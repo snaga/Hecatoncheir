@@ -75,7 +75,8 @@ pip install .
 
 ## Quick Start
 
-TBA
+* [Quick Start [EN]](http://hecatoncheir.readthedocs.io/en/latest/quick-start.html)
+* [Quick Start [JA]](http://hecatoncheir-ja.readthedocs.io/ja/latest/quick-start.html)
 
 ## Documentation
 
