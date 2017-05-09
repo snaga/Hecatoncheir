@@ -19,6 +19,26 @@ Hecatoncheir allows you to:
 * Build a business glossary
 * Curate everything which needs to be shared with data developers and users
 
+## Screenshots
+
+### Data Catalog Top Page
+
+![Data Catalog](doc/screenshots/screenshot1.png "Data Catalog Top Page")
+
+### Metadata and Statistics
+
+![Metadata and Statistics](doc/screenshots/screenshot2.png)
+
+### Data Validation
+
+![Data Validation (1)](doc/screenshots/screenshot3.png)
+
+![Data Validation (2)](doc/screenshots/screenshot4.png)
+
+### Business Glossary
+
+![Business Glossary](doc/screenshots/screenshot5.png)
+
 
 ## Requirements
 
