@@ -1,0 +1,13 @@
+DATABASE_NAME,SCHEMA_NAME,TABLE_NAME,TABLE_NAME_NLS,TABLE_COMMENT,TAGS,TABLE_OWNER
+dqwbtest,public,customer,顧客テーブル,これは顧客のテーブルだお。カスタマーとも言う。,"タグ1",<a href="mailto:snaga@uptime.jp">永安</a>
+dqwbtest,public,lineitem,注文明細テーブル,,"タグ1",<a href="mailto:snaga@uptime.jp">永安</a>
+dqwbtest,public,nation,国名マスタ,,"タグ2",
+dqwbtest,public,orders,注文テーブル,,"タグ1,タグ2",<a href="mailto:snaga@uptime.jp">永安</a>
+dqwbtest,public,part,商品マスタ,,"タグ1",
+dqwbtest,public,partsupp,商品・サプライヤ対応表,,,
+dqwbtest,public,region,地域マスタ,,,
+dqwbtest,public,SUPPLIER,サプライヤマスタ,"大文字でも投入できます。
+# Markdown
+## でも
+* 書けます。",,
+dqwbtest,public,nosuch,存在しないテーブル,,,

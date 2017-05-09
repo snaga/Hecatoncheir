@@ -1,0 +1,268 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+import getopt
+import json
+import os
+import sys
+
+import hecatoncheir.CSVUtils as CSVUtils
+import hecatoncheir.DbProfilerRepository as DbProfilerRepository
+import hecatoncheir.logger as log
+from hecatoncheir.msgutil import gettext as _
+
+table_csv_keys = [
+    'DATABASE_NAME',
+    'SCHEMA_NAME',
+    'TABLE_NAME']
+
+table_csv_attrs = [
+    'TABLE_NAME_NLS',
+    'TABLE_COMMENT',
+    'TAGS',
+    'TABLE_OWNER']
+
+column_csv_keys = [
+    'DATABASE_NAME',
+    'SCHEMA_NAME',
+    'TABLE_NAME',
+    'COLUMN_NAME']
+
+column_csv_attrs = [
+    'COLUMN_NAME_NLS',
+    'COLUMN_COMMENT',
+    'FK']
+
+glossary_csv_keys = [
+    'TERM',
+    'DESCRIPTION_SHORT',
+    'DESCRIPTION_LONG',
+    'OWNER'
+]
+
+glossary_csv_attrs = [
+    'CATEGORIES',
+    'SYNONYMS',
+    'RELATED_TERMS',
+    'RELATED_ASSETS'
+]
+
+validation_csv_keys = [
+    'DATABASE_NAME',
+    'SCHEMA_NAME',
+    'TABLE_NAME',
+    'COLUMN_NAME',
+    'DESCRIPTION',
+    'RULE',
+    'PARAM',
+    'PARAM2'
+]
+
+validation_csv_attrs = [
+]
+
+schema_comment_csv_keys = [
+    'DATABASE_NAME',
+    'SCHEMA_NAME',
+    'SCHEMA_COMMENT'
+]
+
+schema_comment_csv_attrs = [
+]
+
+tag_comment_csv_keys = [
+    'TAG_NAME',
+    'TAG_COMMENT'
+]
+
+tag_comment_csv_attrs = [
+]
+
+csv_confs = [('validation', validation_csv_keys, validation_csv_attrs),
+             ('column', column_csv_keys, column_csv_attrs),
+             ('table', table_csv_keys, table_csv_attrs),
+             ('glossary', glossary_csv_keys, glossary_csv_attrs),
+             ('schemacomment', schema_comment_csv_keys,
+              schema_comment_csv_attrs),
+             ('tagcomment', tag_comment_csv_keys, tag_comment_csv_attrs)]
+
+
+def usage():
+    print '''
+Usage: %s [repo file] [csv file]
+
+Options:
+    -E, --encoding=STRING      Encoding of the CSV file (default: sjis)
+    --help                     Print this help.
+
+''' % os.path.basename(sys.argv[0])
+
+file_enc = 'sjis'
+
+
+def open_csv_file(filename, csv_keys):
+    reader = None
+    try:
+        reader = CSVUtils.CSVReader(filename)
+        if reader.check_header(csv_keys) is False:
+            return None
+    except Exception as e:
+        log.error(_("Could not open csv file `%s'.") % csv_file,
+                  detail=unicode(e))
+        sys.exit(1)
+    return reader
+
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "E:",
+                                   ["encoding=", "help", "debug"])
+    except getopt.GetoptError as err:
+        log.error(unicode(err))
+        usage()
+        sys.exit(1)
+
+    for o, a in opts:
+        if o in ("--debug"):
+            log.debug_enabled = True
+        elif o in ("-E"):
+            file_enc = a
+        elif o in ("--encoding"):
+            file_enc = a
+        elif o in ("--help"):
+            usage()
+            sys.exit(0)
+        else:
+            log.error("unexpected option. internal error.")
+            sys.exit(1)
+
+    if len(args) < 2:
+        usage()
+        sys.exit(1)
+
+    input_file = args[0]
+    csv_file = args[1]
+
+    log.info(_("Importing csv file `%s' into the repository `%s'.") %
+             (csv_file, input_file))
+
+    # detect csv format and prepare the csv reader.
+    reader = None
+    format = None
+    for (f, k, a) in csv_confs:
+        reader = open_csv_file(csv_file, k)
+        if reader:
+            header = k + a
+            format = f
+            break
+    if reader is None:
+        log.error(_("Unsupported csv format."))
+        sys.exit(1)
+    log.info(_("CSV format: %s") % format)
+    log.trace("reader.header: %s" % reader.header)
+
+    repo = DbProfilerRepository.DbProfilerRepository(input_file)
+    repo.init()
+    repo.open()
+
+    merged = 0
+    fk_list = []
+    for r in reader.readline_as_dict(use_lower=True):
+        if format == 'table':
+            tab = repo.get_table(r['database_name'], r['schema_name'],
+                                 r['table_name'])
+            if not tab:
+                tmp = (_("Table %s.%s.%s not found in the repository. "
+                         "Skipping.") %
+                       (r['database_name'], r['schema_name'], r['table_name']))
+                log.warning(tmp)
+                continue
+
+            # update if a key exist, otherwise keep the old value.
+            tab["table_name_nls"] = r.get('table_name_nls',
+                                          tab.get("table_name_nls", ''))
+            tab["comment"] = r.get('table_comment', tab.get("comment", ''))
+            tab["owner"] = r.get('table_owner', tab.get("owner", ''))
+            tab["tags"] = [x.strip() for x in r.get('tags', '').split(',')]
+            merged += 1
+            repo.append_table(tab)
+        elif format == 'column':
+            tab = repo.get_table(r['database_name'], r['schema_name'],
+                                 r['table_name'])
+            if not tab:
+                tmp = (_("Table %s.%s.%s not found in the repository. "
+                         "Skipping.") %
+                       (r['database_name'], r['schema_name'], r['table_name']))
+                log.warning(tmp)
+                continue
+
+            for col in tab["columns"]:
+                if col["column_name"] != r['column_name']:
+                    continue
+
+                # update if a key exist, otherwise keep the old value.
+                col["column_name_nls"] = r.get('column_name_nls',
+                                               col.get("column_name_nls", ''))
+                col["comment"] = r.get('column_comment',
+                                       col.get("comment", ''))
+                if not r.get('fk'):
+                    continue
+                for fk in [x.strip() for x in r['fk'].split(',')]:
+                    guess = True if fk[0] == '?' else False
+                    tmp = fk[1:].split('.') if guess else fk.split('.')
+                    # [table, column]
+                    #  -> [schema, table, column]
+                    if len(tmp) == 2:
+                        tmp.insert(0, tab["schema_name"])
+                    # [schema, table, column]
+                    #  -> [database, schema, table, column]
+                    if len(tmp) == 3:
+                        tmp.insert(0, tab["database_name"])
+                    tmp2 = [tab["database_name"], tab["schema_name"],
+                            tab["table_name"], col["column_name"]]
+                    fk_list.append(tmp2 + tmp + [guess])
+            merged += 1
+            repo.append_table(tab)
+        elif format == 'glossary':
+            if len(r['term']) == 0:
+                continue
+            repo.put_bg_term(r['term'], r['description_short'],
+                             r['description_long'], r['owner'],
+                             [x.strip() for x in r.get('categories', '')
+                              .split(',')],
+                             [x.strip() for x in r.get('synonyms', '')
+                              .split(',')],
+                             [x.strip() for x in r.get('related_terms', '')
+                              .split(',')],
+                             [x.strip() for x in r.get('related_assets', '')
+                              .split(',')])
+            merged += 1
+        elif format == 'validation':
+            if r['param'] is not None and len(r['param']) == 0:
+                r['param'] = None
+            if r['param2'] is not None and len(r['param2']) == 0:
+                r['param2'] = None
+            repo.create_validation_rule(r['database_name'], r['schema_name'],
+                                        r['table_name'], r['column_name'],
+                                        r['description'], r['rule'],
+                                        r['param'], r['param2'])
+            merged += 1
+        elif format == 'schemacomment':
+            repo.set_schema_comment(("%s.%s" %
+                                     (r['database_name'], r['schema_name'])),
+                                    r['schema_comment'])
+            merged += 1
+        elif format == 'tagcomment':
+            repo.set_tag_comment(r['tag_name'], r['tag_comment'])
+            merged += 1
+
+    for fk in fk_list:
+        repo.remove_table_fk(fk[0], fk[1], fk[2], fk[3], fk[4], fk[5], fk[6],
+                             fk[7])
+        repo.put_table_fk(fk[0], fk[1], fk[2], fk[3], fk[4], fk[5], fk[6],
+                          fk[7], fk[8])
+    repo.close()
+    log.info(_("%d records successfully imported into the repository.") %
+             merged)
+
+    sys.exit(0)

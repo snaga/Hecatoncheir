@@ -1,0 +1,476 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+import getopt
+import json
+import mimetypes
+import os
+import re
+import sys
+
+from flask import Flask, request, Response, jsonify
+
+import hecatoncheir.DbProfilerFormatter as DbProfilerFormatter
+import hecatoncheir.DbProfilerRepository as DbProfilerRepository
+import hecatoncheir.DbProfilerVerify as DbProfilerVerify
+import hecatoncheir.logger as log
+from hecatoncheir.msgutil import gettext as _
+
+app = Flask(__name__)
+
+
+def open_repo():
+    filename = os.environ["DBPROF_REPOFILE"]
+    repo = DbProfilerRepository.DbProfilerRepository(filename)
+    repo.open()
+    return repo
+
+
+def get_glossary_terms(repo):
+    terms = []
+    for t in repo.get_bg_terms_all():
+        terms.append(repo.get_bg_term(t))
+    return terms
+
+
+@app.route("/")
+@app.route("/index.html")
+def index():
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    table_list = repo.get_table_list()
+
+    tables_all = []
+    for t in table_list:
+        tab = repo.get_table(t[0], t[1], t[2])
+        tables_all.append(tab)
+    schemas = repo.get_schemas()
+    tags = repo.get_tags()
+
+    reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
+    reponame = re.sub('\..*$', '', reponame)
+    html = DbProfilerFormatter.to_index_html(tables_all, schemas=schemas,
+                                             tags=tags,
+                                             show_validation='both',
+                                             reponame=reponame,
+                                             glossary_terms=terms,
+                                             max_panels=6,
+                                             editable=True).encode('utf-8')
+
+    repo.close()
+    return html
+
+
+@app.route("/index-tags.html")
+def index_tags():
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    table_list = repo.get_table_list()
+
+    tables_all = []
+    for t in table_list:
+        tab = repo.get_table(t[0], t[1], t[2])
+        tables_all.append(tab)
+    tags = repo.get_tags()
+
+    reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
+    reponame = re.sub('\..*$', '', reponame)
+    html = DbProfilerFormatter.to_index_html(tables_all,
+                                             tags=tags,
+                                             reponame=reponame,
+                                             glossary_terms=terms,
+                                             max_panels=99,
+                                             editable=True).encode('utf-8')
+
+    repo.close()
+    return html
+
+
+@app.route("/index-schemas.html")
+def index_schemas():
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    table_list = repo.get_table_list()
+
+    tables_all = []
+    for t in table_list:
+        tab = repo.get_table(t[0], t[1], t[2])
+        tables_all.append(tab)
+    schemas = repo.get_schemas()
+
+    reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
+    reponame = re.sub('\..*$', '', reponame)
+    html = DbProfilerFormatter.to_index_html(tables_all,
+                                             schemas=schemas,
+                                             reponame=reponame,
+                                             glossary_terms=terms,
+                                             max_panels=99,
+                                             editable=True).encode('utf-8')
+
+    repo.close()
+    return html
+
+
+@app.route("/<db>.<schema>.html")
+def index_schema(db, schema):
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    table_list = repo.get_table_list()
+
+    tables = []
+    for t in table_list:
+        if t[0] == db and t[1] == schema:
+            tab = repo.get_table(t[0], t[1], t[2])
+            tables.append(tab)
+    html = DbProfilerFormatter.to_index_html(
+        tables,
+        comment=repo.get_schema_comment('%s.%s' % (db, schema)),
+        schemas=[[db, schema, len(tables)]],
+        reponame=schema, glossary_terms=terms,
+        editable=True).encode('utf-8')
+
+    repo.close()
+    return html
+
+
+@app.route("/tag-<tag>.html")
+def index_tag(tag):
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    table_list = repo.get_tag_ids(tag)
+
+    tables = []
+    for t1 in table_list:
+        t = t1.split('.')
+        tab = repo.get_table(t[0], t[1], t[2])
+        tables.append(tab)
+    html = DbProfilerFormatter.to_index_html(tables,
+                                             comment=repo.get_tag_comment(tag),
+                                             tags=[[tag, len(tables)]],
+                                             reponame=tag,
+                                             glossary_terms=terms,
+                                             editable=True).encode('utf-8')
+
+    repo.close()
+    return html
+
+
+@app.route("/validation-<status>.html")
+def index_validation(status):
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    table_list = repo.get_table_list()
+
+    tables = []
+    for t in table_list:
+        tab = repo.get_table(t[0], t[1], t[2])
+        (valid, invalid) = DbProfilerVerify.verify_table(tab)
+        if status == 'invalid' and invalid > 0:
+            tables.append(tab)
+        elif status == 'valid' and invalid == 0 and valid > 0:
+            tables.append(tab)
+    html = DbProfilerFormatter.to_index_html(tables,
+                                             show_validation=status,
+                                             reponame=status,
+                                             glossary_terms=terms,
+                                             editable=True).encode('utf-8')
+
+    repo.close()
+    return html
+
+
+@app.route("/<db>.<schema>.<table>.html")
+def table(db, schema, table):
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    table_data = repo.get_table(db, schema, table)
+    datamap = repo.get_datamap_items(db, schema, table)
+    validation_rules = repo.get_validation_rules(db, schema, table)
+    html = DbProfilerFormatter.to_table_html(table_data,
+                                             validation_rules=validation_rules,
+                                             datamapping=datamap,
+                                             glossary_terms=terms,
+                                             editable=True).encode('utf-8')
+
+    repo.close()
+    return html
+
+
+@app.route("/glossary.html")
+def glossary():
+    repo = open_repo()
+    terms = get_glossary_terms(repo)
+
+    html = DbProfilerFormatter.to_glossary_html(glossary_terms=terms,
+                                                editable=True).encode('utf-8')
+    repo.close()
+    return html
+
+
+@app.route("/static/<filename>")
+@app.route("/static/<dir1>/<filename>")
+@app.route("/static/<dir2>/<dir1>/<filename>")
+def staticfile(filename, dir1=None, dir2=None):
+    static_dir = DbProfilerFormatter.get_default_template_path()
+    if dir1:
+        filename = dir1 + '/' + filename
+    if dir2:
+        filename = dir2 + '/' + filename
+    out = ""
+    for l in open(static_dir + '/static/' + filename):
+        out = out + l
+
+    mime = mimetypes.guess_type(filename)
+    return Response(out, mimetype=(mime[0] if mime[0]
+                                   else 'application/octet-stream'))
+
+
+# --------------------------------------------------
+# REST API
+# --------------------------------------------------
+@app.route("/api/metadata/<db>.<schema>.<table>")
+def api_metadata(db, schema, table):
+    repo = open_repo()
+    data = repo.get_table(db, schema, table)
+    repo.close()
+
+    return json.dumps(data, indent=2)
+
+
+@app.route("/api/table/<db>.<schema>.<table>/table_info",
+           methods=['GET', 'POST'])
+def api_table_owner(db, schema, table):
+    repo = open_repo()
+    data = repo.get_table(db, schema, table)
+    if request.method == 'POST':
+        data['owner'] = request.form['owner']
+        data['comment'] = request.form['comment']
+        data['tags'] = []
+        for t in request.form['tags'].replace(' ', '').split(','):
+            if len(t) > 0:
+                data['tags'].append(t)
+        repo.append_table(data)
+        repo.close()
+        return json.dumps({'owner': data.get('owner', ''),
+                           'comment': data.get('comment', ''),
+                           'tags': data.get('tags', [])})
+    else:
+        repo.close()
+        return json.dumps({'owner': data.get('owner', ''),
+                           'comment': data.get('comment', ''),
+                           'tags': data.get('tags', [])})
+
+
+@app.route("/api/comment/<db>.<schema>.<table>.<column>",
+           methods=['GET', 'POST'])
+def api_column_comment(db, schema, table, column):
+    repo = open_repo()
+    data = repo.get_table(db, schema, table)
+    col = None
+    for c in data['columns']:
+        if c['column_name'] == column:
+            col = c
+    if request.method == 'POST':
+        col['comment'] = request.form['comment']
+        repo.append_table(data)
+        repo.close()
+        return json.dumps({'comment': col['comment']})
+    else:
+        repo.close()
+        return json.dumps({'comment': col['comment']})
+
+
+def api_error(code, msg):
+    r = jsonify({'message': msg, 'status': 'error'})
+    r.status_code = code
+    return r
+
+
+def api_response(code, content):
+    assert isinstance(content, dict)
+    r = jsonify(content)
+    r.status_code = code
+    return r
+
+
+@app.route("/api/validation", methods=['GET'])
+def api_validation_get_all():
+    repo = open_repo()
+    a = ['id', 'database_name', 'schema_name', 'table_name', 'column_name',
+         'description', 'rule', 'param', 'param2']
+    data = []
+    try:
+        rr = repo.get_validation_rules(request.args.get('database_name'),
+                                       request.args.get('schema_name'),
+                                       request.args.get('table_name'))
+        for r in rr:
+            assert len(a) == len(r)
+            d = {}
+            for k, v in zip(a, r):
+                d[k] = v
+            data.append(d)
+    except Exception as e:
+        return api_error(400, 'exception caught.')
+    repo.close()
+
+    resp = {'status': 'success',
+            'data': data}
+    return api_response(201, resp)
+
+
+@app.route("/api/validation", methods=['POST'])
+def api_validation_create():
+    if not request.data:
+        return api_error(400, 'the request data is empty.')
+
+    req = None
+    try:
+        req = json.loads(request.data)
+    except ValueError as e:
+        return api_error(400, 'incorrect data format.')
+
+    repo = open_repo()
+    id = None
+    try:
+        id = repo.create_validation_rule(
+            req['database_name'], req['schema_name'], req['table_name'],
+            req['column_name'], req['description'], req['rule'],
+            req.get('param'), req.get('param2'))
+    except Exception as e:
+        return api_error(400, 'exception caught.')
+    repo.close()
+
+    if id is None:
+        return api_error(400, 'the same rule already exists.')
+    resp = {'id': id,
+            'status': 'success'}
+    return api_response(201, resp)
+
+
+@app.route("/api/validation/<id>", methods=['GET'])
+def api_validation_get(id):
+    repo = open_repo()
+    r = None
+    try:
+        id = int(id)
+        r = repo.get_validation_rule(id)
+        if r is None:
+            return api_error(400, 'rule id %d not found.' % id)
+    except Exception as e:
+        return api_error(400, 'exception caught.')
+    repo.close()
+
+    assert r[0] == id
+    resp = {'id': r[0],
+            'status': 'success',
+            'database_name': r[1],
+            'schema_name': r[2],
+            'table_name': r[3],
+            'column_name': r[4],
+            'description': r[5],
+            'rule': r[6],
+            'param': r[7],
+            'param2': r[8]}
+    return api_response(201, resp)
+
+
+@app.route("/api/validation/<id>", methods=['PUT'])
+def api_validation_put(id):
+    if not request.data:
+        return api_error(400, 'the request data is empty.')
+    req = None
+    try:
+        req = json.loads(request.data)
+    except ValueError as e:
+        return api_error(400, 'incorrect data format.')
+
+    repo = open_repo()
+    try:
+        id = int(id)
+        if not repo.update_validation_rule(
+                id, req['database_name'], req['schema_name'],
+                req['table_name'], req['column_name'],
+                req['description'], req['rule'],
+                req.get('param'), req.get('param2')):
+            return api_error(400, 'rule %d could not updated.' % id)
+    except Exception as e:
+        return api_error(400, 'exception caught.')
+    repo.close()
+
+    resp = {'id': id,
+            'status': 'success'}
+    return api_response(201, resp)
+
+
+@app.route("/api/validation/<id>", methods=['DELETE'])
+def api_validation_delete(id):
+    repo = open_repo()
+    try:
+        id = int(id)
+        if repo.delete_validation_rule(id) is False:
+            return api_error(400, 'no rule deleted.')
+    except Exception as e:
+        return api_error(400, 'exception caught.')
+    repo.close()
+
+    resp = {'id': id,
+            'status': 'success'}
+    return api_response(201, resp)
+
+
+def usage():
+    print '''
+Usage: %s [repo file] [port]
+
+Options:
+    --help                     Print this help.
+
+''' % os.path.basename(sys.argv[0])
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "",
+                                   ["help", "debug"])
+    except getopt.GetoptError as err:
+        log.error(unicode(err))
+        usage()
+        sys.exit(1)
+
+    debug = False
+
+    for o, a in opts:
+        if o in ("--debug"):
+            debug = True
+        elif o in ("--help"):
+            usage()
+            sys.exit(0)
+        else:
+            log.error("unexpected option. internal error.")
+            sys.exit(1)
+
+    if len(args) < 1:
+        usage()
+        sys.exit(1)
+
+    if os.path.exists(args[0]) is False:
+        log.error(_("File `%s' not found.") % args[0])
+        sys.exit(1)
+
+    os.environ["DBPROF_REPOFILE"] = args[0]
+
+    port = 8080
+    if len(args) == 2:
+        try:
+            port = int(args[1])
+        except Exception as e:
+            log.error(_("%s is not a correct port number.") % args[1])
+            sys.exit(1)
+
+    app.run(host='0.0.0.0', port=port)

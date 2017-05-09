@@ -1,0 +1,272 @@
+@media (min-width: 768px) {
+  .container
+  {
+    width: 100%;
+    margin: auto;
+  }
+}
+
+@media (min-width: 992px) {
+  .container
+  {
+    width: 90%;
+    margin: auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container
+  {
+    width: 80%;
+    margin: auto;
+  }
+}
+
+
+body {
+  font-family: "Open Sans", "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5em;
+  font-weight: 400;
+}
+
+p,
+span,
+a,
+ul,
+li,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+strong {
+  font-weight: 600;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Open Sans", "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5em;
+  font-weight: 300;
+}
+
+h1 {
+  font-size: xx-large;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: x-large;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+h3 {
+  font-size: x-large;
+}
+
+code {
+  display: block;
+  white-space: pre;
+}
+
+.nodecoration {
+  color: #000000;
+  text-decoration: none;
+}
+.nodecoration:hover {
+  color: #000000;
+  text-decoration: none;
+}
+
+strong {
+  font-weight: 400;
+}
+
+.hscroll {
+    box-sizing: border-box;
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+}
+
+.center {
+  text-align: center;
+}
+
+.fui-cross-circle {
+  color: #e74c3c;
+}
+.fui-cross-circle:hover {
+  color: #c0392b;
+}
+
+.fui-check-circle {
+  color: #2ecc71;
+}
+.fui-check-circle:hover {
+  color: #27ae60;
+}
+
+.tag-button {
+  margin-right: 4px;
+}
+
+.filter {
+  float: left;
+}
+
+.tile {
+  width: 100%;
+  display: inline-block;
+  box-sizing: border-box;
+  border-radius: 0px 0px 0px 0px;
+  background: #fff;
+  padding: 10px 20px 15px 20px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: left;
+}
+.tile .title {
+  margin-top: 0px;
+}
+.tile.purple, .tile.blue, .tile.red, .tile.orange, .tile.green, .tile.yellow {
+  color: #fff;
+}
+.tile.purple {
+  background: #9b59b6;
+}
+.tile.purple:hover {
+  background: #8e44ad;
+}
+.tile.red {
+  background: #e74c3c;
+}
+.tile.red:hover {
+  background: #c0392b;
+}
+.tile.green {
+  background: #2ecc71;
+}
+.tile.green:hover {
+  background: #27ae60;
+}
+.tile.blue {
+  background: #3498db;
+}
+.tile.blue:hover {
+  background: #2980b9;
+}
+.tile.orange {
+  background: #e67e22;
+}
+.tile.orange:hover {
+  background: #d35400;
+}
+.tile.yellow {
+  background: #f1c40f;
+}
+.tile.yellow:hover {
+  background: #f39c12;
+}
+
+.bs-callout {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #eee;
+    border-left-width: 5px;
+    border-radius: 3px;
+}
+.bs-callout h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+.bs-callout p:last-child {
+    margin-bottom: 0;
+}
+.bs-callout code {
+    border-radius: 3px;
+}
+.bs-callout+.bs-callout {
+    margin-top: -5px;
+}
+.bs-callout-default {
+    border-left-color: #777;
+}
+.bs-callout-default h4 {
+    color: #777;
+}
+.bs-callout-primary {
+    border-left-color: #428bca;
+}
+.bs-callout-primary h4 {
+    color: #428bca;
+}
+.bs-callout-success {
+    border-left-color: #5cb85c;
+}
+.bs-callout-success h4 {
+    color: #5cb85c;
+}
+.bs-callout-danger {
+    border-left-color: #d9534f;
+}
+.bs-callout-danger h4 {
+    color: #d9534f;
+}
+.bs-callout-warning {
+    border-left-color: #f0ad4e;
+}
+.bs-callout-warning h4 {
+    color: #f0ad4e;
+}
+.bs-callout-info {
+    border-left-color: #5bc0de;
+}
+.bs-callout-info h4 {
+    color: #5bc0de;
+}
+
+.table-wrap {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.wrap {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.glossary-term {
+  color: #34495e;
+  cursor: help;
+  text-decoration: none !important;
+  padding-bottom: 0px;
+  border-bottom: 1px dotted;
+}
+
+.glossary-term:hover {
+  color: #34495e;
+  cursor: help;
+  text-decoration: none !important;
+  padding-bottom: 0px;
+  border-bottom: 1px dotted;
+}
+
+.modal-wide {
+  width: 1400px;
+  margin-left: -400px;
+}

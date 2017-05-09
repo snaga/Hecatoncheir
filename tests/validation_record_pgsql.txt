@@ -1,0 +1,8 @@
+DATABASE_NAME,SCHEMA_NAME,TABLE_NAME,COLUMN_NAME,DESCRIPTION,RULE,PARAM,PARAM2
+dqwbtest,public,customer,c_custkey,すべて数字のみで構成されている,regexp,^\d+$
+dqwbtest,public,customer,c_custkey,"c_custkeyの値が0より大きく1,000,000より小さい",eval,{c_custkey} > 0 and {c_custkey} < 1000000
+dqwbtest,public,customer,c_acctbal,c_acctbalの値が0より大きい,eval,{c_acctbal} > 0
+dqwbtest,public,customer,"c_custkey,c_nationkey",c_custkeyがc_nationkeyより大きい,eval,{c_custkey} > {c_nationkey}
+dqwbtest,public,customer,"c_custkey,c_nationkey",c_custkeyがc_nationkeyより小さい,eval,{c_custkey} < {c_nationkey}
+dqwbtest,public,customer,c_custkey,c_custkeyが0より大きい（エラー）,eval,{c_custkey} > 0 and
+dqwbtest,public,customer,c_custkey,c_custkeyが0より大きい（エラー）,eval,{c_custkey2} > 0

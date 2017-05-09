@@ -1,0 +1,138 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+import getopt
+import json
+import os
+import re
+import shutil
+import sys
+
+import hecatoncheir.DbProfilerExp as DbProfilerExp
+from hecatoncheir.DbProfilerExp import export_html
+import hecatoncheir.DbProfilerRepository as DbProfilerRepository
+import hecatoncheir.logger as log
+from hecatoncheir.msgutil import gettext as _
+
+
+def usage():
+    print '''
+Usage: %s [options...] [repo file] [output directory]
+
+Options:
+    --format <STRING>               Output format. (html, json or csv)
+    --help                          Print this help.
+
+Options for HTML format:
+    --tags <TAG>[,<TAG>]            Tag names to be shown on the top page.
+    --schemas <SCHEMA>[,<SCHEMA>]   Schema names to be shown on the top page.
+    --template <STRING>             Directory name for template files.
+
+''' % os.path.basename(sys.argv[0])
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "",
+                                   ["format=", "tags=", "schemas=",
+                                    "template=", "help", "debug"])
+    except getopt.GetoptError as err:
+        log.error(unicode(err))
+        usage()
+        sys.exit(1)
+
+    debug = False
+
+    format = 'html'
+    tags = None
+    schemas = None
+    template_path = None
+
+    for o, a in opts:
+        if o in ("--debug"):
+            debug = True
+        elif o in ("--format"):
+            format = a
+        elif o in ("--tags"):
+            tags = a.decode('utf-8').split(',')
+        elif o in ("--schemas"):
+            schemas = a.decode('utf-8').split(',')
+        elif o in ("--template"):
+            template_path = a
+        elif o in ("--help"):
+            usage()
+            sys.exit(0)
+        else:
+            log.error("unexpected option. internal error.")
+            sys.exit(1)
+
+    if len(args) < 2:
+        log.error(_("Too few arguments."))
+        usage()
+        sys.exit(1)
+
+    input_file = args[0]
+    output_path = args[1]
+
+    if os.path.exists(input_file) is False:
+        log.error(_("Input file `%s' not found.") % input_file)
+        log.error(_("Abort."))
+        sys.exit(1)
+
+    if os.path.exists(output_path) is False:
+        try:
+            os.makedirs(output_path)
+            log.info(_("Created the output directory `%s'.") % output_path)
+        except IOError, e:
+            log.error(_("Could not create the output directory `%s': %s") %
+                      (output_path, unicode(e)))
+            log.error(_("Abort."))
+            sys.exit(1)
+        except OSError, e:
+            log.error(_("Could not create the output directory `%s': %s") %
+                      (output_path, unicode(e)))
+            log.error(_("Abort."))
+            sys.exit(1)
+
+    repo = DbProfilerRepository.DbProfilerRepository(input_file)
+    repo.open()
+    table_list = repo.get_table_list()
+
+    if format == 'html':
+        try:
+            export_html(repo, tables=table_list, tags=tags, schemas=schemas,
+                        template_path=template_path,
+                        output_title=input_file, output_path=output_path)
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
+
+        # Export attachments
+        dirname = os.path.dirname(input_file)
+        dirname = (dirname + "/attachments" if dirname else
+                   dirname + "./attachments")
+
+        if os.path.isdir(output_path + "/attachments"):
+            try:
+                shutil.rmtree(output_path + "/attachments")
+            except Exception as e:
+                log.error(_("Could not clean up the attachment directory "
+                            "`%s'.") % (output_path + "/attachments"),
+                          detail=str(e))
+                sys.exit(1)
+
+        if os.path.isdir(dirname):
+            shutil.copytree(dirname, output_path + "/attachments")
+            log.info(_("Exported the attachement file directory from `%s'.") %
+                     dirname)
+
+    elif format == 'json':
+        export_json(repo, tables=table_list, output_path=output_path)
+    elif format == 'csv':
+        export_csv(repo, tables=table_list, output_path=output_path)
+    else:
+        log.error(_("Unsupported output format: %s") % format)
+        log.error(_("Abort."))
+        sys.exit(1)
+
+    repo.close()
+    sys.exit(0)

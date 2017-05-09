@@ -1,0 +1,358 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+import getopt
+import os
+import sys
+import traceback
+
+import hecatoncheir.DbProfilerBase as DbProfilerBase
+from hecatoncheir.DbProfilerException import (DbProfilerException, DriverError,
+                                              InternalError, QueryError)
+import hecatoncheir.DbProfilerFormatter as DbProfilerFormatter
+import hecatoncheir.DbProfilerRepository as DbProfilerRepository
+import hecatoncheir.oracle.OraProfiler as OraProfiler
+import hecatoncheir.pgsql.PgProfiler as PgProfiler
+import hecatoncheir.mysql.MyProfiler as MyProfiler
+import hecatoncheir.mssql.MSSQLProfiler as MSSQLProfiler
+import hecatoncheir.logger as log
+from hecatoncheir.msgutil import gettext as _
+
+
+def usage():
+    print '''
+Usage: %s [option...] [schema.table] ...
+
+Options:
+    --dbtype=TYPE              Database type
+    --host=STRING              Host name
+    --port=INTEGER             Port number
+    --dbname=STRING            Database name
+    --tnsname=STRING           TNS name (Oracle only)
+    --user=STRING              User name
+    --pass=STRING              User password
+    -s=STRING                  Schema name
+    -t=STRING                  Table name
+    -P=INTEGER                 Parallel degree of table scan
+    -o=FILENAME                Output file
+    --batch=FILENAME           Batch execution
+
+    --enable-validation        Enable record/column/SQL validations
+
+    --enable-sample-rows       Enable collecting sample rows. (default)
+    --disable-sample-rows      Disable collecting sample rows.
+
+    --skip-table-profiling     Skip table (and column) profiling
+    --skip-column-profiling    Skip column profiling
+    --column-profiling-threshold=INTEGER
+                               Threshold number of rows to skip profiling
+                               columns
+
+    --help                     Print this help.
+
+''' % os.path.basename(sys.argv[0])
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "s:t:P:o:",
+                                   ["help", "dbtype=", "host=", "port=",
+                                    "dbname=", "tnsname=", "user=", "pass=",
+                                    "batch=", "enable-validation",
+                                    "enable-sample-rows",
+                                    "disable-sample-rows",
+                                    "skip-table-profiling",
+                                    "skip-column-profiling",
+                                    "skip-record-validation",
+                                    "column-profiling-threshold="])
+    except getopt.GetoptError as err:
+        log.error(unicode(err))
+        usage()
+        sys.exit(1)
+
+    dbtype = None
+    host = None
+    port = None
+    dbname = None
+    dbuser = None
+    dbpass = None
+    schema_name = None
+    table_name = None
+    parallel_degree = None
+    output_file = None
+    table_list = None
+    enable_validation = False
+    enable_sample_rows = True
+    skip_table_profiling = False
+    skip_column_profiling = False
+    column_profiling_threshold = None
+    skip_record_validation = False
+    debug = None
+    tnsname = None
+
+    for o, a in opts:
+        if o in ("-t"):
+            table_name = a
+        elif o in ("-s"):
+            schema_name = a
+        elif o in ("-P"):
+            parallel_degree = int(a)
+        elif o in ("-o"):
+            output_file = a
+        elif o in ("--dbtype"):
+            dbtype = a
+        elif o in ("--host"):
+            host = a
+        elif o in ("--port"):
+            port = int(a)
+        elif o in ("--dbname"):
+            dbname = a
+        elif o in ("--tnsname"):
+            tnsname = a
+        elif o in ("--user"):
+            dbuser = a
+        elif o in ("--pass"):
+            dbpass = a
+        elif o in ("--batch"):
+            table_list = a
+        elif o in ("--enable-validation"):
+            enable_validation = True
+        elif o in ("--enable-sample-rows"):
+            enable_sample_rows = True
+        elif o in ("--disable-sample-rows"):
+            enable_sample_rows = False
+        elif o in ("--skip-table-profiling"):
+            skip_table_profiling = True
+        elif o in ("--skip-column-profiling"):
+            skip_column_profiling = True
+        elif o in ("--column-profiling-threshold"):
+            column_profiling_threshold = a
+        elif o in ("--skip-record-validation"):
+            skip_record_validation = True
+        elif o in ("--help"):
+            usage()
+            sys.exit(0)
+        else:
+            log.error("unexpected option. internal error.")
+            sys.exit(1)
+
+    if dbtype is None:
+        log.error(_("Specify your database type with --dbtype."))
+        sys.exit(1)
+
+    default_host = 'localhost'
+    default_port = None
+
+    if dbtype == 'pgsql':
+        default_port = 5432
+    elif dbtype == 'oracle':
+        default_port = 1521
+    elif dbtype == 'mysql':
+        default_port = 3306
+    elif dbtype == 'mssql':
+        default_port = 1433
+    else:
+        log.error(_("Unsupported database type: %s") % dbtype)
+        sys.exit(1)
+
+    if host is None:
+        host = default_host
+    if port is None:
+        port = default_port
+
+    if dbtype == 'oracle' and tnsname is not None:
+        dbname = tnsname
+
+    if dbname is None:
+        log.error(_("Specify database name with --dbname."))
+        sys.exit(1)
+
+    if dbuser is None:
+        log.error(_("Specify database user name with --user."))
+        sys.exit(1)
+
+    if dbpass is None:
+        log.error(_("Specify database password with --pass."))
+        sys.exit(1)
+
+    if tnsname is not None:
+        log.info(_("TNS info: %s@%s") % (dbuser, tnsname))
+    else:
+        log.info(_("Conn info: %s@%s:%s/%s") % (dbuser, host, port, dbname))
+
+    profiler = None
+    if dbtype == 'pgsql':
+        profiler = PgProfiler.PgProfiler(host, port, dbname, dbuser,
+                                         dbpass)
+    elif dbtype == 'oracle':
+        log.trace("dbname = %s, tnsname = %s" % (dbname, tnsname))
+        if tnsname is not None:
+            host = None
+            port = None
+        profiler = OraProfiler.OraProfiler(host, port, dbname, dbuser, dbpass)
+    elif dbtype == 'mysql':
+        profiler = MyProfiler.MyProfiler(host, port, dbname, dbuser, dbpass)
+    elif dbtype == 'mssql':
+        profiler = MSSQLProfiler.MSSQLProfiler(host, port, dbname, dbuser,
+                                               dbpass)
+    else:
+        log.error(_("Internal error (%d)") % 1)
+        log.error(_("Abort."))
+        traceback.print_exc()
+        sys.exit(1)
+
+    profiler.profile_sample_rows = enable_sample_rows
+
+    if parallel_degree > 1:
+        profiler.parallel_degree = parallel_degree
+        log.info(_("Setting paralell degree to %d for table scan.") %
+                 profiler.parallel_degree)
+
+    if column_profiling_threshold:
+        profiler.column_profiling_threshold = int(column_profiling_threshold)
+    profiler.skip_table_profiling = skip_table_profiling
+    profiler.skip_column_profiling = skip_column_profiling
+
+    tables = []
+    try:
+        profiler.connect()
+
+        if len(args) > 0:
+            for a in args:
+                if a.find('.') >= 0:
+                    tables.append(a.split('.'))
+                else:
+                    log.error(_("Specify table name in "
+                                "<SCHEMA.TABLE> format: <%s>") % a)
+                    sys.exit(1)
+        # Using a table list file.
+        elif table_list:
+            if os.path.exists(table_list) is False:
+                log.error(_("Table list file %s not found.") % table_list)
+                sys.exit(1)
+            for line in open(table_list):
+                line = line.rstrip()
+                if line.startswith("#"):
+                    continue
+                t = line.split(".")
+                if len(t) == 2 and len(t[0]) > 0 and len(t[1]) > 0:
+                    tables.append([t[0], t[1]])
+        # Looking at all tables in all schemas.
+        elif schema_name is None:
+            for s in profiler.get_schema_names():
+                for t in profiler.get_table_names(s):
+                    tables.append([s, t])
+        # Looking at all tables in the specified schema.
+        elif schema_name and table_name is None:
+            for t in profiler.get_table_names(schema_name):
+                tables.append([schema_name, t])
+        # Looking at one specified table.
+        elif schema_name and table_name:
+            tables.append([schema_name, table_name])
+    except DbProfilerException as e:
+        error, = e.source.args
+        log.error(u"%s" % unicode(e), detail=error.message)
+        log.error(_("Abort."))
+        sys.exit(1)
+    except Exception as e:
+        log.error(_("Internal error (%d)") % 4, detail=repr(e))
+        log.error(_("Abort."))
+        traceback.print_exc()
+        sys.exit(3)
+
+    try:
+        repo = DbProfilerRepository.DbProfilerRepository(output_file)
+        repo.init()
+        repo.open()
+    except DbProfilerException as e:
+        error, = e.source.args
+        log.error(u"%s" % unicode(e), detail=error.message)
+        log.error(_("Abort."))
+        sys.exit(1)
+    except KeyboardInterrupt, e:
+        log.error(_("Interrupted by the user."))
+        log.error(_("Abort."))
+        sys.exit(2)
+    except Exception, e:
+        log.error(_("Internal error (%d)") % 2, detail=repr(e))
+        log.error(_("Abort."))
+        traceback.print_exc()
+        sys.exit(3)
+
+    log.info(u"----------------------------------------------")
+    log.info(_("Parallel degree for table scan: %d") %
+             profiler.parallel_degree)
+    log.info(_("Skipping table profiling: %s") % profiler.skip_table_profiling)
+    log.info(_("Row count profiling: %s") % profiler.profile_row_count_enabled)
+    log.info(_("Skippig column profiling: %s") %
+             profiler.skip_column_profiling)
+    tmp = "{:,d}".format(profiler.column_profiling_threshold)
+    log.info(_("Maximum row count to enable column profiling: %s rows") % tmp)
+    log.info(_("Min/Max values: %s") % profiler.profile_min_max_enabled)
+    log.info(_("Number of null values: %s") % profiler.profile_nulls_enabled)
+    log.info(_("Top-N most/least freq values: %d values") %
+             profiler.profile_most_freq_values_enabled)
+    tmp = profiler.profile_column_cardinality_enabled
+    log.info(_("Column cardinality: %s") % tmp)
+    log.info(_("Data validation: %s") % enable_validation)
+    log.info(_("Obtaining sample records: %s") % enable_sample_rows)
+    log.info(u"----------------------------------------------")
+
+    log.info(_("Profiling on %d tables.") % len(tables))
+    count = 0
+    failed_count = 0
+    for t in tables:
+        assert t[0] and t[1]
+
+        validation_rules = None
+        if enable_validation:
+            validation_rules = repo.get_validation_rules(dbname, t[0], t[1])
+
+        try:
+            count += 1
+            tmp = skip_record_validation
+            newdata = profiler.run(t[0], t[1],
+                                   validation_rules=validation_rules,
+                                   skip_record_validation=tmp)
+        except DriverError as e:
+            log.error(_("Abort by driver error."))
+            sys.exit(1)
+        except QueryError as e:
+            log.error(_("Profiling failed on %s.%s") %
+                      (t[0], t[1]), detail=u'QueryError: '+e.value)
+            failed_count += 1
+            continue
+        except InternalError as e:
+            log.error(_("Profiling failed on %s.%s (internal error)") %
+                      (t[0], t[1]), detail=u'InternalError: '+e.value)
+            failed_count += 1
+            continue
+        except KeyboardInterrupt as e:
+            log.error(_("Interrupted by the user."))
+            log.error(_("Abort."))
+            sys.exit(2)
+        except Exception as e:
+            log.error(_("Profiling failed on %s.%s (internal error)") %
+                      (t[0], t[1]), detail=repr(e))
+            failed_count += 1
+            traceback.print_exc()
+            log.info(_("Continuing profiling."))
+            continue
+
+        # copy nls_name and comment from previous record.
+        prevdata = repo.get_table(dbname, t[0], t[1])
+        DbProfilerBase.migrate_table_meta(prevdata, newdata)
+        repo.append_table(newdata)
+
+    try:
+        repo.close()
+    except Exception as e:
+        log.error(_("Internal error (%d)") % 4, detail=repr(e))
+        log.error(_("Abort."))
+        traceback.print_exc()
+        sys.exit(3)
+
+    log.info(_("Profiling errors have occured on %d/%d tables.") %
+             (count, failed_count))
+    log.info(_("Completed profiling %d tables.") % (count - failed_count))
+
+    sys.exit(0)

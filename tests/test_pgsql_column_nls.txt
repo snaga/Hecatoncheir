@@ -1,0 +1,14 @@
+DATABASE_NAME,SCHEMA_NAME,TABLE_NAME,COLUMN_NAME,COLUMN_NAME_NLS,COLUMN_COMMENT,FK
+dqwbtest,public,customer,c_custkey,顧客id,これは主キーです
+dqwbtest,public,customer,c_name,顧客名,"# MarkdownテストH1
+## テストH2
+### テストH3
+* markdownで
+* 書いてみる"
+dqwbtest,public,customer,c_address,顧客住所,
+dqwbtest,public,customer,c_nationkey,国名コード,,nation.n_nationkey
+dqwbtest,public,customer,c_phone,電話番号,
+dqwbtest,public,customer,c_acctbal,残高,
+dqwbtest,public,customer,c_mktsegment,業界,
+dqwbtest,public,customer,c_comment,備考,
+dqwbtest,public,SUPPLIER,s_nationkey,,,?public.nation.n_nationkey

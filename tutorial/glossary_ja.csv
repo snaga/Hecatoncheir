@@ -1,0 +1,8 @@
+TERM,DESCRIPTION_SHORT,DESCRIPTION_LONG,OWNER,CATEGORIES,SYNONYMS,RELATED_TERMS,RELATED_ASSETS
+顧客,「顧客」の定義。（概要版）,"# 顧客の定義（詳細版）
+
+* カスタマー
+* サプライヤー
+* アカウント
+
+Markdownで書けます。",snaga,カテゴリ1,"カスタマー","アカウント,サプライヤー","SCOTT.CUSTOMER,SCOTT.COMPANY, SUPPLIER"

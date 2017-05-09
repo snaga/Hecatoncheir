@@ -1,0 +1,8 @@
+CHANGE_DATE,DATABASE_NAME,SCHEMA_NAME,TABLE_NAME,COLUMN_NAME,DATA_TYPE,PK,NULLABLE,SOURCE_DATABASE_NAME,RECORD_ID,SOURCE_SCHEMA_NAME,SOURCE_TABLE_NAME,SOURCE_COLUMN_NAME,TRANSFORMATION_CATEGORY,TRANSFORMATION_ROLE,UPDATED_BY
+Change_Date,Database_Name,Schema_name,Table_Name,Column_Name,Data_Type,PK,Nullable,Source_Database_Name,Record_Id,Source_Schema_Name,Source_Table_Name,Source_Column_Name,Transformation_Category,Transformation_Role,Updated_By
+change_date,database_name,schema_name,table_name,column_name,date_type,pk,nullable,source_database_name,record_id,source_schema_name,source_table_name,source_column_name,transformation_category,transformation_role,updated_by2
+change_date,dqwbtest,public,customer,c_acctbal,date_type,pk,nullable,,record_id,,,,Hardcode,foo,@snaga3
+change_date,dqwbtest,public,customer,,date_type,pk,nullable,source_database_name,record_id,source_schema_name,"source_table_name,source_table_name2",source_column_name2,transformation_category,,@snaga3
+change_date,dqwbtest,public,customer,c_acctbal,date_type,pk,nullable,source_database_name,record_id,source_schema_name,source_table_name,source_column_name2,transformation_category,"transformation_role
+  with
+    br and whitespace",@snaga3

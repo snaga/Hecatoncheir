@@ -1,0 +1,8 @@
+TERM,DESCRIPTION_SHORT,DESCRIPTION_LONG,OWNER,CATEGORIES,SYNONYMS,RELATED_TERMS,RELATED_ASSETS
+Customer,Customer (Short description),"# Definition of the Customer (Detailed description)
+
+* Customer
+* Supplier
+* Account
+
+This field can be written in Markdown.",snaga,Category1,"Customer","Account,Supplier","SCOTT.CUSTOMER,SCOTT.COMPANY, SUPPLIER"

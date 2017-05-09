@@ -1,0 +1,101 @@
+{% extends "templ_base.html" %}
+{% block content %}
+    <div class="container">
+      <script type="text/javascript">
+function set_filter_word(s) {
+  $('#table-list').DataTable().search(s).draw();
+  $('#table-list_filter input').val(s);
+  $('#table-list_filter input').focus();
+}
+
+// update filter word when the location hash gets updated
+function locationHashChanged() {
+  s = decodeURIComponent(window.location.hash.substring(1));
+  set_filter_word(s);
+}
+window.onhashchange = locationHashChanged;
+
+// filter with a word in the location hash.
+$(document).ready(function() {
+  s = decodeURIComponent(window.location.hash.substring(1));
+  set_filter_word(s);
+});
+
+// clear a filter word.
+$(window).keyup(function(e) {
+  if (e.keyCode == 27) {
+    set_filter_word('');
+  }
+  e.preventDefault();
+});
+      </script>
+
+  <div class="row">
+    <div class="col-md-12">
+      <h1><a href="index.html" class="nodecoration">Business Glossary</a></h1>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+
+      <table id="table-list" class="table table-hover table-wrap">
+        <colgroup>
+          <col style="width:5%;">
+          <col style="width:20%;">
+          <col style="width:30%;">
+          <col style="width:5%;">
+          <col style="width:10%;">
+          <col style="width:10%;">
+          <col style="width:10%;">
+          <col style="width:10%;">
+        </colgroup>
+
+        <thead>
+          <tr><th>Term</th><th>Description</th><th>Detail</th><th>Categories</th><th>Synonyms</th><th>Related Terms</th><th>Related Assets</th><th>Owner</th></tr>
+        </thead>
+
+        <tbody>
+{% for t in terms %}
+          <tr>
+            <td class="wrap"><a name="{{ t.term }}"></a>{{ t.term }}</td>
+            <td class="wrap">{{ t.description_short }}</td>
+            <td class="wrap">{{ t.description_long }}</td>
+            <td class="wrap">{{ t.categories }}</td>
+            <td class="wrap">{{ t.synonyms }}</td>
+            <td class="wrap">{{ t.related_terms }}</td>
+            <td class="wrap">{{ t.related_assets }}</td>
+            <td class="wrap">{{ t.owned_by }}</td>
+          </tr>
+{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<script type="text/javascript">
+$('table#table-list').dataTable({
+  "dom": 'l<"filter"f>rtip',
+  "bInfo": false,
+  "bPaginate": false,
+  "bLengthChange": false,
+  "orderFixed": [[ 0, "asc" ]],
+  "ordering": false,
+  "oLanguage": {
+    "sSearch": "Filter: "
+  },
+  "columns": [
+    { "searchable": true },
+    { "searchable": false },
+    { "searchable": false },
+    { "searchable": false },
+    { "searchable": true },
+    { "searchable": false },
+    { "searchable": false },
+    { "searchable": false }
+  ]
+});
+</script>
+
+    </div> <!-- /.container -->
+{% endblock %}

@@ -1,0 +1,503 @@
+# Hecatoncheir
+# Copyright (C) 2017 Satoshi Nagayasu
+# Satoshi Nagayasu <snaga@uptime.jp>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2017-04-27 11:55+JST\n"
+"PO-Revision-Date: 2017-05-06 17:39+0900\n"
+"Last-Translator: Satoshi Nagayasu <snaga@uptime.jp>\n"
+"Language-Team: Satoshi Nagayasu <snaga@uptime.jp>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+msgid "%d mappings imported."
+msgstr "%d件のテーブル情報をマージしました。"
+
+msgid "%d records successfully imported into the repository."
+msgstr "%d 件のレコードをインポートしました。"
+
+msgid "%d validation rule(s)"
+msgstr "%d件のデータ検証ルールがあります"
+
+msgid "%s is not a correct port number."
+msgstr "指定されたポート番号 %s が不正です。"
+
+msgid "Abort by driver error."
+msgstr "終了します （ドライバエラー）"
+
+msgid "Abort."
+msgstr "終了します。"
+
+msgid "Assigned Assets"
+msgstr "関連テーブル"
+
+msgid "Attached `%s'."
+msgstr "`%s' を添付しました。"
+
+msgid "Attachment file `%s' does not exist. Abort."
+msgstr "添付ファイル `%s' が存在しません。終了します。"
+
+msgid "CSV format: %s"
+msgstr "CSVフォーマット: %s"
+
+msgid "Column `%s' not found. Check your validation rule again."
+msgstr "カラム %s が見つかりません。検証ルールを確認してください。"
+
+msgid "Column cardinality: %s"
+msgstr "カーディナリティプロファイリング: %s"
+
+msgid "Column cardinality: end"
+msgstr "カーディナリティの取得: 完了"
+
+msgid "Column cardinality: start"
+msgstr "カーディナリティの取得: 開始"
+
+msgid "Column statistics validation: end (%d)"
+msgstr "カラム統計検証: 完了 (%d件)"
+
+msgid "Column statistics validation: start"
+msgstr "カラム統計検証: 開始"
+
+msgid "Completed profiling %d tables."
+msgstr "%d テーブルのプロファイリングを完了しました"
+
+msgid "Conn info: %s@%s:%s/%s"
+msgstr "接続先: %s@%s:%s/%s"
+
+msgid "Connected to the database."
+msgstr "データベースに接続しました。"
+
+msgid "Connecting the database."
+msgstr "データベースに接続しています。"
+
+msgid "Continuing profiling."
+msgstr "処理を継続します"
+
+msgid "Copied the static directory to `%s'."
+msgstr "static ディレクトリを %s にコピーしました。"
+
+msgid "Could not access to the repository file `%s'."
+msgstr "レポジトリファイル %s へアクセスできません。"
+
+msgid "Could not add file name to the repository. Abort."
+msgstr "レポジトリにファイル名を登録できませんでした。終了します。"
+
+msgid "Could not clean up the attachment directory `%s'."
+msgstr "添付ファイルディレクトリ %s を削除できませんでした。"
+
+msgid "Could not connect to the database."
+msgstr "データベースに接続できませんでした。"
+
+msgid "Could not copy `%s' to `%s'. Abort."
+msgstr "`%s' を `%s' にコピーできませんでした。終了します。"
+
+msgid "Could not copy the static directory because `%s/static' already exists."
+msgstr "%s/static ディレクトリが既に存在するためコピーできません。"
+
+msgid "Could not create the attachment directory `%s'. Abort."
+msgstr "添付ファイルディレクトリ `%s' を作成できませんでした。終了します。"
+
+msgid "Could not create the output directory `%s': %s"
+msgstr "出力用ディレクトリ %s の作成に失敗しました: %s"
+
+msgid "Could not create the repository."
+msgstr "レポジトリの初期化に失敗しました。"
+
+msgid "Could not delete tag id: "
+msgstr "タグIDの削除に失敗しました:"
+
+msgid "Could not delete text element: "
+msgstr "テキストエレメントの削除に失敗しました:"
+
+msgid "Could not delete validation rule: "
+msgstr "検証ルールの削除に失敗しました:"
+
+msgid "Could not destroy the repository."
+msgstr "レポジトリの破棄に失敗しました。"
+
+msgid "Could not generate %s: %s"
+msgstr "%s の出力に失敗しました: %s"
+
+msgid "Could not generate CSV file."
+msgstr "CSVファイルの出力に失敗しました"
+
+msgid "Could not generate JSON file."
+msgstr "JSONファイルの出力に失敗しました"
+
+msgid "Could not get a business term: "
+msgstr "ビジネス用語の取得に失敗しました:"
+
+msgid "Could not get a list of business terms: "
+msgstr "ビジネス用語のリスト取得に失敗しました:"
+
+msgid "Could not get column data types at all."
+msgstr ""
+
+msgid "Could not get data types."
+msgstr "データ型の取得に失敗しました"
+
+msgid "Could not get data."
+msgstr "データの取得に失敗しました。"
+
+msgid "Could not get file names from the repository. Abort."
+msgstr "レポジトリからファイル名を取得できませんでした。終了します。"
+
+msgid "Could not get row count/num of nulls/min/max values."
+msgstr "レコード数/NULL数/カラム最小値/最大値の取得に失敗しました。"
+
+msgid "Could not get schema names: "
+msgstr "スキーマ情報の取得に失敗しました:"
+
+msgid "Could not get table data with its history: "
+msgstr "テーブル情報履歴の取得に失敗しました:"
+
+msgid "Could not get table data: "
+msgstr "テーブル情報の取得に失敗しました:"
+
+msgid "Could not get table info: "
+msgstr "テーブル情報の取得に失敗しました:"
+
+msgid "Could not get tag ids: "
+msgstr "タグIDの取得に失敗しました:"
+
+msgid "Could not get tag info: "
+msgstr "タグ情報の取得に失敗しました:"
+
+msgid "Could not get tag labels: "
+msgstr "タグラベルの取得に失敗しました:"
+
+msgid "Could not get text element: "
+msgstr "テキストエレメントの取得に失敗しました:"
+
+msgid "Could not get validation rule: "
+msgstr "検証ルールの取得に失敗しました:"
+
+msgid "Could not get validation rules: "
+msgstr "検証ルールの取得に失敗しました:"
+
+msgid "Could not initialize the repository."
+msgstr "レポジトリファイルの初期化に失敗しました。"
+
+msgid "Could not open csv file `%s'."
+msgstr "CSVファイル %s を開けませんでした。"
+
+msgid "Could not read the repository file `%s'."
+msgstr "レポジトリファイル %s の読み込みでエラーが発生しました。"
+
+msgid "Could not register a business term: "
+msgstr "ビジネス用語の登録に失敗しました:"
+
+msgid "Could not register data mapping."
+msgstr "マッピングデータの保存に失敗しました。"
+
+msgid "Could not register table data: "
+msgstr "テーブル情報の登録に失敗しました:"
+
+msgid "Could not register tag: "
+msgstr "タグの保存に失敗しました:"
+
+msgid "Could not register text element: "
+msgstr "テキストエレメントの保存に失敗しました:"
+
+msgid "Could not register validation rule: "
+msgstr "検証ルールの登録に失敗しました:"
+
+msgid "Could not remove the file from the repository. Abort."
+msgstr "レポジトリからファイル名を削除できませんでした。終了します。"
+
+msgid "Could not retreive from the repository `%s'"
+msgstr "レポジトリファイル %s からの読み込みに失敗しました。"
+
+msgid "Could not update validation rule: "
+msgstr "検証ルールの更新に失敗しました:"
+
+msgid "Created the attachment directory `%s'."
+msgstr "添付ファイルディレクトリ `%s' を作成しました。"
+
+msgid "Created the output directory `%s'."
+msgstr "出力用ディレクトリ %s を作成しました。"
+
+msgid "Data types: end"
+msgstr "データ型の取得: 完了"
+
+msgid "Data types: start"
+msgstr "データ型の取得: 開始"
+
+msgid "Data validation: %s"
+msgstr "データ検証有効化: %s"
+
+msgid "Database driver not found."
+msgstr "データベースドライバが見つかりません。"
+
+msgid "Details..."
+msgstr "詳細…"
+
+msgid "Exported the attachement file directory from `%s'."
+msgstr "添付ファイルディレクトリ `%s' をエクスポートしました。"
+
+msgid "File `%s' not found."
+msgstr "ファイル %s が見つかりません。"
+
+msgid "Generated %s."
+msgstr "%s を出力しました。"
+
+msgid "Generated CSV file."
+msgstr "CSVファイルを出力しました。"
+
+msgid "Generated JSON file."
+msgstr "JSONファイルを出力しました。"
+
+msgid "Importing csv file `%s' into the repository `%s'."
+msgstr "CSVファイル %s をレポジトリ %s にインポートします。"
+
+msgid "Input file `%s' not found."
+msgstr "入力ファイル %s が存在しません。"
+
+msgid "Internal error (%d)"
+msgstr "内部エラーが発生しました。(%d)"
+
+msgid "Interrupted by the user."
+msgstr "ユーザによって中断されました。"
+
+msgid "Invalid command. It must be one of 'add', 'list' or 'rm'."
+msgstr "コマンドが違います。'add', 'list', 'rm' のいずれかを指定してください。"
+
+msgid "Invalid results: %d/%d"
+msgstr "検証結果にエラーがあります: %d/%d"
+
+msgid "Invalid target type. It must be one of 'tag', 'schema' or 'table'."
+msgstr ""
+"ターゲットタイプが違います。'tag', 'schema', 'table' のいずれかを指定してくだ"
+"さい。"
+
+msgid "Maximum row count to enable column profiling: %s rows"
+msgstr "カラムプロファイリング閾値: %s行"
+
+msgid "Min/Max values: %s"
+msgstr "最小値/最大値プロファイリング: %s"
+
+msgid "Min/Max values: end"
+msgstr "最小値/最大値の取得: 完了"
+
+msgid "Min/Max values: start"
+msgstr "最小値/最大値の取得: 開始"
+
+msgid "Missing file name."
+msgstr "ファイル名が指定されていません。"
+
+msgid "Most/Least freq values(1/2): start"
+msgstr "最頻値の取得(1/2): 開始"
+
+msgid "Most/Least freq values(2/2): start"
+msgstr "最頻値の取得(2/2): 開始"
+
+msgid "Most/Least freq values: end"
+msgstr "最頻値の取得: 完了"
+
+msgid "No invalid results: %d/%d"
+msgstr "検証結果にエラーはありません: %d/%d"
+
+msgid "Number of null values: %s"
+msgstr "NULL値数プロファイリング: %s"
+
+msgid "Number of nulls: end"
+msgstr "NULL値数の取得: 完了"
+
+msgid "Number of nulls: start"
+msgstr "NULL値数の取得: 開始"
+
+msgid "Obtaining sample records: %s"
+msgstr "サンプルレコード取得: %s"
+
+msgid "Parallel degree for table scan: %d"
+msgstr "テーブルスキャン並列度: %d"
+
+msgid "Parameter error: "
+msgstr "パラメータエラー: "
+
+msgid "Profiling %s.%s: end"
+msgstr "テーブル %s.%s のプロファイリングが完了しました。"
+
+msgid "Profiling %s.%s: start"
+msgstr "テーブル %s.%s のプロファイリングを開始します。"
+
+msgid "Profiling errors have occured on %d/%d tables."
+msgstr "%d テーブル中 %d テーブルのプロファイリングに失敗しました"
+
+msgid "Profiling failed on %s.%s"
+msgstr "%s.%s のプロファイリングに失敗しました"
+
+msgid "Profiling failed on %s.%s (internal error)"
+msgstr "%s.%s のプロファイリングに失敗しました（内部エラー）"
+
+msgid "Profiling on %d tables."
+msgstr "%d テーブルのプロファイリングを開始します。"
+
+msgid "Read %d lines"
+msgstr "%d行を読み込みました。"
+
+msgid "Record validation: end"
+msgstr "レコード検証: 完了"
+
+msgid "Record validation: no validation rule"
+msgstr "レコード検証: データ検証ルールがありません"
+
+msgid "Record validation: skipping"
+msgstr "レコード検証: スキップします"
+
+msgid "Record validation: start"
+msgstr "レコード検証: 開始"
+
+msgid "Related Terms"
+msgstr "類義語"
+
+msgid "Removed `%s' from the repository."
+msgstr "`%s' をレポジトリから削除しました。"
+
+msgid "Retrieved all data from the repository `%s'."
+msgstr "レポジトリファイル %s から読み込みました。"
+
+msgid "Row count profiling: %s"
+msgstr "行数プロファイリング: %s"
+
+msgid "Row count: end (%s)"
+msgstr "行数の取得: 完了 (%s)"
+
+msgid "Row count: start"
+msgstr "行数の取得: 開始"
+
+msgid "SQL error: "
+msgstr "SQLエラー: "
+
+msgid "SQL validation error: %s"
+msgstr "SQL検証エラー: %s"
+
+msgid "SQL validation: end (%d)"
+msgstr "SQL検証: 完了 (%d件)"
+
+msgid "SQL validation: start"
+msgstr "SQL検証: 開始"
+
+msgid "Sample rows: end"
+msgstr "サンプル行の取得：完了"
+
+msgid "Sample rows: skipping"
+msgstr "サンプル行の取得をスキップします。"
+
+msgid "Sample rows: start"
+msgstr "サンプル行の取得: 開始"
+
+msgid "Setting paralell degree to %d for table scan."
+msgstr "テーブルスキャンの並列度を %d に設定しました。"
+
+msgid "Skippig column profiling: %s"
+msgstr "カラムプロファイリングスキップ: %s"
+
+msgid "Skipping column profiling because the table has more than %s rows"
+msgstr ""
+"行数閾値(%s行)を超えましたのでカラムのプロファイリングをスキップします。"
+
+msgid "Skipping column profiling."
+msgstr "カラムのプロファイリングをスキップします。"
+
+msgid "Skipping column statistics validation and SQL validation."
+msgstr "カラム統計検証およびSQL検証をスキップします。"
+
+msgid "Skipping record validation since no validation rule."
+msgstr "検証ルールが存在しないのでレコード検証をスキップします。"
+
+msgid "Skipping table profiling."
+msgstr "テーブルのプロファイリングをスキップします。"
+
+msgid "Skipping table profiling: %s"
+msgstr "テーブルプロファイリングスキップ: %s"
+
+msgid "Specify database name with --dbname."
+msgstr "データベース名を指定してください。(--dbname)"
+
+msgid "Specify database password with --pass."
+msgstr "パスワードを指定してください。(--pass)"
+
+msgid "Specify database user name with --user."
+msgstr "ユーザ名を指定してください。(--user)"
+
+msgid "Specify table name in <SCHEMA.TABLE> format: <%s>"
+msgstr "<スキーマ名.テーブル名> 形式で指定してください: <%s>"
+
+msgid "Specify your database type with --dbtype."
+msgstr "データベースタイプを指定してください。(--dbtype)"
+
+msgid "Synonym"
+msgstr "同義語"
+
+msgid "Syntax error: "
+msgstr "文法エラー: "
+
+msgid "TNS info: %s@%s"
+msgstr "接続先(TNS): %s@%s"
+
+msgid "Table %s.%s.%s not found in the repository. Skipping."
+msgstr ""
+"レポジトリにテーブル %s.%s.%s のレコードが見つかりません。スキップします。"
+
+msgid "Table list file %s not found."
+msgstr "テーブルリストファイル %s が存在しません。"
+
+msgid "The repository already exists."
+msgstr "既にレポジトリが存在します。"
+
+msgid "The repository file `%s' has already been opened."
+msgstr "レポジトリファイル %s は既にオープンされています。"
+
+msgid "The repository file `%s' has been opened."
+msgstr "レポジトリファイル %s をオープンしました。"
+
+msgid "The repository file `%s' not found."
+msgstr "レポジトリファイル %s がありません。"
+
+msgid "The repository has been destroyed."
+msgstr "レポジトリを破棄しました。"
+
+msgid "The repository has been initialized."
+msgstr "レポジトリを初期化しました。"
+
+msgid "The same validation rule already exists: "
+msgstr "同一の検証ルールが既に存在します: "
+
+msgid "Too few arguments."
+msgstr "引数が足りません。"
+
+msgid "Top-N most/least freq values: %d values"
+msgstr "最頻値プロファイリング: %d 件"
+
+msgid "Unsupported csv format."
+msgstr "サポートされている形式のCSVファイルではありません。"
+
+msgid "Unsupported database type: %s"
+msgstr "サポートされていないデータベースタイプです: %s"
+
+msgid "Unsupported output format: %s"
+msgstr "%sはサポートされていない出力形式です。"
+
+msgid "Unsupported validation rule: %s"
+msgstr "サポートされていない検証ルールです: %s"
+
+msgid "Updating mapping: %s.%s.%s.%s.%s"
+msgstr "マッピング更新: %s.%s.%s.%s.%s"
+
+msgid "Validating column statistics: %s"
+msgstr "カラム統計検証中: %s"
+
+msgid "Validating with SQL: %s"
+msgstr "SQL検証中: %s"
+
+msgid "Verifying the validation results."
+msgstr "検証結果を確認します"
+
+msgid "invalid object type: %s"
+msgstr ""

@@ -1,0 +1,614 @@
+{% extends "templ_base.html" %}
+{% block content %}
+  <div class="container">
+
+  <div class="row">
+    <div class="col-md-12">
+
+    <h1>{{ table.schema_name }}.{{table.table_name }}</h1>
+
+    <p>Last Profiled: {{ table.timestamp }}</p>
+
+    <h2 style="display:inline">テーブル概要</h2>&nbsp;&nbsp;&nbsp;{% if editable %}<a href="#edit_table_info" data-toggle="modal"><span class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="テーブル概要を編集します" onclick="edit_table_info_modal('{{table.database_name}}.{{table.schema_name}}.{{table.table_name}}')"></span></a>{% endif %}
+
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <table class="table table-hover">
+        <thead>
+          <tr><th>項目</th><th>値</th></tr>
+        </thead>
+
+        <tbody>
+          <tr><td>レコード数</td><td>{{ table.row_count }} {% if table.sample_rows and table.sample_rows|length > 1 %}（<a href="#sample_rows" data-toggle="modal">レコードサンプル</a>）{% endif %}</td></tr>
+          <tr><td>カラム数</td><td>{{ table.num_columns }}</td></tr>
+          <tr><td>タグ</td><td>{% if table.tags %}{% for tag in table.tags %}<button type="button" class="btn btn-info btn-xs tag-button" onclick="window.open('tag-{{tag}}.html')">{{ tag }}</button>{% endfor %}{% endif %}</td></tr>
+          <tr><td>管理者</td><td>{% if table.owner is not none %}{{table.owner}}{% else %}未登録{% endif %}</td></tr>
+{% if table.datamapping %}
+          <tr><td>データマッピング（ソーステーブル）</td><td>{% for tab in table.datamapping %}{% if loop.index0 > 0 %}<br/>{% endif %}{{ tab }}{% endfor %}</td></tr>
+{% endif %}
+        </tbody>
+      </table>
+    </div>
+{% if table.comment or files %}
+    <div class="col-md-6">
+      <div class="bs-callout bs-callout-primary">
+  {% if table.comment %}
+        {{ table.comment }}
+  {% endif %}
+
+  {% if files %}
+      関連ファイル:
+      <ul>
+    {% for file in files %}
+        <li><a href="attachments/{{ file[1] }}">{{ file[0] }}</a></li>
+    {% endfor %}
+      </ul>
+  {% endif %}
+      </div>
+    </div>
+{% endif %}
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <h2>カラム統計</h2>
+
+    <div class="hscroll">
+      <table class="table table-hover">
+        <thead>
+          <tr><th>カラム名</th><th></th><th>データ型</th><th>最小値・最大値</th><th>充足率(%)</th><th>カーディナリティ</th><th>外部キー<br/>参照</th><th>データ分布</th><th>検証</th><th colspan="2">コメント</th><th>データ<br/>マッピング</th></tr>
+        </thead>
+
+        <tbody>
+{% for c in table.columns %}
+          <tr><td class="nowrap">{{ c.column_name }}</td><td class="nowrap">{{ c.column_name_nls }}</td><td class="nowrap">{{ c.data_type }}</td><td class="nowrap">{{ c.minmax }}</td><td class="nowrap">{{ c.non_null_ratio }}
+
+<!-- not null -->
+{% if c.notnull %}
+            <img src="http://icons.iconarchive.com/icons/hydrattz/multipurpose-alphabet/16/Letter-N-gold-icon.png" data-toggle="tooltip" data-placement="top" title="このカラムにNULL値はありません">
+{% endif %}
+<!-- /not null -->
+            </td><td class="nowrap">{{ c.cardinality }}
+<!-- unique -->
+{% if c.uniq %}
+            <img src="http://icons.iconarchive.com/icons/hydrattz/multipurpose-alphabet/16/Letter-U-gold-icon.png" data-toggle="tooltip" data-placement="top" title="このカラムに値の重複はありません（NULL値を除く）">
+{% endif %}
+<!-- /unique -->
+            </td><td class="nowrap">
+<!-- foreign keys -->
+{% if c.fk_ref is defined %}
+  {% for fk in c.fk_ref %}
+    <a href="{{ fk[0] }}.{{ fk[1] }}.html#{{ fk[2] }}" target="_blank"><span class="glyphicon glyphicon-arrow-left" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="テーブル {{ fk[1] }} の {{ fk[2] }} から参照{% if fk[3] %}（推定）{% endif %}"></span></a>
+  {% endfor %}
+{% endif %}
+
+{% if c.fk is defined %}
+  {% for fk in c.fk %}
+    <a href="{{ fk[0] }}.{{ fk[1] }}.html#{{ fk[2] }}" target="_blank"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="テーブル {{ fk[1] }} の {{ fk[2] }} を参照{% if fk[3] %}（推定）{% endif %}"></span></a>
+  {% endfor %}
+{% endif %}
+<!-- /foreign keys -->
+            </td><td class="nowrap"><a href="#{{ c.column_name }}_most_freq" data-toggle="modal"><span class="glyphicon glyphicon-sort-by-attributes-alt" data-toggle="tooltip" data-placement="top" title="出現頻度の高い順に値を表示します。"></span></a> <a href="#{{ c.column_name }}_least_freq" data-toggle="modal"><span class="glyphicon glyphicon-sort-by-attributes" data-toggle="tooltip" data-placement="top" title="出現頻度の低い順に値を表示します。"></span></a></td><td class="center">
+<!-- validation -->
+{% if c.validations is defined %}
+{%   if c.invalid > 0 %}
+            <a href="#{{ c.column_name }}_validation" data-toggle="modal"><span class="fui-cross-circle" data-toggle="tooltip" data-placement="top" title="検証ルールに違反しているレコードがあります({{ c.invalid }}/{{ c.validations|count() }})"></span></a>
+{%   else %}
+            <a href="#{{ c.column_name }}_validation" data-toggle="modal"><span class="fui-check-circle" data-toggle="tooltip" data-placement="top" title="検証ルールに違反しているレコードはありません({{ c.invalid }}/{{ c.validations|count() }})"></span></a>
+{%   endif %}
+{% endif %}
+<!-- /validation -->
+            </td><td class="nowrap">
+{% if c.comment is defined and c.comment|length > 0 %}
+            <a href="#{{ c.column_name }}_comment" data-toggle="modal"><img src="http://simpleicon.com/wp-content/uploads/note-4-64x64.png" height="16" width="16" data-toggle="tooltip" data-html="true" data-placement="top" title="{% if c.comment_tooltip is defined %}{{ c.comment_tooltip }}{% else %}コメントを表示します{% endif %}"></a>
+{% endif %}
+            </td><td class="nowrap">
+{% if editable %}
+            <a href="#comment_edit" data-toggle="modal"><span class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="コメントを編集します" onclick="set_edit_column_name('{{table.database_name}}', '{{table.schema_name}}', '{{table.table_name}}', '{{c.column_name}}')"></span></a>
+{% endif %}
+            </td><td class="nowrap">
+{% if c.datamapping is defined %}
+            <a href="#{{ c.column_name }}_datamap" data-toggle="modal"><img src="http://icons.iconarchive.com/icons/icons8/ios7/16/Data-Mind-Map-icon.png" height="16" width="16" data-toggle="tooltip" data-placement="top" title="データマッピング情報を表示します"></span></a>
+{% endif %}
+            </td></tr>
+{% endfor %}
+        </tbody>
+      </table>
+      </div> <!-- /hscroll -->
+    </div> <!-- /col-md-12 -->
+  </div> <!-- /row -->
+
+  </div> <!-- /container -->
+
+{% for c in table.columns %}
+  <!-- most frequent values -->
+             <div class="modal fade" id="{{ c.column_name }}_most_freq" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+                      </button>
+                      <h4 class="modal-title">{{ c.column_name }} 頻度順ランク{{ c.profile_most_freq_values_enabled }}</h4>
+                    </div><!-- /modal-header -->
+                    <div class="modal-body">
+
+                      <TABLE class="table table-hover">
+                      <THEAD>
+                        <TR><TH>ランク</TH><TH>値</TH><TH>頻度</TH><TH>出現率 (%)</TH></TR>
+                      </THEAD>
+
+                      <TBODY>
+{% for v in c.most_freq_vals %}
+                        <TR><TD>{{ v.i }}</TD><TD>{{ v.value }}</TD><TD>{{ v.freq }}</TD><TD>{{ v.ratio }}</TD></TR>
+{% endfor %}
+                      </TBODY>
+                      </TABLE>
+{% if c.nulls is defined and c.nulls > 0 %}
+                      <div align="right">出現率はNULL値 {{ c.nulls }} 件を除く</div>
+{% endif %}
+                    </div>
+                  </div> <!-- /.modal-content -->
+                </div> <!-- /.modal-dialog -->
+              </div> <!-- /.modal -->
+  <!-- /most frequent values -->
+
+  <!-- most least values -->
+             <div class="modal fade" id="{{ c.column_name }}_least_freq" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+                      </button>
+                      <h4 class="modal-title">{{ c.column_name }} 頻度順ランク{{ c.profile_least_freq_values_enabled }}</h4>
+                    </div><!-- /modal-header -->
+                    <div class="modal-body">
+
+                      <TABLE class="table table-hover">
+                      <THEAD>
+                        <TR><TH>ランク</TH><TH>値</TH><TH>頻度</TH><TH>出現率 (%)</TH></TR>
+                      </THEAD>
+
+                      <TBODY>
+{% for v in c.least_freq_vals %}
+                        <TR><TD>{{ v.i }}</TD><TD>{{ v.value }}</TD><TD>{{ v.freq }}</TD><TD>{{ v.ratio }}</TD></TR>
+{% endfor %}
+                      </TBODY>
+                      </TABLE>
+{% if c.nulls is defined and c.nulls > 0 %}
+                      <div align="right">出現率はNULL値 {{ c.nulls }} 件を除く</div>
+{% endif %}
+                    </div>
+                  </div> <!-- /.modal-content -->
+                </div> <!-- /.modal-dialog -->
+              </div> <!-- /.modal -->
+  <!-- /most least values -->
+
+<!-- validation result view -->
+             <div class="modal fade" id="{{ c.column_name }}_validation" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+                      </button>
+                      <h4 class="modal-title">{{ c.column_name }} データ検証</h4>
+                    </div><!-- /modal-header -->
+                    <div class="modal-body">
+                      <div align="right">
+                        <a href="#validation_rule" data-toggle="modal"><span class="glyphicon glyphicon-list-alt" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="検証ルール一覧表示"></span></a>
+                      </div>
+                      <TABLE class="table table-hover">
+                        <THEAD>
+                          <TR><TH>条件</TH><TH class="nowrap center">状態</TH></TR>
+                        </THEAD>
+
+                        <TBODY>
+{% for v in c.validations %}
+                          <TR><TD class="wrap"><div data-toggle="tooltip" data-placement="top" title="{{ v.rule }}">{{ v.desc }}</div></TD><TD class="center">
+{% if v.invalid > 0 %}
+          <span class="fui-cross-circle" data-toggle="tooltip" data-placement="top" title="{{ v.invalid }} invalid"></span>
+{% else %}
+          <span class="fui-check-circle" data-toggle="tooltip" data-placement="top" title="Valid"></span>
+{% endif %}
+</TD></TR>
+{% endfor %}
+                        </TBODY>
+                      </TABLE>
+
+                    </div>
+                  </div> <!-- /.modal-content -->
+                </div> <!-- /.modal-dialog -->
+              </div> <!-- /.modal -->
+
+<!-- /validation result view -->
+
+<!-- comment -->
+{% if c.comment is defined %}
+             <div class="modal fade" id="{{ c.column_name }}_comment" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+                      </button>
+                      <h4 class="modal-title">{{ c.column_name}} コメント</h4>
+                    </div><!-- /modal-header -->
+                    <div class="modal-body">
+{{ c.comment }}
+                    </div>
+                  </div> <!-- /.modal-content -->
+                </div> <!-- /.modal-dialog -->
+              </div> <!-- /.modal -->
+{% endif %}
+<!-- /comment -->
+
+<!-- datamap -->
+{% if c.datamapping is defined %}
+             <div class="modal fade" id="{{ c.column_name }}_datamap" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+                <div class="modal-dialog">
+                  <div class="modal-content modal-wide">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+                      </button>
+                      <h4 class="modal-title">{{ c.column_name}} データマッピング</h4>
+                    </div><!-- /modal-header -->
+                    <div class="modal-body">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr><th rowspan="2">レコードID</th><th colspan="6">データソース</th><th rowspan="2"></th></tr>
+                          <tr><th>データベース名</th><th>スキーマ名</th><th>テーブル名</th><th>カラム名</th><th>変換種別</th><th>変換ルール</th></tr>
+                        </thead>
+
+                        <tbody>
+{% for m in c.datamapping %}
+                          <tr><td>{{ m.record_id }}</td><td>{{ m.source_database_name }}</td><td>{{ m.source_schema_name }}</td><td>{{ m.source_table_name }}</td><td>{{ m.source_column_name }}</td><td>{{ m.transformation_category }}</td><td>{{ m.transformation_role }}</td><td><span class="glyphicon glyphicon-info-sign" aria-hidden="true" data-toggle="tooltip" data-placement="top" data-html="true" title="更新日: {{ m.change_date }}<br/>更新者: {{ m.updated_by }}"></span></td></tr>
+{% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div> <!-- /.modal-content -->
+                </div> <!-- /.modal-dialog -->
+              </div> <!-- /.modal -->
+{% endif %}
+<!-- /datamap -->
+
+{% endfor %}
+
+{% if editable %}
+<!-- table info edit -->
+             <div class="modal fade" id="edit_table_info" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+                      </button>
+                      <h4 id="edit_table_info_title" class="modal-title">テーブル概要編集</h4>
+                    </div><!-- /modal-header -->
+
+                    <div class="modal-body">
+                      <input class="form-control" type="hidden" value="" id="table_name">
+
+                      タグ: カンマ区切りで入力してください
+                      <input class="form-control" type="text" id="tags" value=""><br/>
+
+                      管理者:
+                      <input class="form-control" type="text" id="owner" value=""><br/>
+
+                      コメント: Markdown書式で記述することができます
+                      <textarea class="form-control" rows="10" id="comment"></textarea><br/>
+
+                      <button type="button" class="btn btn-primary" id="submit_table_info">更新</button>
+                    </div>
+                  </div> <!-- /.modal-content -->
+                </div> <!-- /.modal-dialog -->
+              </div> <!-- /.modal -->
+<script type="text/javascript">
+function edit_table_info_modal(id) {
+  $('#table_name').val(id);
+  $('#tags').val('(loading)');
+  $('#owner').val('(loading)');
+  $('#comment').val('(loading)');
+
+  $.getJSON("/api/table/" + id + "/table_info", function(data) {
+    $('#owner').val(data.owner);
+    $('#comment').val(data.comment);
+    $('#tags').val(data.tags);
+  });
+}
+
+$(function () {
+  $('#submit_table_info').on('click', function(event) {
+    event.preventDefault();
+    var id = $('#table_name').val();
+
+    var owner = $('#owner').val();
+    var comment = $('#comment').val();
+    var tags = $('#tags').val();
+    $.post("/api/table/" + id + "/table_info", { 'owner': owner, 'comment': comment, 'tags': tags }, function(data) {
+      window.location.reload();
+    });
+  });
+});
+</script>
+<!-- /table info edit -->
+
+<!-- comment edit -->
+             <div class="modal fade" id="comment_edit" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+                      </button>
+                      <h4 id="comment_edit_title" class="modal-title"> コメント編集</h4>
+                    </div><!-- /modal-header -->
+                    <div class="modal-body">
+                      Markdown書式で記述することができます。
+                      <input class="form-control" type="hidden" value="" id="column_name">
+                      <textarea class="form-control" rows="10" id="column_comment"></textarea><br/>
+                      <button type="button" class="btn btn-primary" id="submit">更新</button>
+                    </div>
+                  </div> <!-- /.modal-content -->
+                </div> <!-- /.modal-dialog -->
+              </div> <!-- /.modal -->
+
+<script type="text/javascript">
+function set_edit_column_name(d,s,t,c) {
+  var id = d + '.' + s + '.' + t + '.' + c;
+
+  $('#comment_edit_title').text(c + ' コメント編集');
+  $('#column_name').val(id);
+  $('#column_comment').val('(loading)');
+
+  $.getJSON("/api/comment/" + id, function(data) {
+    $('#column_comment').val(data.comment);
+  });
+}
+
+$(function () {
+  $('#submit').on('click', function(event) {
+    event.preventDefault();
+    var id = $('#column_name').val();
+    var comment = $('#column_comment').val();
+    $.post("/api/comment/" + id, { 'comment': comment }, function(data) {
+      window.location.reload();
+    });
+  });
+});
+</script>
+<!-- /comment edit -->
+
+{% endif %} <!-- if editable -->
+
+<!-- validation rule view -->
+{% if validation_rules %}
+   <div class="modal fade" id="validation_rule" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+       <div class="modal-dialog">
+         <div class="modal-content modal-wide">
+           <div class="modal-header">
+             <button type="button" class="close" data-dismiss="modal">
+               <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+             </button>
+             <h4 class="modal-title">{{ table.schema_name }}.{{table.table_name }} データ検証ルール一覧</h4>
+           </div><!-- /modal-header -->
+           <div class="modal-body">
+
+{% if editable %}
+             <div align="right"><a href="#edit_validation_rule" data-toggle="modal"><span class="glyphicon glyphicon-plus" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="データ検証ルールを追加します" onclick="create_validation_rule_data('{{ table.database_name }}','{{ table.schema_name }}','{{ table.table_name }}')"></span></a></div>
+{% endif %}
+
+             <table class="table table-hover" style="table-layout:fixed;width:100%;">
+               <colgroup>
+                 <col style="width:10%;">
+                 <col style="width:30%;">
+                 <col style="width:10%;">
+                 <col style="width:30%;">
+                 <col style="width:10%;">
+                 {% if editable %}<col style="width:10%;">{% endif %}
+               </colgroup>
+
+               <thead>
+                 <tr><th>カラム名</th><th>説明</th><th>ルール</th><th>パラメータ</th><th>パラメータ2</th>{% if editable %}<th>Edit</th>{% endif %}</tr>
+               </thead>
+               <tbody>
+{% for r in validation_rules %}
+                 <tr><td>{{ r[4] }}</td><td class="wrap">{{ r[5] }}</td><td class="wrap">{{ r[6] }}</td><td class="wrap">{{ r[7] }}</td><td class="wrap">{{ r[8] }}</td>{% if editable %}<td><a href="#edit_validation_rule" data-toggle="modal"><span class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="データ検証ルールを編集します" onclick="edit_validation_rule_data('{{ r[0] }}')"></span></a></td>{% endif %}</tr>
+{% endfor %}
+               </tbody>
+             </table>
+          </div>
+        </div> <!-- /.modal-content -->
+      </div> <!-- /.modal-dialog -->
+    </div> <!-- /.modal -->
+
+    <script type="text/javascript">
+$(function () {
+  $("#validation_rule").on('show.bs.modal', function (e) {
+    // close all modals before opening new modal
+    close_all_modals();
+  });
+});
+    </script>
+{% endif %}
+    <!-- /validation rule view -->
+
+    <!-- validation rule edit -->
+    <div class="modal fade" id="edit_validation_rule" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+            </button>
+            <h4 id="edit_validation_rule_title" class="modal-title">データ検証編集</h4>
+          </div><!-- /modal-header -->
+
+          <div class="modal-body">
+            <input class="form-control" type="hidden" value="" id="v_id">
+            <input class="form-control" type="hidden" id="v_database_name" value="">
+            <input class="form-control" type="hidden" id="v_schema_name" value="">
+            <input class="form-control" type="hidden" id="v_table_name" value="">
+
+            カラム名：
+            <input class="form-control" type="text" id="v_column_name" value=""><br/>
+            説明：
+            <input class="form-control" type="text" id="v_description" value=""><br/>
+            ルール：
+            <input class="form-control" type="text" id="v_rule" value=""><br/>
+            パラメータ：
+            <input class="form-control" type="text" id="v_param" value=""><br/>
+            パラメータ2：
+            <input class="form-control" type="text" id="v_param2" value=""><br/>
+
+            <button type="button" class="btn btn-primary" id="submit_validation_rule">更新</button>
+            <button type="button" class="btn btn-primary" id="delete_validation_rule">削除</button>
+          </div>
+        </div> <!-- /.modal-content -->
+      </div> <!-- /.modal-dialog -->
+    </div> <!-- /.modal -->
+
+    <script type="text/javascript">
+$(function () {
+  $("#edit_validation_rule").on('show.bs.modal', function (e) {
+    // close all modals before opening new modal
+    close_all_modals();
+  });
+});
+
+function edit_validation_rule_data(id) {
+  $('#v_id').val(id);
+  $('#v_database_name').val('(loading)');
+  $('#v_schema_name').val('(loading)');
+  $('#v_table_name').val('(loading)');
+  $('#v_column_name').val('(loading)');
+  $('#v_description').val('(loading)');
+  $('#v_rule').val('(loading)');
+  $('#v_param').val('(loading)');
+  $('#v_param2').val('(loading)');
+
+  $.getJSON("/api/validation/" + id, function(data) {
+    $('#v_database_name').val(data.database_name);
+    $('#v_schema_name').val(data.schema_name);
+    $('#v_table_name').val(data.table_name);
+    $('#v_column_name').val(data.column_name);
+    $('#v_description').val(data.description);
+    $('#v_rule').val(data.rule);
+    $('#v_param').val(data.param);
+    $('#v_param2').val(data.param2);
+  });
+}
+
+function create_validation_rule_data(db,schema,table) {
+  $('#v_id').val(-1);
+  $('#v_database_name').val(db);
+  $('#v_schema_name').val(schema);
+  $('#v_table_name').val(table);
+  $('#v_column_name').val('');
+  $('#v_description').val('');
+  $('#v_rule').val('');
+  $('#v_param').val('');
+  $('#v_param2').val('');
+}
+
+$(function () {
+  $('#submit_validation_rule').on('click', function(event) {
+    event.preventDefault();
+    if ($('#v_id').val() < 0) {
+      $.ajax({
+        url: "/api/validation",
+        type: 'POST',
+        contentType: "application/json",
+        data: JSON.stringify({'database_name': $('#v_database_name').val(),
+               'schema_name': $('#v_schema_name').val(),
+               'table_name': $('#v_table_name').val(),
+               'column_name': $('#v_column_name').val(),
+               'description': $('#v_description').val(),
+               'rule': $('#v_rule').val(),
+               'param': $('#v_param').val(),
+               'param2': $('#v_param2').val() }),
+        success: function(result) {
+          window.location.reload();
+        }
+      });
+    }
+    else {
+      $.ajax({
+        url: "/api/validation/" + $('#v_id').val(),
+        type: 'PUT',
+        contentType: "application/json",
+        data: JSON.stringify({'database_name': $('#v_database_name').val(),
+               'schema_name': $('#v_schema_name').val(),
+               'table_name': $('#v_table_name').val(),
+               'column_name': $('#v_column_name').val(),
+               'description': $('#v_description').val(),
+               'rule': $('#v_rule').val(),
+               'param': $('#v_param').val(),
+               'param2': $('#v_param2').val() }),
+        success: function(result) {
+          window.location.reload();
+        }
+      });
+    }
+  });
+});
+
+$(function () {
+  $('#delete_validation_rule').on('click', function(event) {
+    event.preventDefault();
+    $.ajax({
+      url: "/api/validation/" + $('#v_id').val(),
+      type: 'DELETE',
+      contentType: "application/json",
+      success: function(result) {
+        window.location.reload();
+      }
+    });
+  });
+});
+    </script>
+    <!-- /validation rule edit -->
+
+<!-- sample rows -->
+{% if table.sample_rows and table.sample_rows|length >= 2 %}
+    <div class="modal fade" id="sample_rows" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+       <div class="modal-dialog">
+         <div class="modal-content modal-wide">
+           <div class="modal-header">
+             <button type="button" class="close" data-dismiss="modal">
+               <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
+             </button>
+             <h4 class="modal-title">{{ table.schema_name }}.{{table.table_name }} レコードサンプル</h4>
+           </div><!-- /modal-header -->
+
+           <div class="modal-body">
+             <div class="hscroll">
+              <table class="table table-hover hscroll">
+  {% for tup in table.sample_rows %}
+    {% if loop.index0 == 0  %}
+              <thead>
+                <tr>{% for c in table.sample_rows[0] %}<th>{{ c }}</th>{% endfor %}</tr>
+              </thead>
+   {% else %}
+              {% if loop.index0 == 1 %}<tbody>{% endif %}
+                <tr>{% for c in tup %}<td>{% if c is not none %}{{ c }}{% else %}(null){% endif %}</td>{% endfor %}</tr>
+              {% if (loop.index0+1) == table.sample_rows|length %}</tbody>{% endif %}
+   {% endif %}
+ {% endfor %}
+              </table>
+            </div> <!-- /hscroll -->
+
+          </div> <!-- /.modal-body -->
+        </div> <!-- /.modal-content -->
+      </div> <!-- /.modal-dialog -->
+    </div> <!-- /.modal -->
+{% endif %}
+<!-- /sample rows -->
+
+{% endblock %}

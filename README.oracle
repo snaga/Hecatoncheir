@@ -1,0 +1,15 @@
+
+Oracle Instant Client
+=====================
+
+To install cx_Oracle, at least, it requires some Oracle client packages:
+
+  oracle-instantclient12.1-basic-12.1.0.2.0-1.x86_64.rpm
+  oracle-instantclient12.1-devel-12.1.0.2.0-1.x86_64.rpm
+
+and then, ORACLE_HOME needs to be specified.
+
+See below for more info:
+http://www.oracle.com/technetwork/database/features/instant-client/index.html
+
+EOF

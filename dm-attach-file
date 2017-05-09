@@ -1,0 +1,148 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+import getopt
+import os
+import shutil
+import sys
+
+import hecatoncheir.DbProfilerRepository as DbProfilerRepository
+import hecatoncheir.logger as log
+from hecatoncheir.msgutil import gettext as _
+
+input_encoding = 'utf-8'
+
+
+def usage():
+    print """
+Usage: %s [repo file] [target] [command]
+
+Targets:
+    tag:[tag label]
+    schema:[schema name]
+    table:[table name]
+
+Commands:
+    list
+    add [file]
+    rm [file]
+
+Options:
+    --help                     Print this help.
+""" % os.path.basename(sys.argv[0])
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "",
+                                   ["help", "debug"])
+    except getopt.GetoptError as e:
+        log.error(unicode(e))
+        usage()
+        sys.exit(1)
+
+    for o, a in opts:
+        if o in ("--debug"):
+            log.debug_enabled = True
+        elif o in ("--help"):
+            usage()
+            sys.exit(0)
+        else:
+            log.error("unexpected option. internal error.")
+            sys.exit(1)
+
+    if len(args) < 3:
+        log.error(_("Too few arguments."))
+        usage()
+        sys.exit(1)
+
+    repofile = args.pop(0).decode(input_encoding)
+    target = args.pop(0).decode(input_encoding)
+    cmd = args.pop(0).decode(input_encoding)
+    filename = None
+    if cmd in ['add', 'rm']:
+        if not args:
+            log.error(_("Missing file name."))
+            usage()
+            sys.exit(1)
+        filename = args.pop(0).decode(input_encoding)
+    if cmd not in ['add', 'list', 'rm']:
+        log.error(_("Invalid command. It must be one of 'add', "
+                    "'list' or 'rm'."))
+        usage()
+        sys.exit(1)
+
+    (objtype, objid) = target.split(':', 1)
+    if objtype not in ['tag', 'schema', 'table']:
+        log.error(_("Invalid target type. "
+                    "It must be one of 'tag', 'schema' or 'table'."))
+        usage()
+        sys.exit(1)
+
+    dirname = os.path.dirname(repofile)
+    dirname = (dirname + "/attachments" if dirname else
+               dirname + "./attachments")
+    if objtype == 'tag':
+        dirname = dirname + u'/tag-%s' % objid
+    else:
+        # schema/table
+        dirname = dirname + u'/%s' % objid
+
+    if cmd == 'add' and not os.path.exists(filename):
+        log.error(_("Attachment file `%s' does not exist. Abort.") % filename)
+        sys.exit(1)
+
+    try:
+        if not os.path.isdir(dirname):
+            os.makedirs(dirname)
+            log.info(_("Created the attachment directory `%s'.") % dirname)
+    except Exception as e:
+        log.error(_("Could not create the attachment directory `%s'. "
+                    "Abort.") % dirname, detail=str(e))
+        sys.exit(1)
+
+    repo = DbProfilerRepository.DbProfilerRepository(repofile)
+    repo.init()
+    repo.open()
+
+    if cmd == 'add':
+        assert objtype and objid and filename and dirname
+        try:
+            shutil.copy(filename, dirname)
+        except Exception as e:
+            log.error(_("Could not copy `%s' to `%s'. "
+                        "Abort.") % (filename, dirname), detail=str(e))
+            sys.exit(1)
+
+        try:
+            repo.add_file(objtype, objid, os.path.basename(filename))
+        except Exception as e:
+            log.error(_("Could not add file name to the repository. "
+                        "Abort."), detail=str(e))
+            sys.exit(1)
+        log.info(_("Attached `%s'.") % (filename))
+    elif cmd == 'list':
+        assert objtype and objid
+        try:
+            for f in repo.get_files(objtype, objid):
+                print(f)
+        except Exception as e:
+            log.error(_("Could not get file names from the repository. "
+                        "Abort."), detail=str(e))
+            sys.exit(1)
+    elif cmd == 'rm':
+        assert objtype and objid and filename
+        try:
+            existing_files = repo.get_files(objtype, objid)
+            repo.delete_files(objtype, objid)
+            for f in existing_files:
+                if f != filename:
+                    repo.add_file(objtype, objid, f)
+        except Exception as e:
+            log.error(_("Could not remove the file from the repository. "
+                        "Abort."), detail=str(e))
+            sys.exit(1)
+        log.info(_("Removed `%s' from the repository.") % filename)
+
+    repo.close()
+
+    sys.exit(0)

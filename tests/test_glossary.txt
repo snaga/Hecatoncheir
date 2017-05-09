@@ -1,0 +1,11 @@
+TERM,DESCRIPTION_SHORT,DESCRIPTION_LONG,OWNER,CATEGORIES,SYNONYMS,RELATED_TERMS,RELATED_ASSETS
+顧客,「われわれの顧客は誰か」ピーター.F.ドラッカー,"# ドラッカー5つの質問
+
+* 第一の問い　われわれの使命は何か
+* 第二の問い　われわれの顧客は誰か
+* 第三の問い　顧客の価値は何か
+* 第四の問い　われわれの成果は何か
+* 第五の問い　われわれの計画は何か
+
+",snaga,CRM部,カスタマー,"あああ,いいい","public.customer,public.company, customer"
+国名,アルファベットの国名,長くなるので割愛,snaga,,,,

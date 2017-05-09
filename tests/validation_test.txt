@@ -1,0 +1,5 @@
+DATABASE_NAME,SCHEMA_NAME,TABLE_NAME,COLUMN_NAME,DESCRIPTION,RULE,PARAM,PARAM2
+,public,t1,c1,desc regexp,regexp,^\d+$,
+,public,t1,c1,desc nulls,columnstat,{nulls} == 0,
+,public,t1,c1,desc rows,columnstat,{rows} == {cardinality},
+,public,t1,"c1,c2",desc eval,eval,{c1} > {c2},

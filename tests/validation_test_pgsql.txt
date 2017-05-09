@@ -1,0 +1,30 @@
+DATABASE_NAME,SCHEMA_NAME,TABLE_NAME,COLUMN_NAME,DESCRIPTION,RULE,PARAM,PARAM2
+dqwbtest,public,customer,c_custkey,すべて数字のみで構成されている,regexp,^\d+$
+dqwbtest,public,customer,c_custkey,"c_custkeyの値が0より大きく1,000,000より小さい",eval,{c_custkey} > 0 and {c_custkey} < 1000000
+dqwbtest,public,customer,c_custkey,非NULLである,columnstat,{nulls} == 0
+dqwbtest,public,customer,c_custkey,カラムがユニークである,columnstat,{rows} == {cardinality}
+dqwbtest,public,customer,c_custkey,最小値が0より大きい,columnstat,{min} > 0
+dqwbtest,public,customer,c_custkey,最小値が0,columnstat,{min} == 0
+dqwbtest,public,customer,c_custkey,"最大値が100,000より大きい",columnstat,{max} > 100000
+dqwbtest,public,customer,c_custkey,"最大値が1,000,000より大きい",columnstat,{max} > 1000000
+dqwbtest,public,customer,c_custkey,カーディナリティが28,columnstat,{cardinality} == 28
+dqwbtest,public,customer,c_custkey,カーディナリティが28より大きい,columnstat,{cardinality} > 28
+dqwbtest,public,customer,c_custkey,最小値が最大値より小さく、カーディナリティが28,columnstat,{min} < {max} and {cardinality} == 28
+dqwbtest,public,customer,c_acctbal,c_acctbalの値が0より大きい,eval,{c_acctbal} > 0
+dqwbtest,public,customer,"c_custkey,c_nationkey",c_custkeyがc_nationkeyより大きい,eval,{c_custkey} > {c_nationkey}
+dqwbtest,public,customer,"c_custkey,c_nationkey",c_custkeyがc_nationkeyより小さい,eval,{c_custkey} < {c_nationkey}
+dqwbtest,public,customer,c_nationkey,c_nationkeyはnationのn_nationkeyと結合可能,sql,SELECT COUNT(*) FROM customer WHERE c_nationkey NOT IN (SELECT n_nationkey FROM nation),{count} == 0
+dqwbtest,public,customer,c_nationkey,c_nationkeyはnationのn_regionkeyと結合可能,sql,SELECT COUNT(*) FROM customer WHERE c_nationkey NOT IN (SELECT n_regionkey FROM nation),{count} == 0
+dqwbtest,public,customer,c_custkey,レコード数が0より大きい,sql,select count(*) from customer,{count} > 0
+dqwbtest,public,customer,c_custkey,レコード数が0,sql,select count(*) from customer,{count} == 0
+dqwbtest,public,customer,c_custkey,レコード数が0,sql,"select count(*) from
+customer",{count} == 0
+dqwbtest,public,customer,c_custkey,c_custkeyの最大値が存在しない,sql,"select max(c_custkey),count(*) from customer",{count} == 0
+dqwbtest,public,customer,c_custkey,レコード数が0（エラー）,sql,select count(*) from customer,{count} === 0
+dqwbtest,public,customer,c_custkey,レコード数が0（エラー）,sql,select count(*) from customer,{count2} == 0
+dqwbtest,public,customer,c_custkey,レコード数が0（エラー）,sql,select count(*) from customer2,{count} == 0
+dqwbtest,public,customer,c_custkey,c_custkeyが0より大きい（エラー）,eval,{c_custkey} > 0 and
+dqwbtest,public,customer,c_custkey,c_custkeyが0より大きい（エラー）,eval,{c_custkey2} > 0
+dqwbtest,public,customer,c_custkey,非NULL（エラー）,columnstat,{nulls} === 0
+dqwbtest,public,customer,c_custkey,非NULL（エラー）,columnstat,{null} == 0
+dqwbtest,public,customer,c_custkey2,非NULL（エラー）,columnstat,{null} == 0

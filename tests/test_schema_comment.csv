@@ -1,0 +1,2 @@
+DATABASE_NAME,SCHEMA_NAME,SCHEMA_COMMENT
+dqwbtest,public,これはpublicスキーマです

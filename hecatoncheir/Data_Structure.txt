@@ -1,0 +1,34 @@
+
+Data Structure
+==============
+
+table: array
+  database_name: string
+  schema_name: string
+  table_name: string
+  table_name_nls: string
+  timestamp: string
+  row_count: integer
+  comment: string
+  tags: array [string,string,...]
+  columns: array
+    column_name: string
+    column_name_nls: string
+    data_type: [string,integer]
+    fk: array [string, string, ...]
+    fk_ref: array [string, string, ...]
+    min: string
+    max: string
+    nulls: integer
+    most_freq_vals: array
+      value: string
+      freq: integer
+    least_freq_vals: array
+      value: string
+      freq: integer
+    cardinality: integer
+    validation: array
+      label: string
+      result: integer
+    comment: string
+  sample_rows: array [[str,...], ...]

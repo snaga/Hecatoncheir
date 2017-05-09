@@ -1,0 +1,333 @@
+{% extends "templ_base.html" %}
+{% block content %}
+    <div class="container">
+
+      <div class="row">
+        <div class="col-md-12">
+          <h1><a href="index.html" class="nodecoration">Data Catalog</a></h1>
+        </div>
+      </div> <!-- /row -->
+
+    <!-- tags -->
+{% if tags is defined and tags|count() > 0 %}
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Tag{% if tags|count() > 1 %}s{% endif %}</h2>
+        </div>
+      </div> <!-- /row -->
+
+      <div class="row">
+  {% for t in tags %}
+        <div class="col-sm-4">
+          <div id="tile-tag-{{ loop.index0 }}" class="tile blue" onclick="window.location.href='tag-{{ t.label }}.html'">
+            <h3 class="title">{{ t.label }}</h3>
+            {{ t.tables }} {% if t.tables <= 1 %}Table{% else %}Tables{% endif %}
+          </div>
+        </div>
+    {% if loop.index is divisibleby(3) %}
+      </div> <!-- /row -->
+
+      <div class="row">
+    {% endif %}
+  {% endfor %}
+
+  {% if comment or files %}
+        <div class="col-md-6">
+          <div class="bs-callout bs-callout-primary" style="margin-top: 0px;">
+    {% if comment %}
+        {{ comment }}
+    {% endif %}
+
+    {% if files %}
+      Attached files:
+      <ul>
+      {% for file in files %}
+        <li><a href="attachments/{{ file[1] }}">{{ file[0] }}</a></li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+          </div>
+        </div>
+  {% endif %}
+      </div> <!-- /row -->
+  {% if tags_index %}
+      <div class="row">
+        <div class="col-md-12" align="right">
+          <a href="index-tags.html"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="View all tags"></span></a>
+        </div>
+      </div> <!-- /row -->
+  {% endif %}
+{% endif %}
+    <!-- /tags -->
+
+      <!-- schemas -->
+{% if schemas is defined and schemas|count() > 0 %}
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Schema{% if schemas|count() > 1 %}s{% endif %}</h2>
+        </div>
+      </div> <!-- /row -->
+
+      <div class="row">
+  {% for t in schemas %}
+        <div class="col-sm-4">
+          <div id="tile-schema-{{ loop.index0 }}" class="tile yellow" onclick="window.location.href='{{t.dbname}}.{{ t.label }}.html'">
+            <h3 class="title">{{ t.label }}</h3>
+        {{ t.tables }} {% if t.tables <= 1 %}Table{% else %}Tables{% endif %}, {{t.dbname}}
+          </div>
+        </div>
+    {% if loop.index is divisibleby(3) %}
+      </div> <!-- /row -->
+
+      <div class="row">
+    {% endif %}
+  {% endfor %}
+
+  {% if comment or files %}
+        <div class="col-md-6">
+          <div class="bs-callout bs-callout-primary" style="margin-top: 0px;">
+    {% if comment %}
+        {{ comment }}
+    {% endif %}
+
+    {% if files %}
+      Attached files:
+      <ul>
+      {% for file in files %}
+        <li><a href="attachments/{{ file[1] }}">{{ file[0] }}</a></li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+          </div>
+        </div>
+  {% endif %}
+      </div> <!-- /row -->
+  {% if schemas_index %}
+      <div class="row">
+        <div class="col-md-12" align="right">
+          <a href="index-schemas.html"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="View all schemas"></span></a>
+        </div>
+      </div> <!-- /row -->
+  {% endif %}
+{% endif %}
+    <!-- /schemas -->
+
+    <!-- validation -->
+{% if validation is defined and validation|count() > 0 %}
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Data Validation</h2>
+        </div>
+      </div> <!-- /row -->
+
+      <div class="row">
+  {% if validation[0].label is defined %}
+        <div class="col-sm-4">
+          <div id="tile-validation-0" class="tile green" onclick="window.location.href='validation-valid.html'">
+            <h3 class="title">{{ validation[0].label }}</h3>
+            {{ validation[0].tables }} {% if validation[0].tables <= 1 %}Table{% else %}Tables{% endif %}
+          </div>
+        </div>
+  {% endif %}
+  {% if validation[1].label is defined and validation[1].tables > 0 %}
+        <div class="col-sm-4">
+          <div id="tile-validation-1" class="tile red" onclick="window.location.href='validation-invalid.html'">
+            <h3 class="title">{{ validation[1].label }}</h3>
+            {{ validation[1].tables }} {% if validation[1].tables <= 1 %}Table{% else %}Tables{% endif %}
+          </div>
+        </div>
+  {% endif %}
+      </div> <!-- /row -->
+{% endif %}
+    <!-- /validation -->
+
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Tables</h2>
+        </div>
+      </div> <!-- /row -->
+
+      <div class="row">
+        <div class="col-md-12">
+          <table id="table-list" class="table table-hover">
+            <thead>
+              <tr><th></th><th>Database</th><th>Schema</th><th colspan="2">Table</th><th>Rows</th><th>Columns</th><th>Validation</th><th>Comment</th><th>Last Profiled</th>{% if editable %}<th>Edit</th>{% endif %}</tr>
+            </thead>
+
+            <tbody>
+{% for t in tables %}
+              <tr>
+                <td>{{ t.schema_name }}.{{ t.table_name }}</td>
+                <td>{{ t.database_name }}</td>
+                <td>{{ t.schema_name }}</td>
+                <td><a href="{{ t.database_name }}.{{ t.schema_name }}.{{ t.table_name }}.html" target="_blank">{{ t.table_name }}</a></td>
+                <td>{{ t.table_name_nls }}</td>
+                <td>{{ t.row_count }}</td>
+                <td>{{ t.num_columns }}</td>
+                <td class="center">
+  {% if t.validation is defined %}
+    {% if t.invalid > 0 %}
+                  <a href="#{{ t.table_name }}_validation" data-toggle="modal"><span class="fui-cross-circle" data-toggle="tooltip" data-placement="top" title="Having invalid records ({{ t.invalid }}/{{ t.validation|count() }})"></span>
+    {% else %}
+                  <a href="#{{ t.table_name }}_validation" data-toggle="modal"><span class="fui-check-circle" data-toggle="tooltip" data-placement="top" title="No invalid records ({{ t.invalid }}/{{ t.validation|count() }})"></span>
+    {% endif %}
+  {% endif %}
+                </td>
+                <td>
+  {% if t.comment is defined and t.comment|length > 0 %}
+                  <a href="#{{ t.table_name }}_comment" data-toggle="modal"><img src="http://simpleicon.com/wp-content/uploads/note-4-64x64.png" height="16" width="16" data-toggle="tooltip" data-html="true" data-placement="top" title="{% if t.comment_tooltip is defined %}{{ t.comment_tooltip }}{% else %}View table comment{% endif %}"></a>
+  {% endif %}
+                </td>
+                <td>{{ t.timestamp }}</td>
+  {% if editable %}
+                <td class="nowrap">
+                  <a href="#edit_table_info" data-toggle="modal"><span class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Edit table info" onclick="edit_table_info_modal('{{t.database_name}}.{{t.schema_name}}.{{t.table_name}}')"></span></a>
+                </td>
+  {% endif %}
+              </tr>
+{% endfor %}
+            </tbody>
+          </table>
+        </div> <!-- /col-md-12 -->
+      </div> <!-- /row -->
+
+{% for t in tables %}
+      <!-- comment -->
+{% if t.comment is defined %}
+      <div class="modal fade" id="{{ t.table_name }}_comment" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+         <div class="modal-dialog">
+           <div class="modal-content">
+             <div class="modal-header">
+               <button type="button" class="close" data-dismiss="modal">
+                 <span aria-hidden="true">&#215;</span><span class="sr-only">Close</span>
+               </button>
+               <h4 class="modal-title">{{ t.table_name }}: Comment</h4>
+             </div><!-- /.modal-header -->
+             <div class="modal-body">
+               {{ t.comment }}
+             </div>
+           </div> <!-- /.modal-content -->
+         </div> <!-- /.modal-dialog -->
+       </div> <!-- /.modal -->
+{% endif %}
+      <!-- /comment -->
+
+      <!-- validation -->
+{% if t.validation is defined %}
+      <div class="modal fade" id="{{ t.table_name }}_validation" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&#215;</span><span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title">{{ t.table_name }}: Data Validation</h4>
+            </div><!-- /modal-header -->
+            <div class="modal-body">
+              <table class="table table-hover">
+                <thead>
+                  <tr><th>Column Name</th><th>Validation Rule</th><th class="nowrap">Result</th></tr>
+                </thead>
+
+                <tbody>
+  {% for r in t.validation %}
+                  <tr><td>{{ r.column_name }}</td><td class="wrap"><div data-toggle="tooltip" data-placement="top" title="{{ r.rule }}">{{ r.desc }}</div></td><td class="center">
+    {% if r.invalid > 0 %}
+                    <span class="fui-cross-circle" data-toggle="tooltip" data-placement="top" title="{{ r.invalid }} invalid"></span>
+    {% else %}
+                    <span class="fui-check-circle" data-toggle="tooltip" data-placement="top" title="valid"></span>
+    {% endif %}
+                  </td></tr>
+  {% endfor %}
+                </tbody>
+              </table>
+            </div> <!-- /.modal-body -->
+          </div> <!-- /.modal-content -->
+        </div> <!-- /.modal-dialog -->
+      </div> <!-- /.modal -->
+  {% endif %}
+      <!-- /validation -->
+{% endfor %}
+
+{% if editable %}
+      <!-- table info edit -->
+      <div class="modal fade" id="edit_table_info" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&#215;</span><span class="sr-only">Close</span>
+              </button>
+              <h4 id="edit_table_info_title" class="modal-title">Edit table info</h4>
+            </div><!-- /modal-header -->
+
+            <div class="modal-body">
+              <input class="form-control" type="hidden" value="" id="table_name">
+
+              Tags: Camma separated values for multiple tags
+              <input class="form-control" type="text" id="tags" value=""><br/>
+
+              Data Steward:
+              <input class="form-control" type="text" id="owner" value=""><br/>
+
+              Comment: Can be written in the Markdown format.
+              <textarea class="form-control" rows="10" id="comment"></textarea><br/>
+
+              <button type="button" class="btn btn-primary" id="submit_table_info">Update</button>
+            </div>
+          </div> <!-- /.modal-content -->
+        </div> <!-- /.modal-dialog -->
+      </div> <!-- /.modal -->
+
+      <script type="text/javascript">
+function edit_table_info_modal(id) {
+  $('#table_name').val(id);
+  $('#tags').val('(loading)');
+  $('#owner').val('(loading)');
+  $('#comment').val('(loading)');
+
+  $.getJSON("/api/table/" + id + "/table_info", function(data) {
+    $('#owner').val(data.owner);
+    $('#comment').val(data.comment);
+    $('#tags').val(data.tags);
+  });
+}
+
+$(function () {
+  $('#submit_table_info').on('click', function(event) {
+    event.preventDefault();
+    var id = $('#table_name').val();
+    var owner = $('#owner').val();
+    var comment = $('#comment').val();
+    var tags = $('#tags').val();
+    $.post("/api/table/" + id + "/table_info", { 'owner': owner, 'comment': comment, 'tags': tags }, function(data) {
+      window.location.reload();
+    });
+  });
+});
+      </script>
+      <!-- /table info edit -->
+{% endif %}
+
+      <script type="text/javascript">
+$('table#table-list').dataTable({
+  "dom": 'l<"filter"f>rtip',
+  "bInfo": false,
+  "bPaginate": false,
+  "bLengthChange": false,
+  "ordering": false,
+  "order": [[ 1, "asc" ]],
+  "oLanguage": {
+    "sSearch": "Filter: "
+  },
+  "columnDefs": [
+    {
+      "targets": [ 0 ],
+      "visible": false
+    }
+  ]
+});
+      </script>
+
+    </div> <!-- /container -->
+{% endblock %}

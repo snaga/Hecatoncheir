@@ -1,0 +1,105 @@
+#!/usr/bin/env python2.7
+
+import getopt
+import os
+import sys
+
+import xlrd
+
+import hecatoncheir.CSVUtils
+from hecatoncheir.logger import to_unicode
+
+
+def usage():
+    print """
+Usage: %s <filename.xls> [<sheet name> | <sheet index>]
+
+Options:
+    -e STRING                  Output encoding (default: utf-8)
+
+    --help                     Print this help.
+""" % os.path.basename(sys.argv[0])
+
+
+def print_sheet_list(xls, encoding='utf-8'):
+    for i, n in enumerate(xls.sheet_names()):
+        print "%d, %s" % (i+1, n.encode(encoding))
+
+
+def print_sheet_by_index(xls, index, encoding='utf-8'):
+    sheet = xls.sheet_by_index(index)
+    if sheet is None:
+        return False
+
+    for r in range(sheet.nrows):
+        row = []
+        for c in range(sheet.ncols):
+            row.append(sheet.cell(r, c).value)
+        print(CSVUtils.list2csv(row).encode(encoding))
+    return True
+
+
+def print_sheet_by_name(xls, sheet_name, encoding='utf-8'):
+    for i, n in enumerate(xls.sheet_names()):
+        if sheet_name == n:
+            return print_sheet_by_index(xls, i)
+    return False
+
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "e:h",
+                                   ["help"])
+    except getopt.GetoptError as err:
+        log.error(unicode(err))
+        usage()
+        sys.exit(1)
+
+    filename = None
+    opt_index = None
+    output_encoding = 'utf-8'
+
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            usage()
+            sys.exit(0)
+        elif o in ("-e"):
+            output_encoding = a
+        else:
+            log.error("unexpected option. internal error.")
+            sys.exit(1)
+
+    if len(args) == 0:
+        usage()
+        sys.exit(1)
+
+    if len(args) == 2:
+        try:
+            opt_index = int(args[1])
+        except Exception as e:
+            opt_index = to_unicode(args[1])
+
+    try:
+        xls = xlrd.open_workbook(args[0])
+    except Exception as e:
+        log.error(unicode(e))
+        sys.exit(1)
+
+    if len(args) == 1:
+        print_sheet_list(xls, encoding=output_encoding)
+        sys.exit(0)
+
+    if (isinstance(opt_index, int) and opt_index > 0 and
+            opt_index <= xls.nsheets):
+        if print_sheet_by_index(xls, opt_index-1,
+                                encoding=output_encoding) is False:
+            sys.exit(1)
+    elif isinstance(opt_index, unicode):
+        if print_sheet_by_name(xls, opt_index,
+                               encoding=output_encoding) is False:
+            sys.exit(1)
+    else:
+        usage()
+        sys.exit(1)
+
+    sys.exit(0)
