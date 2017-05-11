@@ -44,7 +44,7 @@ class TestSQLValidator(unittest.TestCase):
 
         with self.assertRaises(DbProfilerException.DriverError) as cm:
             v.validate(None)
-        self.assertEqual(u'Database driver not found.', cm.exception.value)
+        self.assertEqual(u'データベースドライバが見つかりません。', cm.exception.value)
 
     def test_validate_002(self):
         v = SQLValidator.SQLValidator('002-1', rule=['c_custkey', u'select count(distinct c_custkey1) from customer', '{count} > 27'])

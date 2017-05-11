@@ -4,7 +4,8 @@
 from copy import deepcopy
 
 from hecatoncheir import DbDriverBase
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import (DriverError, InternalError,
+                                              QueryError)
 from hecatoncheir.QueryResult import QueryResult
 from hecatoncheir import logger as log
 
@@ -25,7 +26,7 @@ class PgDriver(DbDriverBase.DbDriverBase):
         try:
             self.driver = __import__(name, fromlist=[''])
         except Exception as e:
-            raise DbProfilerException.DriverError(
+            raise DriverError(
                 u"Could not load the driver module: %s" % name, source=e)
 
     def connect(self):
@@ -33,7 +34,7 @@ class PgDriver(DbDriverBase.DbDriverBase):
         try:
             self.conn = self.driver.connect(s)
         except Exception as e:
-            raise DbProfilerException.DriverError(
+            raise DriverError(
                 u"Could not connect to the server: %s" %
                 e.args[0].split('\n')[0], source=e)
 
@@ -69,18 +70,18 @@ class PgDriver(DbDriverBase.DbDriverBase):
             for i, r in enumerate(cur.fetchall()):
                 # let's consider the memory size.
                 if i > max_rows:
-                    raise DbProfilerException.InternalError(
+                    raise InternalError(
                         u'Exceeded the record limit (%d) for QueryResult.' %
                         max_rows, query=query)
                 res.resultset.append(deepcopy(r))
             cur.close()
-        except DbProfilerException.InternalError as e:
+        except InternalError as e:
             raise e
-        except DbProfilerException.DriverError as e:
+        except DriverError as e:
             raise e
         except Exception as e:
             msg = unicode(e).split('\n')[0]
-            raise DbProfilerException.QueryError(
+            raise QueryError(
                 "Could not execute a query: %s" % msg,
                 query=query, source=e)
         finally:
@@ -100,7 +101,7 @@ class PgDriver(DbDriverBase.DbDriverBase):
         try:
             self.conn.close()
         except Exception as e:
-            raise DbProfilerException.DriverError(
+            raise DriverError(
                 u"Could not disconnect from the server: %s" %
                 e.args[0].split('\n')[0], source=e)
         self.conn = None

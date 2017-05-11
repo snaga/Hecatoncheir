@@ -4,7 +4,7 @@
 import copy
 
 from hecatoncheir import DbProfilerBase
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import InternalError
 from hecatoncheir import DbProfilerValidator
 import PgDriver
 from hecatoncheir.QueryResult import QueryResult
@@ -205,7 +205,7 @@ SELECT COUNT(*) FROM TEMP
 
         column_names = self.get_column_names(schema_name, table_name)
         if not column_names:
-            raise DbProfilerException.InternalError(
+            raise InternalError(
                 'No column found on the table `%s\'.')
         q = u'SELECT "%s" FROM "%s"."%s"' % ('","'.join(column_names),
                                              schema_name, table_name)

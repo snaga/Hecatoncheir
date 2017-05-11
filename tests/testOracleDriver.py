@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError
 from hecatoncheir.oracle import OraDriver
 
 class TestOraDriver(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestOraDriver(unittest.TestCase):
         # connection failure
         ora = OraDriver.OraDriver(None, None, 'orcl', self.dbuser, '')
 
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             ora.connect()
         self.assertEqual('Could not connect to the server: ORA-01005: null password given; logon denied', cm.exception.value)
 
@@ -46,22 +46,22 @@ class TestOraDriver(unittest.TestCase):
         self.assertIsNotNone(ora.conn)
 
         # ok
-        rs = ora.query_to_resultset('select 1 as c from dual')
+        rs = ora.query_to_resultset(u'select 1 as c from dual')
         self.assertEqual('C', rs.column_names[0])
         self.assertEqual(1, rs.resultset[0][0])
 
         # exception
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
-             ora.query_to_resultset('select 1 as c from bar')
+        with self.assertRaises(QueryError) as cm:
+             ora.query_to_resultset(u'select 1 as c from bar')
         self.assertEqual('Could not execute a query: ORA-00942: table or view does not exist', cm.exception.value)
 
         # ok
-        rs = ora.query_to_resultset('select * from lineitem')
+        rs = ora.query_to_resultset(u'select * from lineitem')
         self.assertEqual(110, len(rs.resultset))
 
         # exception
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
-             ora.query_to_resultset('select * from lineitem', max_rows=100)
+        with self.assertRaises(InternalError) as cm:
+             ora.query_to_resultset(u'select * from lineitem', max_rows=100)
         self.assertEqual('Exceeded the record limit (100) for QueryResult.', cm.exception.value)
 
     def test_disconnect_001(self):

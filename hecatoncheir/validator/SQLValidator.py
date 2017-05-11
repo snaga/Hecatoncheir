@@ -1,7 +1,8 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import (DriverError, QueryError,
+                                              ValidationError)
 from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
 
@@ -22,14 +23,14 @@ def validate_eval(kv, p):
     try:
         s = p.format(**kv)
     except KeyError as e:
-        raise DbProfilerException.ValidationError(
+        raise ValidationError(
             _("Parameter error: ") + "`%s' %s" % (p, kv),
             rule=p, params=kv)
 
     try:
         return eval(s)
     except SyntaxError as e:
-        raise DbProfilerException.ValidationError(
+        raise ValidationError(
             _("Syntax error: ") + "`%s'" % s,
             rule=p, params=kv)
 
@@ -57,13 +58,13 @@ class SQLValidator():
 
     def validate(self, dbdriver):
         if dbdriver is None:
-            raise DbProfilerException.DriverError(
+            raise DriverError(
                 _("Database driver not found."))
 
         try:
             res = dbdriver.q2rs(self.query)
-        except DbProfilerException.QueryError as e:
-            raise DbProfilerException.ValidationError(
+        except QueryError as e:
+            raise ValidationError(
                 _("SQL error: ") + "`%s'" % self.query, self.label,
                 source=e)
 

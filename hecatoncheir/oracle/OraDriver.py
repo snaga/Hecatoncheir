@@ -4,7 +4,8 @@
 from copy import deepcopy
 
 from hecatoncheir import DbDriverBase
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import (DriverError, InternalError,
+                                              QueryError)
 from hecatoncheir.QueryResult import QueryResult
 from hecatoncheir import logger as log
 
@@ -30,7 +31,7 @@ class OraDriver(DbDriverBase.DbDriverBase):
             self.driver = __import__(name, fromlist=[''])
         except Exception as e:
             msg = u"Could not load the driver module: %s" % name
-            raise DbProfilerException.DriverError(msg, source=e)
+            raise DriverError(msg, source=e)
 
     def connect(self):
         try:
@@ -46,7 +47,7 @@ class OraDriver(DbDriverBase.DbDriverBase):
         except Exception as e:
             msg = (u"Could not connect to the server: %s" %
                    unicode(e).split('\n')[0])
-            raise DbProfilerException.DriverError(msg, source=e)
+            raise DriverError(msg, source=e)
 
         return True
 
@@ -82,16 +83,16 @@ class OraDriver(DbDriverBase.DbDriverBase):
                 if i > max_rows:
                     msg = (u'Exceeded the record limit (%d) for QueryResult.' %
                            max_rows)
-                    raise DbProfilerException.InternalError(msg, query=query)
+                    raise InternalError(msg, query=query)
                 res.resultset.append(deepcopy(r))
             cur.close()
-        except DbProfilerException.InternalError as e:
+        except InternalError as e:
             raise e
-        except DbProfilerException.DriverError as e:
+        except DriverError as e:
             raise e
         except Exception as e:
             msg = "Could not execute a query: %s" % unicode(e).split('\n')[0]
-            raise DbProfilerException.QueryError(msg, query=query, source=e)
+            raise QueryError(msg, query=query, source=e)
         finally:
             if self.conn:
                 self.conn.rollback()
@@ -110,6 +111,6 @@ class OraDriver(DbDriverBase.DbDriverBase):
         except Exception as e:
             msg = (u"Could not disconnect from the server: %s" %
                    unicode(e).split('\n')[0])
-            raise DbProfilerException.DriverError(msg, source=e)
+            raise DriverError(msg, source=e)
         self.conn = None
         return True

@@ -3,7 +3,7 @@
 
 import re
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import ValidationError
 import RecordValidator
 from hecatoncheir.msgutil import gettext as _
 
@@ -50,7 +50,7 @@ class EvalValidator(RecordValidator.RecordValidator):
             s = self.rule[1].format(**kv)
         except KeyError as e:
             self.statistics[1] += 1
-            raise DbProfilerException.ValidationError(
+            raise ValidationError(
                 _("Parameter error: ") + "`%s'" % kv,
                 self.rule)
 
@@ -60,7 +60,7 @@ class EvalValidator(RecordValidator.RecordValidator):
                 return False
         except SyntaxError:
             self.statistics[1] += 1
-            raise DbProfilerException.ValidationError(
+            raise ValidationError(
                 _("Syntax error: ") + "`%s'" % s,
                 self.rule)
 

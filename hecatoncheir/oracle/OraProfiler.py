@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from hecatoncheir import DbProfilerBase
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import InternalError
 from hecatoncheir import DbProfilerValidator
 import OraDriver
 from hecatoncheir.QueryResult import QueryResult
@@ -258,7 +258,7 @@ SELECT COUNT(*) FROM TEMP
         column_names = self.get_column_names(schema_name, table_name)
         if not column_names:
             msg = 'No column found on the table `%s\'.' % table_name
-            raise DbProfilerException.InternalError(msg)
+            raise InternalError(msg)
         q = u'SELECT %s "%s" FROM "%s"."%s"' % (self.parallel_hint,
                                                 '","'.join(column_names),
                                                 schema_name, table_name)
