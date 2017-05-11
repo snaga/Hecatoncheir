@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError
+from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError, QueryTimeout
 from hecatoncheir.mysql import MyDriver
 
 class TestMyDriver(unittest.TestCase):
@@ -55,6 +55,16 @@ class TestMyDriver(unittest.TestCase):
         with self.assertRaises(QueryError) as cm:
              my.query_to_resultset(u'select 1 as c from bar')
         self.assertEqual("Could not execute a query: Table 'dqwbtest.bar' doesn't exist", cm.exception.value)
+
+        # query timeout (no timeout)
+        rs = my.query_to_resultset(u'select sleep(2)')
+        self.assertEqual("QueryResult:{'column': ('sleep(2)',), 'query': u'select sleep(2)', 'result': [[0L]]}",
+                         str(rs))
+
+        # query timeout
+        with self.assertRaises(QueryTimeout) as cm:
+            my.query_to_resultset(u'select sleep(2)', timeout=1)
+        self.assertEqual('Query timeout: select sleep(2)', cm.exception.value)
 
         # ok
         rs = my.query_to_resultset(u'select * from lineitem')

@@ -16,11 +16,11 @@ class DbDriverBase:
         raise NotImplementedError
 
     @abstractmethod
-    def query_to_resultset(self, label, query, max_rows=10000):
+    def query_to_resultset(self, label, query, max_rows=10000, timeout=None):
         raise NotImplementedError
 
     @abstractmethod
-    def q2rs(self, label, query, max_rows=10000):
+    def q2rs(self, label, query, max_rows=10000, timeout=None):
         raise NotImplementedError
 
     @abstractmethod

@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from copy import deepcopy
+import threading
 
 from hecatoncheir import DbDriverBase
 from hecatoncheir.DbProfilerException import (DriverError, InternalError,
-                                              QueryError)
+                                              QueryError, QueryTimeout)
 from hecatoncheir.QueryResult import QueryResult
 from hecatoncheir import logger as log
 
@@ -51,7 +52,16 @@ class OraDriver(DbDriverBase.DbDriverBase):
 
         return True
 
-    def query_to_resultset(self, query, max_rows=10000):
+    def cancel_callback(self):
+        log.trace("cancel_callback start")
+        try:
+            self.conn.cancel()
+        except Exception as e:
+            log.trace("cancel_callback failed")
+            raise e
+        log.trace("cancel_callback end")
+
+    def query_to_resultset(self, query, max_rows=10000, timeout=None):
         """Build a QueryResult object from the query
 
         Args:
@@ -70,37 +80,49 @@ class OraDriver(DbDriverBase.DbDriverBase):
             if self.conn is None:
                 self.connect()
 
+            monitor = None
+            if timeout and int(timeout) > 0:
+                monitor = threading.Timer(timeout, self.cancel_callback)
+                monitor.start()
+
             cur = self.conn.cursor()
             cur.execute(res.query)
 
             desc = []
-            for d in cur.description:
-                desc.append(d[0])
-            res.column_names = deepcopy(tuple(desc))
+            if cur.description:
+                for d in cur.description:
+                    desc.append(d[0])
+                res.column_names = deepcopy(tuple(desc))
 
-            for i, r in enumerate(cur.fetchall()):
-                # let's consider the memory size.
-                if i > max_rows:
-                    msg = (u'Exceeded the record limit (%d) for QueryResult.' %
-                           max_rows)
-                    raise InternalError(msg, query=query)
-                res.resultset.append(deepcopy(r))
+                for i, r in enumerate(cur.fetchall()):
+                    # let's consider the memory size.
+                    if i > max_rows:
+                        msg = (u'Exceeded the record limit (%d) for QueryResult.' %
+                               max_rows)
+                        raise InternalError(msg, query=query)
+                    res.resultset.append(deepcopy(r))
             cur.close()
         except InternalError as e:
             raise e
         except DriverError as e:
             raise e
         except Exception as e:
+            if unicode(e).startswith('ORA-01013: '):
+                raise QueryTimeout(
+                    "Query timeout: %s" % query,
+                    query=query, source=e)
             msg = "Could not execute a query: %s" % unicode(e).split('\n')[0]
             raise QueryError(msg, query=query, source=e)
         finally:
+            if monitor:
+                monitor.cancel()
             if self.conn:
                 self.conn.rollback()
         log.trace('query_to_resultset: end')
         return res
 
-    def q2rs(self, query, max_rows=10000):
-        return self.query_to_resultset(query, max_rows)
+    def q2rs(self, query, max_rows=10000, timeout=None):
+        return self.query_to_resultset(query, max_rows, timeout=None)
 
     def disconnect(self):
         if self.conn is None:

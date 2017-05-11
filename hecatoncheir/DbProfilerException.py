@@ -25,6 +25,18 @@ class QueryError(Exception):
     def __str__(self):
         return self.value
 
+class QueryTimeout(Exception):
+    source = None
+    query = None
+
+    def __init__(self, value, query, source=None):
+        self.value = value
+        self.query = query
+        self.source = source
+
+    def __str__(self):
+        return self.value
+
 
 class ValidationError(Exception):
     source = None
