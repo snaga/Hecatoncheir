@@ -4,7 +4,7 @@
 import decimal
 
 from hecatoncheir import DbProfilerBase
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import InternalError
 from hecatoncheir import DbProfilerValidator
 import MyDriver
 from hecatoncheir.QueryResult import QueryResult
@@ -60,7 +60,7 @@ SELECT column_name
     def get_sample_rows(self, schema_name, table_name, rows_limit=10):
         column_name = self.get_column_names(schema_name, table_name)
         if len(column_name) == 0:
-            raise DbProfilerException.InternalError(
+            raise InternalError(
                 "Could not get column names of the table: %s.%s" %
                 (schema_name, table_name))
 
@@ -212,7 +212,7 @@ WHERE
 
         column_names = self.get_column_names(schema_name, table_name)
         if not column_names:
-            raise DbProfilerException.InternalError(
+            raise InternalError(
                 'No column found on the table `%s\'.')
         q = u'SELECT `%s` FROM %s.%s' % ('`,`'.join(column_names),
                                          schema_name, table_name)

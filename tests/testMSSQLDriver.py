@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError
 from hecatoncheir.mssql import MSSQLDriver
 
 class TestMSSQLDriver(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestMSSQLDriver(unittest.TestCase):
     def test_connect_002(self):
         # connection failure
         db = MSSQLDriver.MSSQLDriver('127.0.0.1', self.dbname, self.dbuser, 'foo')
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             db.connect()
         self.assertTrue(cm.exception.value.startswith('Could not connect to the server: '))
 
@@ -41,27 +41,27 @@ class TestMSSQLDriver(unittest.TestCase):
         driver = MSSQLDriver.MSSQLDriver('127.0.0.1', self.dbname, self.dbuser, self.dbpass)
         try:
             driver.connect()
-        except DbProfilerException, e:
+        except DriverError as e:
             self.fail()
         self.assertIsNotNone(driver.conn)
 
         # ok
-        rs = driver.query_to_resultset('select 1 as c')
+        rs = driver.query_to_resultset(u'select 1 as c')
         self.assertEqual('c', rs.column_names[0])
         self.assertEqual(1, rs.resultset[0][0])
 
         # exception
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
-             driver.query_to_resultset('select 1 as c from bar')
+        with self.assertRaises(QueryError) as cm:
+             driver.query_to_resultset(u'select 1 as c from bar')
         self.assertEqual("Could not execute a query: Invalid object name 'bar'.", cm.exception.value)
 
         # ok
-        rs = driver.query_to_resultset('select * from lineitem')
+        rs = driver.query_to_resultset(u'select * from lineitem')
         self.assertEqual(110, len(rs.resultset))
 
         # exception
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
-             driver.query_to_resultset('select * from lineitem', max_rows=100)
+        with self.assertRaises(InternalError) as cm:
+             driver.query_to_resultset(u'select * from lineitem', max_rows=100)
         self.assertEqual('Exceeded the record limit (100) for QueryResult.', cm.exception.value)
 
     def test_disconnect_001(self):

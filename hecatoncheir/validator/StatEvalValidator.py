@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import ValidationError
 import StatisticsValidator
 from hecatoncheir.msgutil import gettext as _
 
@@ -42,7 +42,7 @@ class StatEvalValidator(StatisticsValidator.StatisticsValidator):
                 break
 
         if c is None:
-            raise DbProfilerException.ValidationError(
+            raise ValidationError(
                 _("Column `%s' not found. Check your validation rule again.") %
                 self.rule[0],
                 self.rule)
@@ -58,7 +58,7 @@ class StatEvalValidator(StatisticsValidator.StatisticsValidator):
             s = self.rule[1].format(**kv)
         except KeyError as e:
             self.statistics[1] += 1
-            raise DbProfilerException.ValidationError(
+            raise ValidationError(
                 _("Parameter error: ") + "`%s'" % kv,
                 self.rule)
 
@@ -68,7 +68,7 @@ class StatEvalValidator(StatisticsValidator.StatisticsValidator):
                 return False
         except SyntaxError:
             self.statistics[1] += 1
-            raise DbProfilerException.ValidationError(
+            raise ValidationError(
                 _("Syntax error: ") + "`%s'" % s,
                 self.rule)
 

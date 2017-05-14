@@ -9,6 +9,7 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir import DbProfilerFormatter
+from hecatoncheir.DbProfilerException import DbProfilerException
 
 class TestDbProfilerFormatter(unittest.TestCase):
     def setUp(self):
@@ -66,11 +67,11 @@ class TestDbProfilerFormatter(unittest.TestCase):
         self.assertEqual(a, DbProfilerFormatter.filter_markdown2html(md))
 
     def test_filter_term2popover_001(self):
-        a = ('aaa <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="abc" data-content="xyz"><span class="glossary-term">abc</span></a> bbb', 153)
+        a = ('aaa <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="abc" data-content="xyz" class="glossary-term">abc</a> bbb', 140)
         b = DbProfilerFormatter.filter_term2popover('aaa abc bbb', 4, 'abc', 'xyz')
         self.assertEqual(a, b)
 
-        a = ('aaa <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="abc" data-content="xyz"><span class="glossary-term">jkl</span></a> bbb', 153)
+        a = ('aaa <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="abc" data-content="xyz" class="glossary-term">jkl</a> bbb', 140)
         b = DbProfilerFormatter.filter_term2popover('aaa abc bbb', 4, 'jkl', 'xyz', 'abc')
         self.assertEqual(a, b)
 
@@ -78,19 +79,19 @@ class TestDbProfilerFormatter(unittest.TestCase):
         t = {}
         t['term'] = 'aa'
         t['description_short'] = 'desc'
-        a = u"desc<br/><div align=right><a href='glossary.html#aa' target='_glossary'>\u8a73\u7d30\u2026</a></div>"
+        a = u"desc<br/><div align=right><a href='glossary.html#aa' target='_glossary'>Details...</a></div>"
         self.assertEqual(a, DbProfilerFormatter.create_popover_content(t))
 
         t['synonyms'] = ['a','b']
-        a = u"desc<br/><br/>同義語: a, b<div align=right><a href='glossary.html#aa' target='_glossary'>\u8a73\u7d30\u2026</a></div>"
+        a = u"desc<br/><br/>Synonym: a, b<div align=right><a href='glossary.html#aa' target='_glossary'>Details...</a></div>"
         self.assertEqual(a, DbProfilerFormatter.create_popover_content(t))
 
         t['related_terms'] = ['c','d']
-        a = u"desc<br/><br/>同義語: a, b<br/>類義語: c, d<div align=right><a href='glossary.html#aa' target='_glossary'>\u8a73\u7d30\u2026</a></div>"
+        a = u"desc<br/><br/>Synonym: a, b<br/>Related Terms: c, d<div align=right><a href='glossary.html#aa' target='_glossary'>Details...</a></div>"
         self.assertEqual(a, DbProfilerFormatter.create_popover_content(t))
 
         t['assigned_assets'] = ['e', 'f']
-        a = u"desc<br/><br/>同義語: a, b<br/>類義語: c, d<br/>関連テーブル: e, f<div align=right><a href='glossary.html#aa' target='_glossary'>\u8a73\u7d30\u2026</a></div>"
+        a = u"desc<br/><br/>Synonym: a, b<br/>Related Terms: c, d<br/>Assigned Assets: e, f<div align=right><a href='glossary.html#aa' target='_glossary'>Details...</a></div>"
         self.assertEqual(a, DbProfilerFormatter.create_popover_content(t))
 
     def test_filter_glossaryterms_001(self):
@@ -101,7 +102,7 @@ class TestDbProfilerFormatter(unittest.TestCase):
         self.assertEqual(a, DbProfilerFormatter.filter_glossaryterms(html, terms))
 
         html = 'foo PV bar'
-        a = u'foo <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="PV" data-content="Page Views<br/><div align=right><a href=\'glossary.html#PV\' target=\'_glossary\'>詳細…</a></div>"><span class="glossary-term">PV</span></a> bar'
+        a = u'foo <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="PV" data-content="Page Views<br/><div align=right><a href=\'glossary.html#PV\' target=\'_glossary\'>Details...</a></div>" class="glossary-term">PV</a> bar'
         self.assertEqual(a, DbProfilerFormatter.filter_glossaryterms(html, terms))
 
     def test_to_table_html_001(self):
@@ -160,18 +161,18 @@ class TestDbProfilerFormatter(unittest.TestCase):
         # column comment with tooltip
         self.assertIsNotNone(re.search('#c1_comment.* data-toggle="tooltip" data-html="true" data-placement="top" title=" this is column comment on c1 with Term2. ">', html))
         # glossary markup in column comment.
-        self.assertIsNotNone(re.search(u'<a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="Term2" data-content="short description of Term2 for c1<br/><div align=right><a href=\'glossary.html#Term2\' target=\'_glossary\'>詳細…</a></div>"><span class="glossary-term">Term2</span></a>', html))
+        self.assertIsNotNone(re.search(u'<a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="Term2" data-content="short description of Term2 for c1<br/><div align=right><a href=\'glossary.html#Term2\' target=\'_glossary\'>Details...</a></div>" class="glossary-term">Term2</a>', html))
 
         # table comment with attached file
         self.assertIsNotNone(re.search('this is table comment.', html))
-        self.assertIsNotNone(re.search(u'関連ファイル:', html))
+        self.assertIsNotNone(re.search(u'Attached files:', html))
         self.assertIsNotNone(re.search(u'<a href="attachments/aaa.txt">aaa.txt</a></li>', html))
         # glossary markup in table comment.
-        self.assertIsNotNone(re.search(u'<a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="Term1" data-content="short description of Term1<br/><div align=right><a href=\'glossary.html#Term1\' target=\'_glossary\'>詳細…</a></div>"><span class="glossary-term">Term1</span></a>.', html))
+        self.assertIsNotNone(re.search(u'<a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="Term1" data-content="short description of Term1<br/><div align=right><a href=\'glossary.html#Term1\' target=\'_glossary\'>Details...</a></div>" class="glossary-term">Term1</a>', html))
 
         # foreign keys
-        self.assertIsNotNone(re.search(u'orcl\.public\.t2\.html#c2.*テーブル public.t2 の c2 から参照', html))
-        self.assertIsNotNone(re.search(u'orcl\.public\.t3\.html#c1.*テーブル public.t3 の c1 を参照（推定）', html))
+        self.assertIsNotNone(re.search(u'orcl\.public\.t2\.html#c2.*Being refered from c2 on public.t2', html))
+        self.assertIsNotNone(re.search(u'orcl\.public\.t3\.html#c1.*Refering c1 on public.t3 \(guess\)', html))
 
 
     def test_to_table_html_002(self):
@@ -210,8 +211,9 @@ class TestDbProfilerFormatter(unittest.TestCase):
     "timestamp": "2016-05-01T16:15:18.028309"
   }
 """
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DbProfilerException) as cm:
             DbProfilerFormatter.to_table_html(json.loads(data), template_file='foo.html')
+        self.assertEqual("Template file `foo.html' not found.", cm.exception.value)
 
     def test_to_index_html_001(self):
         data = """
@@ -273,7 +275,7 @@ class TestDbProfilerFormatter(unittest.TestCase):
         # table comment with tooltip
         self.assertIsNotNone(re.search('#t1_comment.* data-toggle="tooltip" data-html="true" data-placement="top" title=" this is table comment. foo PV bar. ">', html))
         # glossary markup in table comment.
-        a = u'foo <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="PV" data-content="Page Views<br/><div align=right><a href=\'glossary.html#PV\' target=\'_glossary\'>詳細…</a></div>"><span class="glossary-term">PV</span></a> bar'
+        a = u'foo <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="PV" data-content="Page Views<br/><div align=right><a href=\'glossary.html#PV\' target=\'_glossary\'>Details...</a></div>" class="glossary-term">PV</a> bar'
         self.assertIsNotNone(re.search(a, html))
 
     def test_to_index_html_002(self):
@@ -315,8 +317,9 @@ class TestDbProfilerFormatter(unittest.TestCase):
 ]
 """
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DbProfilerException) as cm:
             DbProfilerFormatter.to_index_html(json.loads(data), reponame='testrepo', template_file='foo.html')
+        self.assertEqual("Template file `foo.html' not found.", cm.exception.value)
 
     def test_to_index_html_003(self):
         data = """
@@ -405,7 +408,7 @@ class TestDbProfilerFormatter(unittest.TestCase):
                                                  reponame='testrepo')
 #        print(html)
         # tag comment with attached file.
-        self.assertTrue(re.search(u'関連ファイル:', html))
+        self.assertTrue(re.search(u'Attached files:', html))
         self.assertTrue(re.search(u'<li><a href="attachments/aaa.txt">aaa.txt</a></li>', html))
 
         # index page for the schema 'orcl'
@@ -415,7 +418,7 @@ class TestDbProfilerFormatter(unittest.TestCase):
                                                  reponame='testrepo')
 #        print(html)
         # tag comment with attached file.
-        self.assertTrue(re.search(u'関連ファイル:', html))
+        self.assertTrue(re.search(u'Attached files:', html))
         self.assertTrue(re.search(u'<li><a href="attachments/bbb.txt">bbb.txt</a></li>', html))
 
     def test_to_glossary_html_001(self):
@@ -436,7 +439,7 @@ class TestDbProfilerFormatter(unittest.TestCase):
 #        print(html)
 
         # term, short desc, long desc, categories, related terms, related assets, owner
-        a = u'<td class="wrap"><a name="Term1" class="nodeco">Term1</a></td>'
+        a = u'<td class="wrap"><a name="Term1"></a>Term1</td>'
         self.assertIsNotNone(re.search(a, html))
         a = u'<td class="wrap">short description of '
         self.assertIsNotNone(re.search(a, html))
@@ -444,14 +447,14 @@ class TestDbProfilerFormatter(unittest.TestCase):
         self.assertIsNotNone(re.search(a, html))
         a = u'<td class="wrap">term1cat, term1cat2</td>'
         self.assertIsNotNone(re.search(a, html))
-        a = u'<td class="wrap">short description of <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="Term1" data-content="short description of Term1<br/><br/>関連テーブル: table1, table2<div align=right><a href=\'glossary.html#Term1\' target=\'_glossary\'>詳細…</a></div>"><span class="glossary-term">Term1</span></a></td>'
+        a = u'<td class="wrap">short description of <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="Term1" data-content="short description of Term1<br/><br/>Assigned Assets: table1, table2<div align=right><a href=\'glossary.html#Term1\' target=\'_glossary\'>Details...</a></div>" class="glossary-term">Term1</a></td>'
         self.assertIsNotNone(re.search(a, html))
         a = u'<td class="wrap"><a href="dqwbtest.public.table1.html" target=_blank >table1</a>, table2</td>'
         self.assertIsNotNone(re.search(a, html))
         a = u'<td class="wrap">snaga</td>'
         self.assertIsNotNone(re.search(a, html))
 
-        a = u'<td class="wrap"><a name="Term2" class="nodeco">Term2</a></td>'
+        a = u'<td class="wrap"><a name="Term2"></a>Term2</td>'
         self.assertIsNotNone(re.search(a, html))
 
 if __name__ == '__main__':

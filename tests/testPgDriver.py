@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError
 from hecatoncheir.QueryResult import QueryResult
 from hecatoncheir.pgsql import PgDriver
 
@@ -31,14 +31,14 @@ class TestPgDriver(unittest.TestCase):
         pg = PgDriver.PgDriver('host=/tmp dbname=%s' % self.dbname, self.dbuser, self.dbpass)
         try:
             pg.connect()
-        except DbProfilerException.DriverError as e:
+        except DriverError as e:
             self.fail()
         self.assertIsNotNone(pg.conn)
 
     def test_connect_002(self):
         # connection failure
         pg = PgDriver.PgDriver('host=/tmp dbname=%s' % self.dbname, "nosuchuser", '')
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             pg.connect()
         self.assertEqual('Could not connect to the server: FATAL:  role "nosuchuser" does not exist', cm.exception.value)
 
@@ -46,27 +46,27 @@ class TestPgDriver(unittest.TestCase):
         pg = PgDriver.PgDriver('host=/tmp dbname=%s' % self.dbname, self.dbuser, self.dbpass)
         try:
             pg.connect()
-        except DbProfilerException.DriverError as e:
+        except DriverError as e:
             self.fail()
         self.assertIsNotNone(pg.conn)
 
         # ok
-        rs = pg.query_to_resultset('select 1 as c')
+        rs = pg.query_to_resultset(u'select 1 as c')
         self.assertEqual('c', rs.column_names[0])
         self.assertEqual(1, rs.resultset[0][0])
 
         # exception
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
-             pg.query_to_resultset('select 1 as c from bar')
+        with self.assertRaises(QueryError) as cm:
+             pg.query_to_resultset(u'select 1 as c from bar')
         self.assertEqual('Could not execute a query: relation "bar" does not exist', cm.exception.value)
 
         # ok
-        rs = pg.query_to_resultset('select generate_series(1,1000)')
+        rs = pg.query_to_resultset(u'select generate_series(1,1000)')
         self.assertEqual(1000, len(rs.resultset))
 
         # exception
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
-             pg.query_to_resultset('select generate_series(1,1000)', max_rows=100)
+        with self.assertRaises(InternalError) as cm:
+             pg.query_to_resultset(u'select generate_series(1,1000)', max_rows=100)
         self.assertEqual('Exceeded the record limit (100) for QueryResult.', cm.exception.value)
 
     def test_disconnect_001(self):

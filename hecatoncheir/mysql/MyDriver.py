@@ -5,7 +5,8 @@ from copy import deepcopy
 from decimal import Decimal
 
 from hecatoncheir import DbDriverBase
-from hecatoncheir import DbProfilerException
+from hecatoncheir.DbProfilerException import (DriverError, InternalError,
+                                              QueryError)
 from hecatoncheir.QueryResult import QueryResult
 from hecatoncheir import logger as log
 
@@ -30,7 +31,7 @@ class MyDriver(DbDriverBase.DbDriverBase):
         try:
             self.driver = __import__(name, fromlist=[''])
         except Exception as e:
-            raise DbProfilerException.DriverError(
+            raise DriverError(
                 "Could not load the driver module: %s" % name, source=e)
 
     def connect(self):
@@ -39,7 +40,7 @@ class MyDriver(DbDriverBase.DbDriverBase):
                                             user=self.dbuser,
                                             passwd=self.dbpass)
         except Exception as e:
-            raise DbProfilerException.DriverError(
+            raise DriverError(
                 u"Could not connect to the server: %s" %
                 e.args[1].split('\n')[0], source=e)
         return True
@@ -74,19 +75,19 @@ class MyDriver(DbDriverBase.DbDriverBase):
             for i, r in enumerate(cur.fetchall()):
                 # let's consider the memory size.
                 if i > max_rows:
-                    raise DbProfilerException.InternalError(
+                    raise InternalError(
                         u'Exceeded the record limit (%d) for QueryResult.' %
                         max_rows, query=query)
                 res.resultset.append(deepcopy([float(x) if
                                                isinstance(x, Decimal) else
                                                x for x in r]))
             cur.close()
-        except DbProfilerException.InternalError as e:
+        except InternalError as e:
             raise e
-        except DbProfilerException.DriverError as e:
+        except DriverError as e:
             raise e
         except Exception as e:
-            raise DbProfilerException.QueryError(
+            raise QueryError(
                 "Could not execute a query: %s" %
                 e.args[1].split('\n')[0], query=query, source=e)
         finally:
@@ -105,7 +106,7 @@ class MyDriver(DbDriverBase.DbDriverBase):
         try:
             self.conn.close()
         except Exception as e:
-            raise DbProfilerException.DriverError(
+            raise DriverError(
                 u"Could not disconnect from the server: %s" %
                 e.args[1].split('\n')[0], source=e)
 

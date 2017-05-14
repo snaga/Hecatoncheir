@@ -1,6 +1,7 @@
 #!/bin/sh
 
 export __DBPROF_TRACE=0
+export LANGUAGE=en
 
 function oracle()
 {

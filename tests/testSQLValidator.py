@@ -29,12 +29,12 @@ class TestSQLValidator(unittest.TestCase):
         # wrong column name
         with self.assertRaises(DbProfilerException.ValidationError) as cm:
             SQLValidator.validate_eval(kv, '{COL3} > 100')
-        self.assertEqual(u"パラメータエラー: `{COL3} > 100' {'COL2': 201, 'COL1': 101}", cm.exception.value)
+        self.assertEqual("Parameter error: `{COL3} > 100' {'COL2': 201, 'COL1': 101}", cm.exception.value)
 
         # invalid syntax
         with self.assertRaises(DbProfilerException.ValidationError) as cm:
             SQLValidator.validate_eval(kv, '{COL1} > 100 and')
-        self.assertEqual(u"文法エラー: `101 > 100 and'", cm.exception.value)
+        self.assertEqual("Syntax error: `101 > 100 and'", cm.exception.value)
 
     def test_validate_001(self):
         v = SQLValidator.SQLValidator('001-1', rule=['c_custkey', u'select count(distinct c_custkey) from customer', '{count} > 27'])
@@ -44,24 +44,24 @@ class TestSQLValidator(unittest.TestCase):
 
         with self.assertRaises(DbProfilerException.DriverError) as cm:
             v.validate(None)
-        self.assertEqual(u'Database driver not found.', cm.exception.value)
+        self.assertEqual('Database driver not found.', cm.exception.value)
 
     def test_validate_002(self):
         v = SQLValidator.SQLValidator('002-1', rule=['c_custkey', u'select count(distinct c_custkey1) from customer', '{count} > 27'])
         with self.assertRaises(DbProfilerException.ValidationError) as cm:
             v.validate(self.d)
-        self.assertEqual(u"SQLエラー: `select count(distinct c_custkey1) from customer'", cm.exception.value)
+        self.assertEqual(u"SQL error: `select count(distinct c_custkey1) from customer'", cm.exception.value)
 
     def test_validate_003(self):
         v = SQLValidator.SQLValidator('003-1', rule=['c_custkey', u'select count(distinct c_custkey) from customer', '{countt} > 27'])
         with self.assertRaises(DbProfilerException.ValidationError) as cm:
             v.validate(self.d)
-        self.assertEqual(u"パラメータエラー: `{countt} > 27' {'count': 28L}", cm.exception.value)
+        self.assertEqual(u"Parameter error: `{countt} > 27' {'count': 28L}", cm.exception.value)
 
         v = SQLValidator.SQLValidator('003-1', rule=['c_custkey', u'select count(distinct c_custkey) from customer', '{countt} === 27'])
         with self.assertRaises(DbProfilerException.ValidationError) as cm:
             v.validate(self.d)
-        self.assertEqual(u"パラメータエラー: `{countt} === 27' {'count': 28L}", cm.exception.value)
+        self.assertEqual(u"Parameter error: `{countt} === 27' {'count': 28L}", cm.exception.value)
 
 if __name__ == '__main__':
     unittest.main()
