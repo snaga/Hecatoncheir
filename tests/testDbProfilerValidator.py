@@ -113,7 +113,7 @@ class TestDbProfilerValidator(unittest.TestCase):
         # exception. unsupported rule
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             v.add_rule(r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8])
-        self.assertEqual(u"サポートされていない検証ルールです: regex", cm.exception.value)
+        self.assertEqual("Unsupported validation rule: regex", cm.exception.value)
 
     def test_has_validation_rules_001(self):
         v = DbProfilerValidator.DbProfilerValidator("public", "t1")

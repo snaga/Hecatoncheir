@@ -89,7 +89,7 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             self.repo.append_table(t)
-        self.assertEqual(u"テーブル情報の登録に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not register table data: ", cm.exception.value)
 
     def testAppend_table_002(self):
         # different timestamp must go to the different records.
@@ -173,7 +173,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail with query error
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             self.repo.get_table('test\'_database', 'test_schema', 'test_table')
-        self.assertEqual(u"テーブル情報の取得に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not get table data: ", cm.exception.value)
 
     def testSet_001(self):
         t = {}
@@ -419,7 +419,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             self.repo.get_table_history('test\'_database', 'test_schema', 'test_table')
-        self.assertEqual(u"テーブル情報履歴の取得に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not get table data with its history: ", cm.exception.value)
 
     def test_put_datamap_item_001(self):
         dm = {}
@@ -501,7 +501,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         repo = DbProfilerRepository.DbProfilerRepository("/dev/null")
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             repo.get_schemas()
-        self.assertEqual(u"スキーマ情報の取得に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not get schema names: ", cm.exception.value)
 
     def test_get_tags_001(self):
         t = {}
@@ -535,7 +535,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         repo = DbProfilerRepository.DbProfilerRepository("/dev/null")
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             repo.get_tags()
-        self.assertEqual(u"タグ情報の取得に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not get tag info: ", cm.exception.value)
 
     def test_has_table_record_001(self):
         t = {}
@@ -559,7 +559,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             self.repo.put_tag('d.s.t2\'', 'tag3')
-        self.assertEqual(u"タグの保存に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not register tag: ", cm.exception.value)
 
     def test_get_tag_labels_001(self):
         self.assertTrue(self.repo.put_tag('d.s.t', 'tag1'))
@@ -576,7 +576,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             self.repo.get_tag_labels('d.s.t2\'')
-        self.assertEqual(u"タグラベルの取得に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not get tag labels: ", cm.exception.value)
 
     def test_set_tag_comment_001(self):
         self.assertTrue(self.repo.set_tag_comment('tag1', 'comment'))
@@ -692,7 +692,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             self.repo.get_tag_ids('tag2\'')
-        self.assertEqual(u"タグIDの取得に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not get tag ids: ", cm.exception.value)
 
     def test_delete_tag_id_001(self):
         self.assertTrue(self.repo.put_tag('d.s.t', 'tag1'))
@@ -707,7 +707,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(DbProfilerException.InternalError) as cm:
             self.repo.delete_tag_id('tag2\'')
-        self.assertEqual(u"タグIDの削除に失敗しました:", cm.exception.value)
+        self.assertEqual("Could not delete tag id: ", cm.exception.value)
 
     def test_put_textelement_001(self):
         self.assertTrue(self.repo.put_textelement('id1', 'elem1'))

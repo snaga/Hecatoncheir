@@ -86,7 +86,7 @@ class TestStatEvalValidator(unittest.TestCase):
              'row_count': 10}
         with self.assertRaises(DbProfilerException.ValidationError) as cm:
             v.validate(s)
-        self.assertEqual(u'カラム COL2 が見つかりません。検証ルールを確認してください。', cm.exception.value)
+        self.assertEqual("Column `COL2' not found. Check your validation rule again.", cm.exception.value)
 
 
 if __name__ == '__main__':
