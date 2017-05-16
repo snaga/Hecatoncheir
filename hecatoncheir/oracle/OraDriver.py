@@ -121,9 +121,6 @@ class OraDriver(DbDriverBase.DbDriverBase):
         log.trace('query_to_resultset: end')
         return res
 
-    def q2rs(self, query, max_rows=10000, timeout=None):
-        return self.query_to_resultset(query, max_rows, timeout=None)
-
     def disconnect(self):
         if self.conn is None:
             return False

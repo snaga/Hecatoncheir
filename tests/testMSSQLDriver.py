@@ -74,6 +74,11 @@ class TestMSSQLDriver(unittest.TestCase):
              driver.query_to_resultset(u'select * from lineitem', max_rows=100)
         self.assertEqual('Exceeded the record limit (100) for QueryResult.', cm.exception.value)
 
+        # q2rs ok
+        rs = driver.q2rs(u'select 1 as c')
+        self.assertEqual('c', rs.column_names[0])
+        self.assertEqual(1, rs.resultset[0][0])
+
     def test_disconnect_001(self):
         db = MSSQLDriver.MSSQLDriver('127.0.0.1', self.dbname, self.dbuser, self.dbpass)
         conn = db.connect()

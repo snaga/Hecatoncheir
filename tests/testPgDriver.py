@@ -79,6 +79,11 @@ class TestPgDriver(unittest.TestCase):
              pg.query_to_resultset(u'select generate_series(1,1000)', max_rows=100)
         self.assertEqual('Exceeded the record limit (100) for QueryResult.', cm.exception.value)
 
+        # q2rs ok
+        rs = pg.q2rs(u'select 1 as c')
+        self.assertEqual('c', rs.column_names[0])
+        self.assertEqual(1, rs.resultset[0][0])
+
     def test_disconnect_001(self):
         pg = PgDriver.PgDriver('host=/tmp dbname=%s' % self.dbname, self.dbuser, self.dbpass)
         conn = pg.connect()

@@ -74,6 +74,11 @@ class TestOraDriver(unittest.TestCase):
              ora.query_to_resultset(u'select * from lineitem', max_rows=100)
         self.assertEqual('Exceeded the record limit (100) for QueryResult.', cm.exception.value)
 
+        # q2rs ok
+        rs = ora.q2rs(u'select 1 as c from dual')
+        self.assertEqual('C', rs.column_names[0])
+        self.assertEqual(1, rs.resultset[0][0])
+
     def test_disconnect_001(self):
         ora = OraDriver.OraDriver(None, None, 'orcl', self.dbuser, self.dbpass)
         conn = ora.connect()
