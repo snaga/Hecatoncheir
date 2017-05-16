@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError
+from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError, QueryTimeout
 from hecatoncheir.QueryResult import QueryResult
 from hecatoncheir.pgsql import PgDriver
 
@@ -59,6 +59,16 @@ class TestPgDriver(unittest.TestCase):
         with self.assertRaises(QueryError) as cm:
              pg.query_to_resultset(u'select 1 as c from bar')
         self.assertEqual('Could not execute a query: relation "bar" does not exist', cm.exception.value)
+
+        # query timeout (no timeout)
+        rs = pg.query_to_resultset(u'select pg_sleep(2)')
+        self.assertEqual("QueryResult:{'column': ('pg_sleep',), 'query': u'select pg_sleep(2)', 'result': [('',)]}",
+                         str(rs))
+
+        # query timeout
+        with self.assertRaises(QueryTimeout) as cm:
+             pg.query_to_resultset(u'select pg_sleep(2)', timeout=1)
+        self.assertEqual('Query timeout: select pg_sleep(2)', cm.exception.value)
 
         # ok
         rs = pg.query_to_resultset(u'select generate_series(1,1000)')

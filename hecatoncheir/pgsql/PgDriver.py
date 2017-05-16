@@ -5,7 +5,7 @@ from copy import deepcopy
 
 from hecatoncheir import DbDriverBase
 from hecatoncheir.DbProfilerException import (DriverError, InternalError,
-                                              QueryError)
+                                              QueryError, QueryTimeout)
 from hecatoncheir.QueryResult import QueryResult
 from hecatoncheir import logger as log
 
@@ -40,7 +40,7 @@ class PgDriver(DbDriverBase.DbDriverBase):
 
         return True
 
-    def query_to_resultset(self, query, max_rows=10000):
+    def query_to_resultset(self, query, max_rows=10000, timeout=None):
         """Build a QueryResult object from the query
 
         Args:
@@ -60,6 +60,9 @@ class PgDriver(DbDriverBase.DbDriverBase):
                 self.connect()
 
             cur = self.conn.cursor()
+            if timeout and int(timeout) > 0:
+                cur.execute('set statement_timeout to %d' % (timeout*1000))
+
             cur.execute(res.query)
 
             desc = []
@@ -81,6 +84,10 @@ class PgDriver(DbDriverBase.DbDriverBase):
             raise e
         except Exception as e:
             msg = unicode(e).split('\n')[0]
+            if msg == 'canceling statement due to statement timeout':
+                raise QueryTimeout(
+                    "Query timeout: %s" % query,
+                    query=query, source=e)
             raise QueryError(
                 "Could not execute a query: %s" % msg,
                 query=query, source=e)
@@ -91,8 +98,8 @@ class PgDriver(DbDriverBase.DbDriverBase):
         log.trace('query_to_resultset: end')
         return res
 
-    def q2rs(self, query, max_rows=10000):
-        return self.query_to_resultset(query, max_rows)
+    def q2rs(self, query, max_rows=10000, timeout=None):
+        return self.query_to_resultset(query, max_rows, timeout)
 
     def disconnect(self):
         if self.conn is None:

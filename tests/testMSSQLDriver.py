@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError
+from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError, QueryTimeout
 from hecatoncheir.mssql import MSSQLDriver
 
 class TestMSSQLDriver(unittest.TestCase):
@@ -54,6 +54,16 @@ class TestMSSQLDriver(unittest.TestCase):
         with self.assertRaises(QueryError) as cm:
              driver.query_to_resultset(u'select 1 as c from bar')
         self.assertEqual("Could not execute a query: Invalid object name 'bar'.", cm.exception.value)
+
+        # query timeout (no timeout)
+        rs = driver.query_to_resultset(u"WAITFOR DELAY '00:00:02'")
+        self.assertEqual("QueryResult:{'column': [], 'query': u\"WAITFOR DELAY '00:00:02'\", 'result': []}",
+                         str(rs))
+
+        # query timeout
+        # FIXME: Need to be fixed to handle QueryTimeout instead of NotImplementedError
+        with self.assertRaises(NotImplementedError) as cm:
+            driver.query_to_resultset(u"WAITFOR DELAY '00:00:10'", timeout=1)
 
         # ok
         rs = driver.query_to_resultset(u'select * from lineitem')

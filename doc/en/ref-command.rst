@@ -172,6 +172,8 @@ dm-run-profiler
       --column-profiling-threshold=INTEGER
                                  Threshold number of rows to skip profiling columns
   
+      --timeout=NUMBER           Query timeout in seconds (default:no timeout)
+
       --help                     Print this help.
 
 
@@ -211,6 +213,7 @@ dm-run-profiler
 
 ``--column-profiling-threshold`` specifies max number of table records to perform column profiling.
 
+``--timeout`` specifies query timeout in seconds. If query execution exeeds this parameter, the query will be cancelled and profiling the table will fail.
 
 dm-run-server
 =============

@@ -172,6 +172,8 @@ dm-run-profilerコマンド
       --column-profiling-threshold=INTEGER
                                  Threshold number of rows to skip profiling columns
   
+      --timeout=NUMBER           Query timeout in seconds (default:no timeout)
+
       --help                     Print this help.
 
 
@@ -210,6 +212,8 @@ dm-run-profilerコマンド
 ``--skip-column-profiling`` はカラムのプロファイリングを無効にします。
 
 ``--column-profiling-threshold`` はカラムのプロファイリングを行うレコード数の上限を指定します。
+
+``--timeout`` はクエリのタイムアウトを秒数で指定します。クエリの実行時間がこれを超えると中断され、テーブルのプロファイリングは失敗として扱われます。
 
 
 dm-run-serverコマンド

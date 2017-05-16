@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError
+from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError, QueryTimeout
 from hecatoncheir.oracle import OraDriver
 
 class TestOraDriver(unittest.TestCase):
@@ -54,6 +54,16 @@ class TestOraDriver(unittest.TestCase):
         with self.assertRaises(QueryError) as cm:
              ora.query_to_resultset(u'select 1 as c from bar')
         self.assertEqual('Could not execute a query: ORA-00942: table or view does not exist', cm.exception.value)
+
+        # query timeout (no timeout)
+        rs = ora.query_to_resultset(u'CALL DBMS_LOCK.SLEEP(2)')
+        self.assertEqual("QueryResult:{'column': [], 'query': u'CALL DBMS_LOCK.SLEEP(2)', 'result': []}",
+                         str(rs))
+
+        # query timeout
+        with self.assertRaises(QueryTimeout) as cm:
+            ora.query_to_resultset(u'CALL DBMS_LOCK.SLEEP(10)', timeout=1)
+        self.assertEqual('Query timeout: CALL DBMS_LOCK.SLEEP(10)', cm.exception.value)
 
         # ok
         rs = ora.query_to_resultset(u'select * from lineitem')

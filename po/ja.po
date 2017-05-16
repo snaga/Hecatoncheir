@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "POT-Creation-Date: 2017-04-27 11:55+JST\n"
-"PO-Revision-Date: 2017-05-06 17:39+0900\n"
+"PO-Revision-Date: 2017-05-16 17:22+0900\n"
 "Last-Translator: Satoshi Nagayasu <snaga@uptime.jp>\n"
 "Language-Team: Satoshi Nagayasu <snaga@uptime.jp>\n"
 "MIME-Version: 1.0\n"
@@ -20,6 +20,9 @@ msgstr "%d件のテーブル情報をマージしました。"
 
 msgid "%d records successfully imported into the repository."
 msgstr "%d 件のレコードをインポートしました。"
+
+msgid "%d second(s)"
+msgstr "%d 秒"
 
 msgid "%d validation rule(s)"
 msgstr "%d件のデータ検証ルールがあります"
@@ -136,7 +139,7 @@ msgid "Could not get a list of business terms: "
 msgstr "ビジネス用語のリスト取得に失敗しました:"
 
 msgid "Could not get column data types at all."
-msgstr ""
+msgstr "カラムのデータ型を取得できませんでした"
 
 msgid "Could not get data types."
 msgstr "データ型の取得に失敗しました"
@@ -236,6 +239,9 @@ msgstr "データベースドライバが見つかりません。"
 
 msgid "Details..."
 msgstr "詳細…"
+
+msgid "Disabled"
+msgstr "無効"
 
 msgid "Exported the attachement file directory from `%s'."
 msgstr "添付ファイルディレクトリ `%s' をエクスポートしました。"
@@ -337,6 +343,9 @@ msgstr "%s.%s のプロファイリングに失敗しました（内部エラー
 
 msgid "Profiling on %d tables."
 msgstr "%d テーブルのプロファイリングを開始します。"
+
+msgid "Query Timeout: %s"
+msgstr "クエリタイムアウト: %s"
 
 msgid "Read %d lines"
 msgstr "%d行を読み込みました。"
@@ -468,6 +477,9 @@ msgstr "レポジトリを初期化しました。"
 
 msgid "The same validation rule already exists: "
 msgstr "同一の検証ルールが既に存在します: "
+
+msgid "This feature is not implemented."
+msgstr "この機能は実装されていません"
 
 msgid "Too few arguments."
 msgstr "引数が足りません。"
