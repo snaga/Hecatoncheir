@@ -171,6 +171,7 @@ class DbProfilerBase(object):
     skip_column_profiling = False
 
     parallel_degree = 0
+    timeout = None
 
     def __init__(self, host, port, dbname, dbuser, dbpass, debug=False):
         self.host = host
@@ -210,7 +211,7 @@ class DbProfilerBase(object):
         Returns:
           list: a list of the schema names.
         """
-        rs = self.dbdriver.q2rs(query)
+        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         schema_names = []
         for r in rs.resultset:
             if r[0] not in ignores:
@@ -232,7 +233,7 @@ class DbProfilerBase(object):
         Returns:
           list: a list of the table names.
         """
-        rs = self.dbdriver.q2rs(query)
+        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         table_names = []
         for r in rs.resultset:
             table_names.append(_s2u(r[0]))
@@ -253,7 +254,7 @@ class DbProfilerBase(object):
         Returns:
           list: a list of the column names.
         """
-        rs = self.dbdriver.q2rs(query)
+        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         column_names = []
         for r in rs.resultset:
             column_names.append(_s2u(r[0]))
@@ -275,7 +276,7 @@ class DbProfilerBase(object):
           list: a list of the column names and rows:
                 [[column names], [row1], [row2], ...]
         """
-        rs = self.dbdriver.q2rs(query)
+        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         sample_rows = []
         sample_rows.append(list(rs.column_names))
         for r in rs.resultset:
@@ -306,7 +307,7 @@ class DbProfilerBase(object):
           dict: {column_name, [type, len]}
         """
         data_types = {}
-        rs = self.dbdriver.q2rs(query)
+        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         for r in rs.resultset:
             data_types[r[0]] = [r[1], r[2]]
             log.trace("_query_column_datetypes: " + unicode(r))
@@ -359,7 +360,7 @@ class DbProfilerBase(object):
         _nulls = {}
         num_rows = None
         try:
-            rs = self.dbdriver.q2rs(query)
+            rs = self.dbdriver.q2rs(query, timeout=self.timeout)
             assert len(rs.resultset) == 1
 
             a = copy.copy(list(rs.resultset[0]))
@@ -421,7 +422,7 @@ class DbProfilerBase(object):
           freqs(dict): a dictionary which holds the frequencies of the columns.
                        This function updates this dictionary as output.
         """
-        rs = self.dbdriver.q2rs(query)
+        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         for r in rs.resultset:
             log.trace(("_query_value_freqs: col %s val %s freq %d" %
                        (column_name, _s2u(r[0]), _s2u(r[1]))))
@@ -451,7 +452,7 @@ class DbProfilerBase(object):
           cardinality(dict): a dictionary which holds the column cardinality.
                              This function updates this dictionary as output.
         """
-        rs = self.dbdriver.q2rs(query)
+        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         for r in rs.resultset:
             cardinalities[column_name] = int(r[0])
             log.trace(("_query_column_cardinality: col %s cardinality %d" %
@@ -585,8 +586,12 @@ class DbProfilerBase(object):
         return table_data
 
     def run(self, schema_name=None, table_name=None,
-            skip_record_validation=False, validation_rules=None):
+            skip_record_validation=False, validation_rules=None,
+            timeout=None):
         assert schema_name and table_name
+
+        # set query timeout
+        self.timeout = timeout
 
         # column profiling requires table profiling
         if self.skip_table_profiling:

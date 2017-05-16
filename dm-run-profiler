@@ -8,7 +8,8 @@ import traceback
 
 import hecatoncheir.DbProfilerBase as DbProfilerBase
 from hecatoncheir.DbProfilerException import (DbProfilerException, DriverError,
-                                              InternalError, QueryError)
+                                              InternalError, QueryError,
+                                              QueryTimeout)
 import hecatoncheir.DbProfilerFormatter as DbProfilerFormatter
 import hecatoncheir.DbProfilerRepository as DbProfilerRepository
 import hecatoncheir.oracle.OraProfiler as OraProfiler
@@ -48,6 +49,8 @@ Options:
                                Threshold number of rows to skip profiling
                                columns
 
+    --timeout=NUMBER           Query timeout in seconds (default:no timeout)
+
     --help                     Print this help.
 
 ''' % os.path.basename(sys.argv[0])
@@ -63,7 +66,8 @@ if __name__ == "__main__":
                                     "skip-table-profiling",
                                     "skip-column-profiling",
                                     "skip-record-validation",
-                                    "column-profiling-threshold="])
+                                    "column-profiling-threshold=",
+                                    "timeout="])
     except getopt.GetoptError as err:
         log.error(unicode(err))
         usage()
@@ -88,6 +92,7 @@ if __name__ == "__main__":
     skip_record_validation = False
     debug = None
     tnsname = None
+    timeout = None
 
     for o, a in opts:
         if o in ("-t"):
@@ -128,6 +133,8 @@ if __name__ == "__main__":
             column_profiling_threshold = a
         elif o in ("--skip-record-validation"):
             skip_record_validation = True
+        elif o in ("--timeout"):
+            timeout = int(a)
         elif o in ("--help"):
             usage()
             sys.exit(0)
@@ -295,6 +302,7 @@ if __name__ == "__main__":
     log.info(_("Column cardinality: %s") % tmp)
     log.info(_("Data validation: %s") % enable_validation)
     log.info(_("Obtaining sample records: %s") % enable_sample_rows)
+    log.info(_("Query Timeout: %s") % (_("%d second(s)") % timeout if timeout else _('Disabled')))
     log.info(u"----------------------------------------------")
 
     log.info(_("Profiling on %d tables.") % len(tables))
@@ -312,13 +320,19 @@ if __name__ == "__main__":
             tmp = skip_record_validation
             newdata = profiler.run(t[0], t[1],
                                    validation_rules=validation_rules,
-                                   skip_record_validation=tmp)
+                                   skip_record_validation=tmp,
+                                   timeout=timeout)
         except DriverError as e:
             log.error(_("Abort by driver error."))
             sys.exit(1)
         except QueryError as e:
             log.error(_("Profiling failed on %s.%s") %
                       (t[0], t[1]), detail=u'QueryError: '+e.value)
+            failed_count += 1
+            continue
+        except QueryTimeout as e:
+            log.error(_("Profiling failed on %s.%s") %
+                      (t[0], t[1]), detail=u'QueryTimeout: '+e.value)
             failed_count += 1
             continue
         except InternalError as e:
