@@ -127,7 +127,8 @@ class MyDriver(DbDriverBase.DbDriverBase):
                 try:
                     self.conn.rollback()
                 except Exception as e:
-                    if e.args[0] == 2006 and e.args[1] == 'MySQL server has gone away':
+                    if (e.args[0] == 2006 and
+                            e.args[1] == 'MySQL server has gone away'):
                         self.connect()
                         raise QueryTimeout(
                             "Query timeout: %s" % query,

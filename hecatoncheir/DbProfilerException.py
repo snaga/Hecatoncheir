@@ -25,6 +25,7 @@ class QueryError(Exception):
     def __str__(self):
         return self.value
 
+
 class QueryTimeout(Exception):
     source = None
     query = None

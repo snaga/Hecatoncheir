@@ -59,7 +59,8 @@ class MSSQLDriver(DbDriverBase.DbDriverBase):
     def cancel_callback(self):
         log.info("cancel_callback start")
         try:
-            conn = self.driver.connect(self.host, self.dbuser, self.dbpass, self.dbname)
+            conn = self.driver.connect(self.host, self.dbuser, self.dbpass,
+                                       self.dbname)
             cur = conn.cursor()
             log.info("KILL %d" % self.__spid)
             cur.execute("KILL %d" % self.__spid)
@@ -91,7 +92,8 @@ class MSSQLDriver(DbDriverBase.DbDriverBase):
         # See below for more information:
         # http://stackoverflow.com/questions/43529410/run-sql-kill-from-python
         if timeout:
-            raise NotImplementedError('Query timeout is not implemented on SQL Server')
+            raise NotImplementedError(
+                'Query timeout is not implemented on SQL Server')
 
         res = QueryResult(query)
         try:
@@ -117,8 +119,9 @@ class MSSQLDriver(DbDriverBase.DbDriverBase):
                     # let's consider the memory size.
                     if i > max_rows:
                         raise InternalError(
-                            u'Exceeded the record limit (%d) for QueryResult.' %
-                            max_rows, query=query)
+                           (u'Exceeded the record limit (%d) '
+                            u'for QueryResult.' % max_rows),
+                           query=query)
                     res.resultset.append(deepcopy(r))
             cur.close()
         except InternalError as e:

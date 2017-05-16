@@ -97,8 +97,8 @@ class OraDriver(DbDriverBase.DbDriverBase):
                 for i, r in enumerate(cur.fetchall()):
                     # let's consider the memory size.
                     if i > max_rows:
-                        msg = (u'Exceeded the record limit (%d) for QueryResult.' %
-                               max_rows)
+                        msg = (u'Exceeded the record limit (%d) '
+                               'for QueryResult.' % max_rows)
                         raise InternalError(msg, query=query)
                     res.resultset.append(deepcopy(r))
             cur.close()

@@ -302,7 +302,8 @@ if __name__ == "__main__":
     log.info(_("Column cardinality: %s") % tmp)
     log.info(_("Data validation: %s") % enable_validation)
     log.info(_("Obtaining sample records: %s") % enable_sample_rows)
-    log.info(_("Query Timeout: %s") % (_("%d second(s)") % timeout if timeout else _('Disabled')))
+    log.info(_("Query Timeout: %s") %
+             (_("%d second(s)") % timeout if timeout else _('Disabled')))
     log.info(u"----------------------------------------------")
 
     log.info(_("Profiling on %d tables.") % len(tables))
