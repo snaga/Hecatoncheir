@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "POT-Creation-Date: 2017-04-27 11:55+JST\n"
-"PO-Revision-Date: 2017-05-16 16:49+0900\n"
+"PO-Revision-Date: 2017-05-16 17:22+0900\n"
 "Last-Translator: Satoshi Nagayasu <snaga@uptime.jp>\n"
 "Language-Team: Satoshi Nagayasu <snaga@uptime.jp>\n"
 "MIME-Version: 1.0\n"
@@ -477,6 +477,9 @@ msgstr "レポジトリを初期化しました。"
 
 msgid "The same validation rule already exists: "
 msgstr "同一の検証ルールが既に存在します: "
+
+msgid "This feature is not implemented."
+msgstr "この機能は実装されていません"
 
 msgid "Too few arguments."
 msgstr "引数が足りません。"
