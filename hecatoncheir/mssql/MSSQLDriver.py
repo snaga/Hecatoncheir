@@ -85,6 +85,14 @@ class MSSQLDriver(DbDriverBase.DbDriverBase):
         assert isinstance(query, unicode)
         log.trace('query_to_resultset: start query=%s' % query)
 
+        # FIXME: Query timeout is not supported on SQL Server.
+        #
+        # KILL <spid> does not work as expected so far.
+        # See below for more information:
+        # http://stackoverflow.com/questions/43529410/run-sql-kill-from-python
+        if timeout:
+            raise NotImplementedError('Query timeout is not implemented on SQL Server')
+
         res = QueryResult(query)
         try:
             if self.conn is None:

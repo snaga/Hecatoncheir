@@ -344,6 +344,10 @@ if __name__ == "__main__":
             log.error(_("Interrupted by the user."))
             log.error(_("Abort."))
             sys.exit(2)
+        except NotImplementedError as e:
+            log.error(_("This feature is not implemented."), detail=e)
+            failed_count += 1
+            continue
         except Exception as e:
             log.error(_("Profiling failed on %s.%s (internal error)") %
                       (t[0], t[1]), detail=repr(e))
