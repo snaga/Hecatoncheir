@@ -7,10 +7,8 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
-from hecatoncheir import DbProfilerExp
+from hecatoncheir import DbProfilerExp, DbProfilerRepository
 from hecatoncheir.DbProfilerExp import export_html
-from hecatoncheir import DbProfilerRepository
 
 class TestDbProfilerExp(unittest.TestCase):
     repo = None

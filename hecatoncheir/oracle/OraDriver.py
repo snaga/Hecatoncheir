@@ -4,11 +4,10 @@
 from copy import deepcopy
 import threading
 
-from hecatoncheir import DbDriverBase
-from hecatoncheir.DbProfilerException import (DriverError, InternalError,
-                                              QueryError, QueryTimeout)
+from hecatoncheir import DbDriverBase, logger as log
 from hecatoncheir.QueryResult import QueryResult
-from hecatoncheir import logger as log
+from hecatoncheir.exception import (DriverError, InternalError, QueryError,
+                                    QueryTimeout)
 
 
 class OraDriver(DbDriverBase.DbDriverBase):

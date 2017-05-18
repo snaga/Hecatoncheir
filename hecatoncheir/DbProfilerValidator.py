@@ -9,16 +9,16 @@ import re
 import sys
 
 import CSVUtils
-from CSVUtils import list2csv
 import ColumnValidationCounter
-from DbProfilerException import DriverError, InternalError, ValidationError
+import logger as log
+from CSVUtils import list2csv
+from exception import DriverError, InternalError, ValidationError
+from logger import to_unicode
+from msgutil import gettext as _
 from validator.RegexpValidator import RegexpValidator
 from validator.EvalValidator import EvalValidator
 from validator.StatEvalValidator import StatEvalValidator
 from validator.SQLValidator import SQLValidator
-from logger import to_unicode
-import logger as log
-from msgutil import gettext as _
 
 
 class ValidationException(Exception):

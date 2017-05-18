@@ -6,7 +6,7 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir import ColumnValidationCounter
-from hecatoncheir import DbProfilerException
+from hecatoncheir.exception import InternalError
 
 class TestColumnValidationCounter(unittest.TestCase):
     def setUp(self):
@@ -45,12 +45,12 @@ class TestColumnValidationCounter(unittest.TestCase):
         self.assertEqual(1, c._column_counter['foo2']['bar2'])
 
         # key error
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             c.incr('foo3', 'bar')
         self.assertEqual('ColumnValidationCounter#incr() key error: foo3',
                          cm.exception.value)
 
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             c.incr('foo', 'bar3')
         self.assertEqual('ColumnValidationCounter#incr() key error: foo, bar3',
                          cm.exception.value)
@@ -85,12 +85,12 @@ class TestColumnValidationCounter(unittest.TestCase):
         self.assertEqual(1, c.get('foo2','bar2'))
 
         # key error
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             c.get('foo3', 'bar')
         self.assertEqual('ColumnValidationCounter#get() key error: foo3',
                          cm.exception.value)
 
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             c.get('foo', 'bar3')
         self.assertEqual('ColumnValidationCounter#get() key error: foo, bar3',
                          cm.exception.value)

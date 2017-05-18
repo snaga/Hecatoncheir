@@ -7,8 +7,8 @@ import time
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
 from hecatoncheir import DbProfilerRepository
+from hecatoncheir.exception import InternalError
 
 class TestDbProfilerRepository(unittest.TestCase):
     repo = None
@@ -87,7 +87,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         t['table_name'] = 'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.append_table(t)
         self.assertEqual("Could not register table data: ", cm.exception.value)
 
@@ -171,7 +171,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual('2016-04-27T10:06:41.653836', tab['timestamp'])
 
         # fail with query error
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.get_table('test\'_database', 'test_schema', 'test_table')
         self.assertEqual("Could not get table data: ", cm.exception.value)
 
@@ -417,7 +417,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual('2016-04-26T10:06:41.653836', thist[2]['timestamp']) # oldest
 
         # fail
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.get_table_history('test\'_database', 'test_schema', 'test_table')
         self.assertEqual("Could not get table data with its history: ", cm.exception.value)
 
@@ -499,7 +499,7 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         # fail
         repo = DbProfilerRepository.DbProfilerRepository("/dev/null")
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             repo.get_schemas()
         self.assertEqual("Could not get schema names: ", cm.exception.value)
 
@@ -533,7 +533,7 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         # fail
         repo = DbProfilerRepository.DbProfilerRepository("/dev/null")
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             repo.get_tags()
         self.assertEqual("Could not get tag info: ", cm.exception.value)
 
@@ -557,7 +557,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.put_tag('d.s.t', 'tag2'))
 
         # fail
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.put_tag('d.s.t2\'', 'tag3')
         self.assertEqual("Could not register tag: ", cm.exception.value)
 
@@ -574,7 +574,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual(['tag3'], self.repo.get_tag_labels('d.s.t2'))
 
         # fail
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.get_tag_labels('d.s.t2\'')
         self.assertEqual("Could not get tag labels: ", cm.exception.value)
 
@@ -630,7 +630,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual([u'file1.xls', u'file2.ppt'], self.repo.get_files('tag', 'tag1'))
 
         # invalid objtype
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.add_file('foo', 'tag1', 'file2.ppt')
         self.assertEqual(u"invalid object type: foo", cm.exception.value)
 
@@ -690,7 +690,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual(['d.s.t3'], self.repo.get_tag_ids('tag2'))
 
         # fail
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.get_tag_ids('tag2\'')
         self.assertEqual("Could not get tag ids: ", cm.exception.value)
 
@@ -705,7 +705,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual(['d.s.t'], self.repo.get_tag_ids('tag1'))
 
         # fail
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             self.repo.delete_tag_id('tag2\'')
         self.assertEqual("Could not delete tag id: ", cm.exception.value)
 

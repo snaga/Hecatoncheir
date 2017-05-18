@@ -1,12 +1,10 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-from hecatoncheir import DbProfilerBase
-from hecatoncheir.DbProfilerException import InternalError
-from hecatoncheir import DbProfilerValidator
 import OraDriver
+from hecatoncheir import DbProfilerBase, DbProfilerValidator, logger as log
 from hecatoncheir.QueryResult import QueryResult
-from hecatoncheir import logger as log
+from hecatoncheir.exception import InternalError
 from hecatoncheir.logger import str2unicode as _s2u
 from hecatoncheir.msgutil import gettext as _
 

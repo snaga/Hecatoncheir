@@ -7,8 +7,8 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
 from hecatoncheir import logger as log
+from hecatoncheir.exception import DriverError, QueryError
 from hecatoncheir.pgsql import PgProfiler
 
 class TestPgProfiler(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestPgProfiler(unittest.TestCase):
 
         # detecting error on lazy connection
         p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, 'foo', 'foo')
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             s = p.get_schema_names()
         self.assertEqual('Could not connect to the server: FATAL:  role "foo" does not exist',
                          cm.exception.value)
@@ -160,10 +160,10 @@ class TestPgProfiler(unittest.TestCase):
         self.assertEqual(28, c)
 
         # case-sensitive?
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
+        with self.assertRaises(QueryError) as cm:
             c = p.get_row_count(u'public', u'CUSTOMER')
         self.assertEqual('Could not execute a query: relation "public.CUSTOMER" does not exist', cm.exception.value)
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
+        with self.assertRaises(QueryError) as cm:
             c = p.get_row_count(u'PUBLIC', u'customer')
         self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
 
@@ -181,10 +181,10 @@ class TestPgProfiler(unittest.TestCase):
         self.assertEqual(0, c['c_comment'])
 
         # case-sensitive?
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
+        with self.assertRaises(QueryError) as cm:
             c = p.get_column_nulls(u'public', u'CUSTOMER')
         self.assertEqual('Could not execute a query: relation "public.CUSTOMER" does not exist', cm.exception.value)
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
+        with self.assertRaises(QueryError) as cm:
             c = p.get_column_nulls(u'PUBLIC', u'customer')
         self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
 
@@ -213,11 +213,11 @@ class TestPgProfiler(unittest.TestCase):
         self.assertEqual([u'accounts across the even instructions haggle ironic deposits. slyly re', u'unusual, even packages are among the ironic pains. regular, final accou'], c['c_comment'])
 
         # case-sensitive?
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
+        with self.assertRaises(QueryError) as cm:
             c = p.get_column_min_max(u'public', u'CUSTOMER')
         self.assertEqual('Could not execute a query: relation "public.CUSTOMER" does not exist', cm.exception.value)
 
-        with self.assertRaises(DbProfilerException.QueryError) as cm:
+        with self.assertRaises(QueryError) as cm:
             c = p.get_column_min_max(u'PUBLIC', u'customer')
         self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
 

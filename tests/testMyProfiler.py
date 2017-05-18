@@ -1,13 +1,13 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-from decimal import *
-import sys
 import os
+import sys
 import unittest
+from decimal import *
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.exception import DriverError, InternalError
 from hecatoncheir.mysql import MyProfiler
 
 """
@@ -42,7 +42,7 @@ class TestMyProfiler(unittest.TestCase):
 
         # detecting error on lazy connection
         p = MyProfiler.MyProfiler(self.host, self.port, self.dbname, 'foo', 'foo')
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             s = p.get_schema_names()
         self.assertEqual("Could not connect to the server: Access denied for user 'foo'@'localhost' (using password: YES)", cm.exception.value)
 
@@ -106,7 +106,7 @@ class TestMyProfiler(unittest.TestCase):
                           'quickly bold asymptotes mold carefully unusual pearls. requests boost at the blith'],
                          c[10])
 
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             p.get_sample_rows(u'public', u'SUPPLIER')
         self.assertEqual("Could not get column names of the table: public.SUPPLIER", cm.exception.value)
 

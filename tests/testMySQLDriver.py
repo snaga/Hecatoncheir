@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError, QueryTimeout
+from hecatoncheir.exception import DriverError, InternalError, QueryError, QueryTimeout
 from hecatoncheir.mysql import MyDriver
 
 class TestMyDriver(unittest.TestCase):

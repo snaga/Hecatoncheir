@@ -7,7 +7,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.exception import DriverError
 from hecatoncheir.oracle import OraProfiler
 
 class TestOracleProfiler(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestOracleProfiler(unittest.TestCase):
 
         # detecting error on lazy connection
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, 'foo', 'foo')
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             s = p.get_schema_names()
         self.assertEqual('Could not connect to the server: ORA-01017: invalid username/password; logon denied', cm.exception.value)
 

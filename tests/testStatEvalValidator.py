@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.exception import ValidationError
 from hecatoncheir.validator import StatEvalValidator
 
 class TestStatEvalValidator(unittest.TestCase):
@@ -84,7 +84,7 @@ class TestStatEvalValidator(unittest.TestCase):
                     'max': 1001,
                     'cardinality': 10}],
              'row_count': 10}
-        with self.assertRaises(DbProfilerException.ValidationError) as cm:
+        with self.assertRaises(ValidationError) as cm:
             v.validate(s)
         self.assertEqual("Column `COL2' not found. Check your validation rule again.", cm.exception.value)
 

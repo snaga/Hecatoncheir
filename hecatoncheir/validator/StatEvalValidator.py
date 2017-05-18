@@ -1,8 +1,8 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-from hecatoncheir.DbProfilerException import ValidationError
 import StatisticsValidator
+from hecatoncheir.exception import ValidationError
 from hecatoncheir.msgutil import gettext as _
 
 

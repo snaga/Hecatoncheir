@@ -8,8 +8,8 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
 from hecatoncheir import DbProfilerValidator
+from hecatoncheir.exception import DriverError, InternalError
 from hecatoncheir.pgsql import PgDriver
 
 class TestDbProfilerValidator(unittest.TestCase):
@@ -111,7 +111,7 @@ class TestDbProfilerValidator(unittest.TestCase):
         v = DbProfilerValidator.DbProfilerValidator("public", "customer")
 
         # exception. unsupported rule
-        with self.assertRaises(DbProfilerException.InternalError) as cm:
+        with self.assertRaises(InternalError) as cm:
             v.add_rule(r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8])
         self.assertEqual("Unsupported validation rule: regex", cm.exception.value)
 
@@ -363,7 +363,7 @@ class TestDbProfilerValidator(unittest.TestCase):
 
         v.add_rule_sql("c_custkey:count", "c_custkey", 'select count(distinct c_custkey) from customer', '{count} < 100')
 
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             v.validate_sql(None)
         self.assertEqual(u"Database driver not found.", cm.exception.value)
 

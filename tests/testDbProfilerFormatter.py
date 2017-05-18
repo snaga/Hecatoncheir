@@ -9,7 +9,7 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir import DbProfilerFormatter
-from hecatoncheir.DbProfilerException import DbProfilerException
+from hecatoncheir.exception import DbProfilerException
 
 class TestDbProfilerFormatter(unittest.TestCase):
     def setUp(self):

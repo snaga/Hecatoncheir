@@ -3,8 +3,8 @@
 
 import re
 
-from hecatoncheir.DbProfilerException import ValidationError
 import RecordValidator
+from hecatoncheir.exception import ValidationError
 from hecatoncheir.msgutil import gettext as _
 
 

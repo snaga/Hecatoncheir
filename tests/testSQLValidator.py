@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.exception import DriverError, ValidationError
 from hecatoncheir.pgsql import PgDriver
 from hecatoncheir.validator import SQLValidator
 
@@ -27,12 +27,12 @@ class TestSQLValidator(unittest.TestCase):
         self.assertFalse(SQLValidator.validate_eval(kv, '{COL1} >= {COL2}'))
 
         # wrong column name
-        with self.assertRaises(DbProfilerException.ValidationError) as cm:
+        with self.assertRaises(ValidationError) as cm:
             SQLValidator.validate_eval(kv, '{COL3} > 100')
         self.assertEqual("Parameter error: `{COL3} > 100' {'COL2': 201, 'COL1': 101}", cm.exception.value)
 
         # invalid syntax
-        with self.assertRaises(DbProfilerException.ValidationError) as cm:
+        with self.assertRaises(ValidationError) as cm:
             SQLValidator.validate_eval(kv, '{COL1} > 100 and')
         self.assertEqual("Syntax error: `101 > 100 and'", cm.exception.value)
 
@@ -42,24 +42,24 @@ class TestSQLValidator(unittest.TestCase):
         v = SQLValidator.SQLValidator('001-1', rule=['c_custkey', u'select count(distinct c_custkey) from customer', '{count} > 28'])
         self.assertFalse(v.validate(self.d))
 
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             v.validate(None)
         self.assertEqual('Database driver not found.', cm.exception.value)
 
     def test_validate_002(self):
         v = SQLValidator.SQLValidator('002-1', rule=['c_custkey', u'select count(distinct c_custkey1) from customer', '{count} > 27'])
-        with self.assertRaises(DbProfilerException.ValidationError) as cm:
+        with self.assertRaises(ValidationError) as cm:
             v.validate(self.d)
         self.assertEqual(u"SQL error: `select count(distinct c_custkey1) from customer'", cm.exception.value)
 
     def test_validate_003(self):
         v = SQLValidator.SQLValidator('003-1', rule=['c_custkey', u'select count(distinct c_custkey) from customer', '{countt} > 27'])
-        with self.assertRaises(DbProfilerException.ValidationError) as cm:
+        with self.assertRaises(ValidationError) as cm:
             v.validate(self.d)
         self.assertEqual(u"Parameter error: `{countt} > 27' {'count': 28L}", cm.exception.value)
 
         v = SQLValidator.SQLValidator('003-1', rule=['c_custkey', u'select count(distinct c_custkey) from customer', '{countt} === 27'])
-        with self.assertRaises(DbProfilerException.ValidationError) as cm:
+        with self.assertRaises(ValidationError) as cm:
             v.validate(self.d)
         self.assertEqual(u"Parameter error: `{countt} === 27' {'count': 28L}", cm.exception.value)
 

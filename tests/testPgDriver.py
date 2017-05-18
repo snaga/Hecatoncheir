@@ -5,8 +5,8 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir.DbProfilerException import DriverError, InternalError, QueryError, QueryTimeout
 from hecatoncheir.QueryResult import QueryResult
+from hecatoncheir.exception import DriverError, InternalError, QueryError, QueryTimeout
 from hecatoncheir.pgsql import PgDriver
 
 class TestPgDriver(unittest.TestCase):

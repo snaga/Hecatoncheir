@@ -7,9 +7,6 @@ import sys
 import traceback
 
 import hecatoncheir.DbProfilerBase as DbProfilerBase
-from hecatoncheir.DbProfilerException import (DbProfilerException, DriverError,
-                                              InternalError, QueryError,
-                                              QueryTimeout)
 import hecatoncheir.DbProfilerFormatter as DbProfilerFormatter
 import hecatoncheir.DbProfilerRepository as DbProfilerRepository
 import hecatoncheir.oracle.OraProfiler as OraProfiler
@@ -17,6 +14,8 @@ import hecatoncheir.pgsql.PgProfiler as PgProfiler
 import hecatoncheir.mysql.MyProfiler as MyProfiler
 import hecatoncheir.mssql.MSSQLProfiler as MSSQLProfiler
 import hecatoncheir.logger as log
+from hecatoncheir.exception import (DbProfilerException, DriverError,
+                                    InternalError, QueryError, QueryTimeout)
 from hecatoncheir.msgutil import gettext as _
 
 

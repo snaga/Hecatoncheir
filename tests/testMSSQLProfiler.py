@@ -6,7 +6,7 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir import DbProfilerException
+from hecatoncheir.exception import DriverError
 from hecatoncheir.mssql import MSSQLProfiler
 
 class TestMSSQLProfiler(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestMSSQLProfiler(unittest.TestCase):
 
         # detecting error on lazy connection
         p = MSSQLProfiler.MSSQLProfiler(self.host, self.port, self.dbname, 'foo', 'foo')
-        with self.assertRaises(DbProfilerException.DriverError) as cm:
+        with self.assertRaises(DriverError) as cm:
             s = p.get_schema_names()
         self.assertTrue(cm.exception.value.startswith('Could not connect to the server: '))
 
