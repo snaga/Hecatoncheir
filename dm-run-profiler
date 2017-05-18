@@ -185,6 +185,8 @@ if __name__ == "__main__":
     else:
         log.info(_("Conn info: %s@%s:%s/%s") % (dbuser, host, port, dbname))
 
+    dbname = unicode(dbname)
+
     profiler = None
     if dbtype == 'pgsql':
         profiler = PgProfiler.PgProfiler(host, port, dbname, dbuser,
@@ -318,7 +320,7 @@ if __name__ == "__main__":
         try:
             count += 1
             tmp = skip_record_validation
-            newdata = profiler.run(t[0], t[1],
+            newdata = profiler.run(unicode(t[0]), unicode(t[1]),
                                    validation_rules=validation_rules,
                                    skip_record_validation=tmp,
                                    timeout=timeout)

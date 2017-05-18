@@ -13,7 +13,8 @@ import DbProfilerValidator
 import logger as log
 from DbProfilerFormatter import DbProfilerJSONEncoder
 from exception import DbProfilerException, InternalError, QueryError
-from logger import str2unicode as _s2u
+from logger import str2unicode as _s2u, to_unicode as _2u
+from metadata import TableColumnMeta, TableMeta
 from msgutil import gettext as _
 
 
@@ -37,118 +38,6 @@ def migrate_table_meta(olddata, newdata):
                 c['fk_ref'] = oldc.get('fk_ref')
 
     return newdata
-
-
-class TableColumnMeta:
-    name = None
-    name_nls = None
-    datatype = []
-    nulls = None
-    min = None
-    max = None
-    most_freq_values = None
-    least_freq_values = None
-    cardinality = None
-    validation = {}
-    comment = None
-
-    def __init__(self, schema_name, table_name, column_name=None):
-        self.schema_name = schema_name
-        self.table_name = table_name
-        self.name = column_name
-        self.most_freq_values = []
-        self.least_freq_values = []
-
-    def makedic(self):
-        dic = {}
-        dic['column_name'] = self.name
-        dic['column_name_nls'] = self.name_nls
-        dic['data_type'] = self.datatype
-        dic['nulls'] = self.nulls
-        dic['min'] = self.min
-        dic['max'] = self.max
-        dic['most_freq_vals'] = []
-        for v in self.most_freq_values:
-            dic['most_freq_vals'].append({"value": v[0], "freq": v[1]})
-        dic['least_freq_vals'] = []
-        for v in self.least_freq_values:
-            dic['least_freq_vals'].append({"value": v[0], "freq": v[1]})
-        dic['cardinality'] = self.cardinality
-        dic['validation'] = self.validation
-        dic['comment'] = self.comment
-        return dic
-
-    def from_json(self, j):
-        dic = json.loads(j)
-        self.name = dic['column_name']
-        self.name_nls = dic['column_name_nls']
-        self.datatype = dic['data_type']
-        self.nulls = dic['nulls']
-        self.min = dic['min']
-        self.max = dic['max']
-        for v in dic['most_freq_vals']:
-            self.most_freq_values.append([v['value'], v['freq']])
-        for v in dic['least_freq_vals']:
-            self.least_freq_values.append([v['value'], v['freq']])
-        self.cardinality = dic['cardinality']
-        self.validation = dic['validation']
-        self.comment = dic['comment']
-
-    def to_json(self):
-        return json.dumps(self.makedic(), cls=DbProfilerJSONEncoder)
-
-    def __repr__(self):
-        return self.to_json()
-
-
-class TableMeta:
-    table_name_nls = None
-    timestamp = None
-    row_count = None
-    column_names = None
-    columns = None
-    comment = None
-    sample_rows = None
-
-    def __init__(self, database_name, schema_name, table_name):
-        self.database_name = database_name
-        self.schema_name = schema_name
-        self.table_name = table_name
-        self.columns = []
-
-    def makedic(self):
-        dic = {}
-        dic['database_name'] = self.database_name
-        dic['schema_name'] = self.schema_name
-        dic['table_name'] = self.table_name
-        dic['table_name_nls'] = self.table_name_nls
-        dic['timestamp'] = self.timestamp
-        dic['row_count'] = self.row_count
-        dic['columns'] = []
-        for c in self.columns:
-            dic['columns'].append(c.makedic())
-        dic['comment'] = self.comment
-        dic['sample_rows'] = self.sample_rows
-        log.debug('dic: %s' % dic)
-        return dic
-
-    def from_json(self, j):
-        dic = json.loads(j)
-        self.table_name_nls = dic['table_name_nls']
-        self.timestamp = dateutil.parser.parse(dic['timestamp'])
-        self.row_count = dic['row_count']
-        for c in dic['columns']:
-            cm = TableColumnMeta(self.schema_name, self.table_name)
-            cm.from_json(json.dumps(c))
-            self.columns.append(cm)
-        self.comment = dic['comment']
-        self.sample_rows = json.loads(dic.get('sample_rows', 'null'))
-
-    def to_json(self):
-        return json.dumps(self.makedic(), cls=DbProfilerJSONEncoder, indent=2)
-
-    def __repr__(self):
-        return self.to_json()
 
 
 class DbProfilerBase(object):
@@ -515,15 +404,15 @@ class DbProfilerBase(object):
             log.info(_("Number of nulls: start"))
             nulls = self.get_column_nulls(schema_name, table_name)
             for col in tablemeta.column_names:
-                columnmeta[col].nulls = nulls[col]
+                columnmeta[col].nulls = long(nulls[col])
             log.info(_("Number of nulls: end"))
 
         if self.profile_min_max_enabled is True:
             log.info(_("Min/Max values: start"))
             minmax = self.get_column_min_max(schema_name, table_name)
             for col in tablemeta.column_names:
-                columnmeta[col].min = minmax[col][0]
-                columnmeta[col].max = minmax[col][1]
+                columnmeta[col].min = _2u(str(minmax[col][0]))
+                columnmeta[col].max = _2u(str(minmax[col][1]))
             log.info(_("Min/Max values: end"))
 
         if self.profile_most_freq_values_enabled > 0:
@@ -608,7 +497,7 @@ class DbProfilerBase(object):
         # column meta
         columnmeta = {}
         for col in tablemeta.column_names:
-            columnmeta[col] = TableColumnMeta(schema_name, table_name, col)
+            columnmeta[col] = TableColumnMeta(unicode(col))
 
         log.info(_("Data types: start"))
         data_types = self.get_column_datatypes(schema_name, table_name)

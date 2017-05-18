@@ -7,9 +7,8 @@ import sys
 import unittest
 sys.path.append('..')
 
-from hecatoncheir.DbProfilerBase import TableColumnMeta
-from hecatoncheir.DbProfilerBase import TableMeta
 from hecatoncheir.DbProfilerBase import migrate_table_meta
+from hecatoncheir.metadata import TableColumnMeta, TableMeta
 
 class TestTableColumnMeta(unittest.TestCase):
     def setUp(self):
@@ -68,35 +67,42 @@ class TestTableColumnMeta(unittest.TestCase):
                          t2)
 
     def test_tablecolumnmeta_001(self):
-        m = TableColumnMeta('s', 't')
-        self.assertEqual('s', m.schema_name)
-        self.assertEqual('t', m.table_name)
-        self.assertIsNone(m.name)
-
-        m = TableColumnMeta('s', 't', 'c')
-        self.assertEqual('s', m.schema_name)
-        self.assertEqual('t', m.table_name)
+        m = TableColumnMeta(u'c')
         self.assertEqual('c', m.name)
 
+        # unicode only, not str.
+        with self.assertRaises(AssertionError) as cm:
+            c = TableColumnMeta('c')
+
+        # not empty string
+        with self.assertRaises(ValueError) as cm:
+            c = TableColumnMeta('')
+        self.assertEqual("Invalid column name: ''", cm.exception[0])
+
+        # not None
+        with self.assertRaises(ValueError) as cm:
+            c = TableColumnMeta(None)
+        self.assertEqual("Invalid column name: 'None'", cm.exception[0])
+
     def test_makedic_001(self):
-        m = TableColumnMeta('s', 't', 'c')
-        self.assertEqual({'most_freq_vals': [], 'data_type': [], 'min': None, 'max': None, 'nulls': None, 'validation': {}, 'least_freq_vals': [], 'cardinality': None, 'column_name': 'c', 'column_name_nls': None, 'comment': None}, m.makedic())
+        m = TableColumnMeta(u'c')
+        self.assertEqual({'most_freq_vals': [], 'data_type': [], 'min': None, 'max': None, 'nulls': None, 'validation': [], 'least_freq_vals': [], 'cardinality': None, 'column_name': 'c', 'column_name_nls': None, 'comment': None}, m.makedic())
 
         m.datatype = ['v', 1]
-        m.nulls = 2
-        m.min = 3
-        m.max = 4
+        m.nulls = 2L
+        m.min = u'3'
+        m.max = u'4'
         m.most_freq_values = [['a', 5], ['b', 6], ['c', 7]]
         m.least_freq_values = [['d', 8], ['e', 9], ['f', 10]]
         m.cardinality = 11
-        m.validation = {'L1': 12, 'L2': 13}
-        m.comment = 'm'
+        m.validation = [{'L1': 12, 'L2': 13}]
+        m.comment = u'm'
         self.assertEqual({'column_name': 'c',
                           'column_name_nls': None,
                           'data_type': ['v', 1],
-                          'min': 3,
-                          'max': 4,
-                          'nulls': 2,
+                          'min': u'3',
+                          'max': u'4',
+                          'nulls': 2L,
                           'most_freq_vals': [{'freq': 5, 'value': 'a'},
                                              {'freq': 6, 'value': 'b'},
                                              {'freq': 7, 'value': 'c'}],
@@ -104,35 +110,35 @@ class TestTableColumnMeta(unittest.TestCase):
                                               {'freq': 9, 'value': 'e'},
                                               {'freq': 10, 'value': 'f'}],
                           'cardinality': 11,
-                          'validation': {'L1': 12, 'L2': 13},
+                          'validation': [{'L1': 12, 'L2': 13}],
                           'comment': 'm'}, m.makedic())
 
     def test_repr_001(self):
-        m = TableColumnMeta('s', 't', 'c')
-        m.name_nls = 'n'
+        m = TableColumnMeta(u'c')
+        m.name_nls = u'n'
         m.datatype = ['v', 1]
-        m.nulls = 2
-        m.min = 3
-        m.max = 4
+        m.nulls = 2L
+        m.min = u'3'
+        m.max = u'4'
         m.most_freq_values = [['a', 5], ['b', 6], ['c', 7]]
         m.least_freq_values = [['d', 8], ['e', 9], ['f', 10]]
         m.cardinality = 11
-        m.validation = {'L1': 12, 'L2': 13}
-        m.comment = 'm'
-        self.assertEqual('{"comment": "m", "most_freq_vals": [{"freq": 5, "value": "a"}, {"freq": 6, "value": "b"}, {"freq": 7, "value": "c"}], "data_type": ["v", 1], "min": 3, "max": 4, "nulls": 2, "validation": {"L2": 13, "L1": 12}, "least_freq_vals": [{"freq": 8, "value": "d"}, {"freq": 9, "value": "e"}, {"freq": 10, "value": "f"}], "column_name_nls": "n", "cardinality": 11, "column_name": "c"}', unicode(m))
+        m.validation = [{'L1': 12, 'L2': 13}]
+        m.comment = u'm'
+        self.assertEqual(u'{"comment": "m", "nulls": 2, "data_type": ["v", 1], "min": "3", "max": "4", "most_freq_vals": [{"freq": 5, "value": "a"}, {"freq": 6, "value": "b"}, {"freq": 7, "value": "c"}], "least_freq_vals": [{"freq": 8, "value": "d"}, {"freq": 9, "value": "e"}, {"freq": 10, "value": "f"}], "column_name_nls": "n", "cardinality": 11, "validation": [{"L2": 13, "L1": 12}], "column_name": "c"}', unicode(m))
 
     def test_from_json_001(self):
-        j = '{"most_freq_vals": [{"freq": 5, "value": "a"}, {"freq": 6, "value": "b"}, {"freq": 7, "value": "c"}], "data_type": ["v", 1], "min": 3, "max": 4, "nulls": 2, "validation": {"L2": 13, "L1": 12}, "least_freq_vals": [{"freq": 8, "value": "d"}, {"freq": 9, "value": "e"}, {"freq": 10, "value": "f"}], "cardinality": 11, "column_name": "c", "column_name_nls": "n", "comment": "m"}'
+        j = '{"most_freq_vals": [{"freq": 5, "value": "a"}, {"freq": 6, "value": "b"}, {"freq": 7, "value": "c"}], "data_type": ["v", 1], "min": "3", "max": "4", "nulls": 2, "validation": [{"L2": 13, "L1": 12}], "least_freq_vals": [{"freq": 8, "value": "d"}, {"freq": 9, "value": "e"}, {"freq": 10, "value": "f"}], "cardinality": 11, "column_name": "c", "column_name_nls": "n", "comment": "m"}'
 
-        m = TableColumnMeta('s', 't', 'c')
+        m = TableColumnMeta(u'c')
         m.from_json(j)
 
         self.assertEqual({'column_name': 'c',
                           'column_name_nls': 'n',
                           'data_type': ['v', 1],
-                          'min': 3,
-                          'max': 4,
-                          'nulls': 2,
+                          'min': u'3',
+                          'max': u'4',
+                          'nulls': 2L,
                           'most_freq_vals': [{'freq': 5, 'value': 'a'},
                                              {'freq': 6, 'value': 'b'},
                                              {'freq': 7, 'value': 'c'}],
@@ -140,7 +146,7 @@ class TestTableColumnMeta(unittest.TestCase):
                                               {'freq': 9, 'value': 'e'},
                                               {'freq': 10, 'value': 'f'}],
                           'cardinality': 11,
-                          'validation': {'L1': 12, 'L2': 13},
+                          'validation': [{'L1': 12, 'L2': 13}],
                           'comment': 'm'}, m.makedic())
 
 
@@ -153,13 +159,27 @@ class TestTableMeta(unittest.TestCase):
         pass
 
     def test_tablemeta_001(self):
-        m = TableMeta('d', 's', 't')
+        m = TableMeta(u'd', u's', u't')
         self.assertEqual('d', m.database_name)
         self.assertEqual('s', m.schema_name)
         self.assertEqual('t', m.table_name)
 
+        # unicode only, not str.
+        with self.assertRaises(AssertionError) as cm:
+            c = TableMeta('d', u's', u't')
+
+        # not empty string
+        with self.assertRaises(ValueError) as cm:
+            c = TableMeta('', u's', u't')
+        self.assertEqual("Invalid database name: ''", cm.exception[0])
+
+        # not None
+        with self.assertRaises(ValueError) as cm:
+            c = TableMeta(u'd', None, u't')
+        self.assertEqual("Invalid schema name: 'None'", cm.exception[0])
+
     def test_makedic_001(self):
-        m = TableMeta('d', 's', 't')
+        m = TableMeta(u'd', u's', u't')
         self.assertEqual('d', m.database_name)
         self.assertEqual('s', m.schema_name)
         self.assertEqual('t', m.table_name)
@@ -168,42 +188,42 @@ class TestTableMeta(unittest.TestCase):
 
         m.table_name_nls = u'テーブル'
         m.timestamp = datetime(2016, 11, 5, 18, 49, 47, 795589)
-        m.row_count = 1
-        m.comment = 'M'
+        m.row_count = 1L
+        m.comment = u'M'
 
-        c = TableColumnMeta('s', 't', 'c')
-        c.name_nls = 'n'
+        c = TableColumnMeta(u'c')
+        c.name_nls = u'n'
         c.datatype = ['v', 1]
-        c.nulls = 2
-        c.min = 3
-        c.max = 4
+        c.nulls = 2L
+        c.min = u'3'
+        c.max = u'4'
         c.most_freq_values = [['a', 5], ['b', 6], ['c', 7]]
         c.least_freq_values = [['d', 8], ['e', 9], ['f', 10]]
         c.cardinality = 11
-        c.validation = {'L1': 12, 'L2': 13}
-        c.comment = 'm'
+        c.validation = [{'L1': 12, 'L2': 13}]
+        c.comment = u'm'
 
         m.columns.append(c)
 
         self.assertEqual({'timestamp': datetime(2016, 11, 5, 18, 49, 47, 795589),
-                          'database_name': 'd',
+                          'database_name': u'd',
                           'table_name_nls': u'\u30c6\u30fc\u30d6\u30eb',
-                          'row_count': 1,
-                          'table_name': 't',
-                          'schema_name': 's',
-                          'comment': 'M',
+                          'row_count': 1L,
+                          'table_name': u't',
+                          'schema_name': u's',
+                          'comment': u'M',
                           'sample_rows': None,
-                          'columns': [{'column_name': 'c',
-                                       'column_name_nls': 'n',
+                          'columns': [{'column_name': u'c',
+                                       'column_name_nls': u'n',
                                        'data_type': ['v', 1],
-                                       'min': 3,
-                                       'max': 4,
-                                       'nulls': 2,
+                                       'min': u'3',
+                                       'max': u'4',
+                                       'nulls': 2L,
                                        'most_freq_vals': [{'freq': 5, 'value': 'a'}, {'freq': 6, 'value': 'b'}, {'freq': 7, 'value': 'c'}],
                                        'least_freq_vals': [{'freq': 8, 'value': 'd'}, {'freq': 9, 'value': 'e'}, {'freq': 10, 'value': 'f'}],
                                        'cardinality': 11,
-                                       'validation': {'L2': 13, 'L1': 12},
-                                       'comment': 'm'}]}, m.makedic())
+                                       'validation': [{'L2': 13, 'L1': 12}],
+                                       'comment': u'm'}]}, m.makedic())
 #        print(m.to_json())
 
     def test_from_json_001(self):
@@ -236,13 +256,13 @@ class TestTableMeta(unittest.TestCase):
         "v",
         1
       ],
-      "min": 3,
-      "max": 4,
+      "min": "3",
+      "max": "4",
       "nulls": 2,
-      "validation": {
+      "validation": [{
         "L2": 13,
         "L1": 12
-      },
+      }],
       "least_freq_vals": [
         {
           "freq": 8,
@@ -266,13 +286,13 @@ class TestTableMeta(unittest.TestCase):
 }
 '''
 
-        m = TableMeta('d', 's', 't')
+        m = TableMeta(u'd', u's', u't')
         m.from_json(j)
 
         self.assertEqual({'timestamp': datetime(2016, 11, 5, 18, 49, 47, 795589),
-                          'database_name': 'd',
+                          'database_name': u'd',
                           'table_name_nls': u'\u30c6\u30fc\u30d6\u30eb',
-                          'row_count': 1,
+                          'row_count': 1L,
                           'table_name': 't',
                           'schema_name': 's',
                           'comment': 'M',
@@ -280,13 +300,13 @@ class TestTableMeta(unittest.TestCase):
                           'columns': [{'column_name': 'c',
                                        'column_name_nls': 'n',
                                        'data_type': ['v', 1],
-                                       'min': 3,
-                                       'max': 4,
-                                       'nulls': 2,
+                                       'min': u'3',
+                                       'max': u'4',
+                                       'nulls': 2L,
                                        'most_freq_vals': [{'freq': 5, 'value': 'a'}, {'freq': 6, 'value': 'b'}, {'freq': 7, 'value': 'c'}],
                                        'least_freq_vals': [{'freq': 8, 'value': 'd'}, {'freq': 9, 'value': 'e'}, {'freq': 10, 'value': 'f'}],
                                        'cardinality': 11,
-                                       'validation': {'L2': 13, 'L1': 12},
+                                       'validation': [{'L2': 13, 'L1': 12}],
                                        'comment': 'm'}]}, m.makedic())
 
 if __name__ == '__main__':
