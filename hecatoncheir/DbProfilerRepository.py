@@ -249,13 +249,13 @@ SELECT database_name,
         log.trace("get_schemas: end")
         return schemas
 
-    def get_tags(self):
+    def get_tag_label_with_count(self):
         """Get a list of tag names and number of tags associated with tables.
 
         Returns:
             list: a list of lists: [[tag,num of tables], ...]
         """
-        log.trace("get_tags: start")
+        log.trace("get_tag_label_with_count: start")
 
         query = """
 SELECT tag_label,
@@ -271,15 +271,15 @@ SELECT tag_label,
         tags = []
         try:
             cursor = self._conn.cursor()
-            log.debug("get_tags: query = %s" % query)
+            log.debug("get_tag_label_with_count: query = %s" % query)
             for r in cursor.execute(query):
                 tags.append([r[0], r[1]])
         except Exception as e:
-            log.trace("get_tags: " + unicode(e))
+            log.trace("get_tag_label_with_count: " + unicode(e))
             raise InternalError(_("Could not get tag info: "),
                                 query=query, source=e)
 
-        log.trace("get_tags: end")
+        log.trace("get_tag_label_with_count: end")
         return tags
 
     def has_table_record(self, tab):

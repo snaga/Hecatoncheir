@@ -195,7 +195,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         tags = []
     tags2 = []
     tags3 = []
-    for t in sorted(repo.get_tags()):
+    for t in sorted(repo.get_tag_label_with_count()):
         if t[0] in tags:
             tags2.append(t)
         else:

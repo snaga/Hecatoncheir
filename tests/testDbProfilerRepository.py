@@ -503,7 +503,7 @@ class TestDbProfilerRepository(unittest.TestCase):
             repo.get_schemas()
         self.assertEqual("Could not get schema names: ", cm.exception.value)
 
-    def test_get_tags_001(self):
+    def test_get_tag_label_with_count_001(self):
         t = {}
         t['database_name'] = u'test_database'
         t['schema_name'] = u'test_schema'
@@ -529,12 +529,12 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual([[u'tag1', 2],
                           [u'tag2', 1],
                           [u'tag3', 1]],
-                         self.repo.get_tags())
+                         self.repo.get_tag_label_with_count())
 
         # fail
         repo = DbProfilerRepository.DbProfilerRepository("/dev/null")
         with self.assertRaises(InternalError) as cm:
-            repo.get_tags()
+            repo.get_tag_label_with_count()
         self.assertEqual("Could not get tag info: ", cm.exception.value)
 
     def test_has_table_record_001(self):
