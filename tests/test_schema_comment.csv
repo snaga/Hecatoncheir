@@ -1,2 +1,2 @@
-DATABASE_NAME,SCHEMA_NAME,SCHEMA_COMMENT
-dqwbtest,public,これはpublicスキーマです
+DATABASE_NAME,SCHEMA_NAME,SCHEMA_DESCRIPTION,SCHEMA_COMMENT
+dqwbtest,public,短い説明,これはpublicスキーマです

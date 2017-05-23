@@ -85,22 +85,24 @@ Schema Comment CSV
 
 A CSV file to import Schema Comment must have following fields in its header line (the 1st line).
 
-+-----------------+------------------------+-----------+
-| Field Name      | Value                  | Required? |
-+=================+========================+===========+
-| DATABASE_NAME   | Database Name          | Required  |
-+-----------------+------------------------+-----------+
-| SCHEMA_NAME     | Schema Name            | Required  |
-+-----------------+------------------------+-----------+
-| SCHEMA_COMMENT  | Schema Comment         | Required  |
-+-----------------+------------------------+-----------+
++--------------------+--------------------------+-----------+
+| Field Name         | Value                    | Required? |
++====================+==========================+===========+
+| DATABASE_NAME      | Database Name            | Required  |
++--------------------+--------------------------+-----------+
+| SCHEMA_NAME        | Schema Name              | Required  |
++--------------------+--------------------------+-----------+
+| SCHEMA_DESCRIPTION | Short Schema Description | Required  |
++--------------------+--------------------------+-----------+
+| SCHEMA_COMMENT     | Schema Comment           | Required  |
++--------------------+--------------------------+-----------+
 
 Schema comment can be written in the Markdown format.
 
 ::
 
-  DATABASE_NAME,SCHEMA_NAME,SCHEMA_COMMENT
-  ORCL,SCOTT,This is SCOTT schema.
+  DATABASE_NAME,SCHEMA_NAME,SCHEMA_DESCRIPTION,SCHEMA_COMMENT
+  ORCL,SCOTT,Schema for FOO BAR,This is SCOTT schema.
 
 
 Tag Comment CSV
@@ -108,20 +110,22 @@ Tag Comment CSV
 
 A CSV file to import Tag Comment must have following fields in its header line (the 1st line).
 
-+--------------+------------------------+-----------+
-| Field Name   | Value                  | Required? |
-+==============+========================+===========+
-| TAG_NAME     | Tag Name               | Required  |
-+--------------+------------------------+-----------+
-| TAG_COMMENT  | Tag Comment            | Required  |
-+--------------+------------------------+-----------+
++-----------------+------------------------+-----------+
+| Field Name      | Value                  | Required? |
++=================+========================+===========+
+| TAG_NAME        | Tag Name               | Required  |
++-----------------+------------------------+-----------+
+| TAG_DESCRIPTION | Short Tag Description  | Required  |
++-----------------+------------------------+-----------+
+| TAG_COMMENT     | Tag Comment            | Required  |
++-----------------+------------------------+-----------+
 
 Tag comment can be written in the Markdown format.
 
 ::
 
-  TAG_NAME,TAG_COMMENT
-  TAG1,This a comment on TAG1.
+  TAG_NAME,TAG_DESCRIPTION,TAG_COMMENT
+  TAG1,Data Set AAA,This a comment on TAG1.
 
 
 Data Mapping CSV

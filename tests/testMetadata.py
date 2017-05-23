@@ -8,7 +8,7 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir.DbProfilerBase import migrate_table_meta
-from hecatoncheir.metadata import TableColumnMeta, TableMeta
+from hecatoncheir.metadata import TableColumnMeta, TableMeta, Tag, TagDesc, SchemaDesc
 
 class TestTableColumnMeta(unittest.TestCase):
     def setUp(self):
@@ -308,6 +308,65 @@ class TestTableMeta(unittest.TestCase):
                                        'cardinality': 11,
                                        'validation': [{'L2': 13, 'L1': 12}],
                                        'comment': 'm'}]}, m.makedic())
+
+class TestTag(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        pass
+
+    def test_tag_001(self):
+        t = Tag(u'l', u't')
+        self.assertEqual(u'l', t.label)
+        self.assertEqual(u't', t.target)
+
+        with self.assertRaises(AssertionError) as cm:
+            t = Tag('l', u't')
+
+        with self.assertRaises(ValueError) as cm:
+            t = Tag(u'', u't')
+        self.assertEqual("Invalid tag label: ''", cm.exception[0])
+
+        with self.assertRaises(ValueError) as cm:
+            t = Tag(u'l', None)
+        self.assertEqual("Invalid tag target: 'None'", cm.exception[0])
+
+
+class TestTagDesc(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        pass
+
+    def test_tagdesc_001(self):
+        t = TagDesc(u'l', u'd', u'c')
+        self.assertEqual(u'l', t.label)
+        self.assertEqual(u'd', t.desc)
+        self.assertEqual(u'c', t.comment)
+
+        with self.assertRaises(AssertionError) as cm:
+            t = TagDesc('l', u'd', u'c')
+
+        with self.assertRaises(ValueError) as cm:
+            t = TagDesc(u'', u'd', u'c')
+        self.assertEqual("Invalid tag label: ''", cm.exception[0])
+
+
+class TestSchemaDesc(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        pass
+
+    def test_schemadesc_001(self):
+        t = SchemaDesc(u's', u'd', u'c')
+        self.assertEqual(u's', t.name)
+        self.assertEqual(u'd', t.desc)
+        self.assertEqual(u'c', t.comment)
+
+        with self.assertRaises(AssertionError) as cm:
+            t = SchemaDesc('s', u'd', u'c')
+
+        with self.assertRaises(ValueError) as cm:
+            t = SchemaDesc(u'', u'd', u'c')
+        self.assertEqual("Invalid schema name: ''", cm.exception[0])
 
 if __name__ == '__main__':
     unittest.main()

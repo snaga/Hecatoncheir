@@ -43,6 +43,22 @@ def parse_table_name(s):
     return (db, schema, table)
 
 
+def append_schema_desc(repo, schemas):
+    tmp = []
+    for s in schemas:
+        desc = repo.get_schema_description(u'%s.%s' % (s[0], s[1]))
+        tmp.append([s[0], s[1], s[2], desc.desc if desc else None])
+    return tmp
+
+
+def append_tag_desc(repo, tags):
+    tmp = []
+    for s in tags:
+        desc = repo.get_tag_description(s[0])
+        tmp.append([s[0], s[1], desc.desc if desc else None])
+    return tmp
+
+
 def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
                 output_title='title', output_path='./html'):
     """
@@ -146,11 +162,13 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         filename = output_path + "/%s.html" % schema
         files = (repo.get_files('schema', schema) if
                  repo.get_files('schema', schema) else [])
+        desc = repo.get_schema_description(schema)
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_schema[schema],
-                comment=repo.get_schema_comment(schema),
+                comment=desc.comment if desc else None,
                 files=['%s/%s' % (schema, x) for x in files],
-                schemas=[[d, s, len(tables_by_schema[schema])]],
+                schemas=[[d, s, len(tables_by_schema[schema]),
+                          desc.desc if desc else None]],
                 reponame=schema, glossary_terms=terms,
                 template_file=template_index))
 
@@ -159,11 +177,13 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         filename = output_path + "/tag-%s.html" % tag
         files = (repo.get_files('tag', tag) if
                  repo.get_files('tag', tag) else [])
+        desc = repo.get_tag_description(tag)
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_tag[tag],
-                comment=repo.get_tag_comment(tag),
+                comment=desc.comment if desc else None,
                 files=['tag-%s/%s' % (tag, x) for x in files],
-                tags=[[tag, len(tables_by_tag[tag])]],
+                tags=[[tag, len(tables_by_tag[tag]),
+                       desc.desc if desc else None]],
                 reponame=tag, glossary_terms=terms,
                 template_file=template_index))
 
@@ -190,12 +210,13 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         for s in repo.get_schemas():
             if s[1] in schemas:
                 schemas2.append(s)
+    schemas2 = append_schema_desc(repo, schemas2)
 
     if tags is None:
         tags = []
     tags2 = []
     tags3 = []
-    for t in sorted(repo.get_tags()):
+    for t in sorted(repo.get_tag_label_with_count()):
         if t[0] in tags:
             tags2.append(t)
         else:
@@ -203,6 +224,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     # sort by tags
     tags2 = [y for x in tags for y in tags2 if x == y[0]]
     tags2.extend(tags3)
+    tags2 = append_tag_desc(repo, tags2)
     export_file(filename, DbProfilerFormatter.to_index_html(
             tables_all, schemas=schemas2, tags=tags2,
             show_validation='both', reponame=output_title,

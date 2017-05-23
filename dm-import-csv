@@ -9,6 +9,7 @@ import sys
 import hecatoncheir.CSVUtils as CSVUtils
 import hecatoncheir.DbProfilerRepository as DbProfilerRepository
 import hecatoncheir.logger as log
+from hecatoncheir.metadata import TagDesc, SchemaDesc
 from hecatoncheir.msgutil import gettext as _
 
 table_csv_keys = [
@@ -64,6 +65,7 @@ validation_csv_attrs = [
 schema_comment_csv_keys = [
     'DATABASE_NAME',
     'SCHEMA_NAME',
+    'SCHEMA_DESCRIPTION',
     'SCHEMA_COMMENT'
 ]
 
@@ -72,6 +74,7 @@ schema_comment_csv_attrs = [
 
 tag_comment_csv_keys = [
     'TAG_NAME',
+    'TAG_DESCRIPTION',
     'TAG_COMMENT'
 ]
 
@@ -248,12 +251,14 @@ if __name__ == "__main__":
                                         r['param'], r['param2'])
             merged += 1
         elif format == 'schemacomment':
-            repo.set_schema_comment(("%s.%s" %
-                                     (r['database_name'], r['schema_name'])),
-                                    r['schema_comment'])
+            s = u"%s.%s" % (r['database_name'], r['schema_name'])
+            desc = SchemaDesc(s, r['schema_description'], r['schema_comment'])
+            repo.set_schema_description(desc)
             merged += 1
         elif format == 'tagcomment':
-            repo.set_tag_comment(r['tag_name'], r['tag_comment'])
+            desc = TagDesc(r['tag_name'], r['tag_description'],
+                           r['tag_comment'])
+            repo.set_tag_description(desc)
             merged += 1
 
     for fk in fk_list:

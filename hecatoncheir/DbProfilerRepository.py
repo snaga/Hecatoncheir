@@ -9,6 +9,7 @@ from datetime import datetime
 import DbProfilerFormatter
 import logger as log
 from exception import DbProfilerException, InternalError
+from metadata import Tag, TagDesc, SchemaDesc
 from logger import str2unicode as _s2u
 from msgutil import gettext as _
 
@@ -248,13 +249,13 @@ SELECT database_name,
         log.trace("get_schemas: end")
         return schemas
 
-    def get_tags(self):
+    def get_tag_label_with_count(self):
         """Get a list of tag names and number of tags associated with tables.
 
         Returns:
             list: a list of lists: [[tag,num of tables], ...]
         """
-        log.trace("get_tags: start")
+        log.trace("get_tag_label_with_count: start")
 
         query = """
 SELECT tag_label,
@@ -270,15 +271,15 @@ SELECT tag_label,
         tags = []
         try:
             cursor = self._conn.cursor()
-            log.debug("get_tags: query = %s" % query)
+            log.debug("get_tag_label_with_count: query = %s" % query)
             for r in cursor.execute(query):
                 tags.append([r[0], r[1]])
         except Exception as e:
-            log.trace("get_tags: " + unicode(e))
+            log.trace("get_tag_label_with_count: " + unicode(e))
             raise InternalError(_("Could not get tag info: "),
                                 query=query, source=e)
 
-        log.trace("get_tags: end")
+        log.trace("get_tag_label_with_count: end")
         return tags
 
     def has_table_record(self, tab):
@@ -376,10 +377,11 @@ INSERT INTO repo VALUES ('{database_name}','{schema_name}','{table_name}',
         # Remove all tag id/label pairs to replace with new ones.
         tagid = "%s.%s.%s" % (tab['database_name'], tab['schema_name'],
                               tab['table_name'])
-        self.delete_tag_id(tagid)
+        self.delete_tags(target=tagid)
         if tab.get('tags'):
             for label in tab['tags']:
-                self.put_tag(tagid, label)
+                if label:
+                    self.put_tag(Tag(label, tagid))
 
         log.trace("append_table: end")
         return True
@@ -466,56 +468,59 @@ SELECT data
 
         return table_history
 
-    def get_tag_labels(self, tag_id):
-        labels = []
-        try:
-            cursor = self._conn.cursor()
-            query = u"SELECT tag_label FROM tags WHERE tag_id = '%s'" % tag_id
-            for r in cursor.execute(query):
-                labels.append(r[0])
-        except Exception as e:
-            raise InternalError(_("Could not get tag labels: "),
-                                query=query, source=e)
-        return labels
+    def get_tags(self, label=None, target=None):
+        assert isinstance(label, unicode) or label is None
+        assert isinstance(target, unicode) or target is None
 
-    def get_tag_ids(self, tag_label):
-        ids = []
+        tags = []
         try:
             cursor = self._conn.cursor()
-            query = (u"SELECT tag_id FROM tags WHERE tag_label = '%s'" %
-                     tag_label)
-            for r in cursor.execute(query):
-                ids.append(r[0])
-        except Exception as e:
-            raise InternalError(_("Could not get tag ids: "),
-                                query=query, source=e)
-        return ids
+            where = u''
+            if label:
+                where = u"WHERE tag_label = '%s'" % label
+            elif target:
+                where = u"WHERE tag_id = '%s'" % target
 
-    def delete_tag_id(self, tag_id):
-        log.trace('delete_tag_id: start %s' % tag_id)
+            query = u"SELECT tag_label,tag_id FROM tags %s" % where
+            for r in cursor.execute(query):
+                tags.append(Tag(r[0], r[1]))
+        except Exception as e:
+            raise InternalError(_("Could not get tags: "),
+                                query=query, source=e)
+        return tags
+
+    def delete_tags(self, label=None, target=None):
+        assert isinstance(label, unicode) or label is None
+        assert isinstance(target, unicode) or target is None
+
         try:
             cursor = self._conn.cursor()
-            query = u"DELETE FROM tags WHERE tag_id = '%s'" % tag_id
+            where = u''
+            if label:
+                where = u"WHERE tag_label = '%s'" % label
+            elif target:
+                where = u"WHERE tag_id = '%s'" % target
+
+            query = u"DELETE FROM tags %s" % where
             cursor.execute(query)
             self._conn.commit()
         except Exception as e:
-            raise InternalError(_("Could not delete tag id: "),
+            raise InternalError(_("Could not delete tags: "),
                                 query=query, source=e)
-        log.trace('delete_tag_id: end')
         return True
 
-    def put_tag(self, tag_id, tag_label):
-        log.trace('put_tag: start %s %s' % (tag_id, tag_label))
-        if not tag_label:
-            return False
+    def put_tag(self, tag):
+        assert isinstance(tag, Tag)
+
+        log.trace('put_tag: start %s %s' % (tag.target, tag.label))
         try:
             cursor = self._conn.cursor()
             query = (u"DELETE FROM tags WHERE tag_id = '%s' "
                      u"AND tag_label = '%s'" %
-                     (tag_id, tag_label))
+                     (tag.target, tag.label))
             cursor.execute(query)
             query = (u"INSERT INTO tags VALUES ('%s', '%s')" %
-                     (tag_id, tag_label))
+                     (tag.target, tag.label))
             cursor.execute(query)
             self._conn.commit()
         except Exception as e:
@@ -524,22 +529,45 @@ SELECT data
         log.trace('put_tag: end')
         return True
 
-    def set_tag_comment(self, tag_label, tag_comment):
-        self.delete_textelement(u'tag_comment:%s' % tag_label)
-        return self.put_textelement(u'tag_comment:%s' % tag_label, tag_comment)
+    def set_tag_description(self, tdesc):
+        assert isinstance(tdesc, TagDesc)
 
-    def get_tag_comment(self, tag_label):
-        elem = self.get_textelements(u'tag_comment:%s' % tag_label)
-        return elem[0] if elem else None
+        self.delete_textelement(u'tag_desc:%s' % tdesc.label)
+        self.delete_textelement(u'tag_comment:%s' % tdesc.label)
+        if tdesc.desc is not None:
+            self.put_textelement(u'tag_desc:%s' % tdesc.label, tdesc.desc)
+        if tdesc.comment is not None:
+            self.put_textelement(u'tag_comment:%s' % tdesc.label,
+                                 tdesc.comment)
+        return True
 
-    def set_schema_comment(self, schema_name, schema_comment):
-        self.delete_textelement(u'schema_comment:%s' % schema_name)
-        return self.put_textelement(u'schema_comment:%s' %
-                                    schema_name, schema_comment)
+    def get_tag_description(self, label):
+        desc = self.get_textelements(u'tag_desc:%s' % label)
+        comment = self.get_textelements(u'tag_comment:%s' % label)
+        if not desc and not comment:
+            return None
+        return TagDesc(label, desc[0] if desc else None,
+                       comment[0] if comment else None)
 
-    def get_schema_comment(self, schema_name):
-        elem = self.get_textelements(u'schema_comment:%s' % schema_name)
-        return elem[0] if elem else None
+    def set_schema_description(self, sdesc):
+        assert isinstance(sdesc, SchemaDesc)
+
+        self.delete_textelement(u'schema_desc:%s' % sdesc.name)
+        self.delete_textelement(u'schema_comment:%s' % sdesc.name)
+        if sdesc.desc is not None:
+            self.put_textelement(u'schema_desc:%s' % sdesc.name, sdesc.desc)
+        if sdesc.comment is not None:
+            self.put_textelement(u'schema_comment:%s' % sdesc.name,
+                                 sdesc.comment)
+        return True
+
+    def get_schema_description(self, name):
+        desc = self.get_textelements(u'schema_desc:%s' % name)
+        comment = self.get_textelements(u'schema_comment:%s' % name)
+        if not desc and not comment:
+            return None
+        return SchemaDesc(name, desc[0] if desc else None,
+                          comment[0] if comment else None)
 
     def add_file(self, objtype, objid, filename):
         """Assign a file name to the object.
@@ -613,6 +641,7 @@ SELECT data
             cursor = self._conn.cursor()
             query = u"SELECT text_ FROM textelement WHERE id_= '%s'" % id_
             for r in cursor.execute(query):
+                assert isinstance(r[0], unicode)
                 texts.append(r[0])
         except Exception as e:
             raise InternalError(_("Could not get text element: "),

@@ -1,2 +1,2 @@
-TAG_NAME,TAG_COMMENT
-タグ1,これはタグ1のコメントです
+TAG_NAME,TAG_DESCRIPTION,TAG_COMMENT
+タグ1,短いタグ説明,これはタグ1のコメントです

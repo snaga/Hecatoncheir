@@ -29,13 +29,13 @@ class TestDbProfilerExp(unittest.TestCase):
 
     def testExport_html_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 't1'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u't1'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         t['row_count'] = 0
         t['columns'] = []
-        t['tags'] = ['tag1', 'tag2']
+        t['tags'] = [u'tag1', u'tag2']
 
         self.assertTrue(self.repo.append_table(t))
 
@@ -47,13 +47,13 @@ class TestDbProfilerExp(unittest.TestCase):
 
     def testExport_html_002(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 't1'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u't1'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         t['row_count'] = 0
         t['columns'] = []
-        t['tags'] = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7']
+        t['tags'] = [u'tag1', u'tag2', u'tag3', u'tag4', u'tag5', u'tag6', u'tag7']
 
         self.assertTrue(self.repo.append_table(t))
 
@@ -65,27 +65,27 @@ class TestDbProfilerExp(unittest.TestCase):
 
     def testExport_html_003(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema1'
-        t['table_name'] = 't1'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema1'
+        t['table_name'] = u't1'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         t['row_count'] = 0
         t['columns'] = []
 
         self.assertTrue(self.repo.append_table(t))
 
-        t['schema_name'] = 'test_schema2'
+        t['schema_name'] = u'test_schema2'
         self.assertTrue(self.repo.append_table(t))
-        t['schema_name'] = 'test_schema3'
+        t['schema_name'] = u'test_schema3'
         self.assertTrue(self.repo.append_table(t))
-        t['schema_name'] = 'test_schema4'
+        t['schema_name'] = u'test_schema4'
         self.assertTrue(self.repo.append_table(t))
-        t['schema_name'] = 'test_schema5'
+        t['schema_name'] = u'test_schema5'
         self.assertTrue(self.repo.append_table(t))
-        t['schema_name'] = 'test_schema6'
+        t['schema_name'] = u'test_schema6'
         self.assertTrue(self.repo.append_table(t))
 
-        t['schema_name'] = 'test_schema7'
+        t['schema_name'] = u'test_schema7'
         self.assertTrue(self.repo.append_table(t))
 
         table_list = self.repo.get_table_list()
@@ -96,13 +96,13 @@ class TestDbProfilerExp(unittest.TestCase):
 
     def testExport_html_004(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 't1'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u't1'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         t['row_count'] = 0
         t['columns'] = []
-        t['tags'] = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7']
+        t['tags'] = [u'tag1', u'tag2', u'tag3', u'tag4', u'tag5', u'tag6', u'tag7']
 
         self.assertTrue(self.repo.append_table(t))
 
@@ -137,9 +137,9 @@ class TestDbProfilerExp(unittest.TestCase):
 
     def testExport_html_005(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 't1'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u't1'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         t['row_count'] = 0
         t['columns'] = [

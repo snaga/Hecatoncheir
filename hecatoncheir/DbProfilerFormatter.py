@@ -457,6 +457,7 @@ def to_index_html(data, reponame, schemas=None, tags=None,
             ts['dbname'] = s[0]
             ts['label'] = s[1]
             ts['tables'] = s[2]
+            ts['desc'] = s[3]
             templ_schemas.append(ts)
 
     templ_tags = []
@@ -465,6 +466,7 @@ def to_index_html(data, reponame, schemas=None, tags=None,
             ts = {}
             ts['label'] = s[0]
             ts['tables'] = s[1]
+            ts['desc'] = s[2]
             templ_tags.append(ts)
 
     templ_validation = []

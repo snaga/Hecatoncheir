@@ -337,16 +337,18 @@ class TestDbProfilerFormatter(unittest.TestCase):
 """
         # max_panels is not specified, so 'schema7' could be appeared.
         html = DbProfilerFormatter.to_index_html(json.loads(data),
-                                                 schemas=[['d','schema%s'%x,0] for x in range(1,8)],
+                                                 schemas=[['d','schema%s'%x,0,'Schema for %s'%x] for x in range(1,8)],
                                                  reponame='testrepo')
 #        print(html)
         self.assertTrue(html.find('schema6') > 0) # found
         self.assertTrue(html.find('schema7') > 0) # found
+        # short description of schema
+        self.assertTrue(html.find('Schema for 7') > 0) # found
         self.assertTrue(html.find('index-schemas.html') < 0) # not found
 
         # max_panels=6, so 'schema7' must not be appeared.
         html = DbProfilerFormatter.to_index_html(json.loads(data),
-                                                 schemas=[['d','schema%s'%x,0] for x in range(1,8)],
+                                                 schemas=[['d','schema%s'%x,0,None] for x in range(1,8)],
                                                  reponame='testrepo',
                                                  max_panels=6)
 #        print(html)
@@ -370,16 +372,18 @@ class TestDbProfilerFormatter(unittest.TestCase):
 """
         # max_panels is not specified, so 'tag7' could be appeared.
         html = DbProfilerFormatter.to_index_html(json.loads(data),
-                                                 tags=[['tag%s'%x,0] for x in range(1,8)],
+                                                 tags=[['tag%s'%x,0,'Tag for %s'%x] for x in range(1,8)],
                                                  reponame='testrepo')
 #        print(html)
         self.assertTrue(html.find('tag6') > 0) # found
         self.assertTrue(html.find('tag7') > 0) # found
+        # short description of tag
+        self.assertTrue(html.find('Tag for 7') > 0) # found
         self.assertTrue(html.find('index-tags.html') < 0) # not found
 
         # max_panels=6, so 'tag7' must not be appeared.
         html = DbProfilerFormatter.to_index_html(json.loads(data),
-                                                 tags=[['tag%s'%x,0] for x in range(1,8)],
+                                                 tags=[['tag%s'%x,0,None] for x in range(1,8)],
                                                  reponame='testrepo',
                                                  max_panels=6)
 #        print(html)
@@ -403,7 +407,7 @@ class TestDbProfilerFormatter(unittest.TestCase):
 """
         # index page for the tag 'tag0'
         html = DbProfilerFormatter.to_index_html(json.loads(data),
-                                                 tags=[['tag0',0]],
+                                                 tags=[['tag0',0,'MyTag']],
                                                  files=['aaa.txt'],
                                                  reponame='testrepo')
 #        print(html)
@@ -413,7 +417,7 @@ class TestDbProfilerFormatter(unittest.TestCase):
 
         # index page for the schema 'orcl'
         html = DbProfilerFormatter.to_index_html(json.loads(data),
-                                                 schemas=[['orcl','public',0]],
+                                                 schemas=[['orcl','public',0,'MySchema']],
                                                  files=['bbb.txt'],
                                                  reponame='testrepo')
 #        print(html)
