@@ -694,19 +694,19 @@ class TestDbProfilerRepository(unittest.TestCase):
             self.repo.get_tag_ids(u'tag2\'')
         self.assertEqual("Could not get tags: ", cm.exception.value)
 
-    def test_delete_tag_id_001(self):
+    def test_delete_tags_001(self):
         self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
         self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag1'))
 
         self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids(u'tag1'))
 
-        self.assertTrue(self.repo.delete_tag_id(u'd.s.t2'))
+        self.assertTrue(self.repo.delete_tags(target=u'd.s.t2'))
 
         self.assertEqual(['d.s.t'], self.repo.get_tag_ids(u'tag1'))
 
         # fail
         with self.assertRaises(InternalError) as cm:
-            self.repo.delete_tag_id(u'tag2\'')
+            self.repo.delete_tags(target=u'tag2\'')
         self.assertEqual("Could not delete tags: ", cm.exception.value)
 
     def test_put_textelement_001(self):

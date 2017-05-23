@@ -377,7 +377,7 @@ INSERT INTO repo VALUES ('{database_name}','{schema_name}','{table_name}',
         # Remove all tag id/label pairs to replace with new ones.
         tagid = "%s.%s.%s" % (tab['database_name'], tab['schema_name'],
                               tab['table_name'])
-        self.delete_tag_id(tagid)
+        self.delete_tags(target=tagid)
         if tab.get('tags'):
             for label in tab['tags']:
                 self.put_tag(tagid, label)
@@ -500,7 +500,7 @@ SELECT data
             ids.append(tag.target)
         return ids
 
-    def __delete_tags(self, label=None, target=None):
+    def delete_tags(self, label=None, target=None):
         assert isinstance(label, unicode) or label is None
         assert isinstance(target, unicode) or target is None
 
@@ -519,12 +519,6 @@ SELECT data
             raise InternalError(_("Could not delete tags: "),
                                 query=query, source=e)
         return True
-
-    def delete_tag_id(self, tag_id):
-        log.trace('delete_tag_id: start %s' % tag_id)
-        rc = self.__delete_tags(target=tag_id)
-        log.trace('delete_tag_id: end')
-        return rc
 
     def __put_tag(self, tag):
         assert isinstance(tag, Tag)
