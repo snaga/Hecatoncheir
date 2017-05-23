@@ -21,6 +21,7 @@
         <div class="col-sm-4">
           <div id="tile-tag-{{ loop.index0 }}" class="tile blue" onclick="window.location.href='tag-{{ t.label }}.html'">
             <h3 class="title">{{ t.label }}</h3>
+	    {% if t.desc %}{{ t.desc }}{% endif %}<br/>
             {{ t.tables }} {% if t.tables <= 1 %}Table{% else %}Tables{% endif %}
           </div>
         </div>
@@ -73,6 +74,7 @@
         <div class="col-sm-4">
           <div id="tile-schema-{{ loop.index0 }}" class="tile yellow" onclick="window.location.href='{{t.dbname}}.{{ t.label }}.html'">
             <h3 class="title">{{ t.label }}</h3>
+	    {% if t.desc %}{{ t.desc }}{% endif %}<br/>
         {{ t.tables }} {% if t.tables <= 1 %}Table{% else %}Tables{% endif %}, {{t.dbname}}
           </div>
         </div>
@@ -125,6 +127,7 @@
         <div class="col-sm-4">
           <div id="tile-validation-0" class="tile green" onclick="window.location.href='validation-valid.html'">
             <h3 class="title">{{ validation[0].label }}</h3>
+            Tables with valid validation results<br/>
             {{ validation[0].tables }} {% if validation[0].tables <= 1 %}Table{% else %}Tables{% endif %}
           </div>
         </div>
@@ -133,6 +136,7 @@
         <div class="col-sm-4">
           <div id="tile-validation-1" class="tile red" onclick="window.location.href='validation-invalid.html'">
             <h3 class="title">{{ validation[1].label }}</h3>
+            Tables with invalid validation results<br/>
             {{ validation[1].tables }} {% if validation[1].tables <= 1 %}Table{% else %}Tables{% endif %}
           </div>
         </div>
