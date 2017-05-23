@@ -566,17 +566,17 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
         self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
 
-        self.assertEqual(['tag1', 'tag2'], self.repo.get_tag_labels('d.s.t'))
+        self.assertEqual(['tag1', 'tag2'], self.repo.get_tag_labels(u'd.s.t'))
 
         self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag3'))
 
-        self.assertEqual(['tag1', 'tag2'], self.repo.get_tag_labels('d.s.t'))
-        self.assertEqual(['tag3'], self.repo.get_tag_labels('d.s.t2'))
+        self.assertEqual(['tag1', 'tag2'], self.repo.get_tag_labels(u'd.s.t'))
+        self.assertEqual(['tag3'], self.repo.get_tag_labels(u'd.s.t2'))
 
         # fail
         with self.assertRaises(InternalError) as cm:
-            self.repo.get_tag_labels('d.s.t2\'')
-        self.assertEqual("Could not get tag labels: ", cm.exception.value)
+            self.repo.get_tag_labels(u'd.s.t2\'')
+        self.assertEqual("Could not get tags: ", cm.exception.value)
 
     def test_set_tag_comment_001(self):
         self.assertTrue(self.repo.set_tag_comment('tag1', 'comment'))
@@ -683,26 +683,26 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
         self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag1'))
 
-        self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids('tag1'))
+        self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids(u'tag1'))
 
         self.assertTrue(self.repo.put_tag(u'd.s.t3', u'tag2'))
-        self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids('tag1'))
-        self.assertEqual(['d.s.t3'], self.repo.get_tag_ids('tag2'))
+        self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids(u'tag1'))
+        self.assertEqual(['d.s.t3'], self.repo.get_tag_ids(u'tag2'))
 
         # fail
         with self.assertRaises(InternalError) as cm:
-            self.repo.get_tag_ids('tag2\'')
-        self.assertEqual("Could not get tag ids: ", cm.exception.value)
+            self.repo.get_tag_ids(u'tag2\'')
+        self.assertEqual("Could not get tags: ", cm.exception.value)
 
     def test_delete_tag_id_001(self):
         self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
         self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag1'))
 
-        self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids('tag1'))
+        self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids(u'tag1'))
 
         self.assertTrue(self.repo.delete_tag_id('d.s.t2'))
 
-        self.assertEqual(['d.s.t'], self.repo.get_tag_ids('tag1'))
+        self.assertEqual(['d.s.t'], self.repo.get_tag_ids(u'tag1'))
 
         # fail
         with self.assertRaises(InternalError) as cm:

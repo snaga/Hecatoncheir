@@ -467,29 +467,37 @@ SELECT data
 
         return table_history
 
-    def get_tag_labels(self, tag_id):
-        labels = []
+    def __get_tags(self, label=None, target=None):
+        assert isinstance(label, unicode) or label is None
+        assert isinstance(target, unicode) or target is None
+
+        tags = []
         try:
             cursor = self._conn.cursor()
-            query = u"SELECT tag_label FROM tags WHERE tag_id = '%s'" % tag_id
+            where = u''
+            if label:
+                where = u"WHERE tag_label = '%s'" % label
+            elif target:
+                where = u"WHERE tag_id = '%s'" % target
+
+            query = u"SELECT tag_label,tag_id FROM tags %s" % where
             for r in cursor.execute(query):
-                labels.append(r[0])
+                tags.append(Tag(r[0],r[1]))
         except Exception as e:
-            raise InternalError(_("Could not get tag labels: "),
+            raise InternalError(_("Could not get tags: "),
                                 query=query, source=e)
+        return tags
+
+    def get_tag_labels(self, tag_id):
+        labels = []
+        for tag in self.__get_tags(target=tag_id):
+            labels.append(tag.label)
         return labels
 
     def get_tag_ids(self, tag_label):
         ids = []
-        try:
-            cursor = self._conn.cursor()
-            query = (u"SELECT tag_id FROM tags WHERE tag_label = '%s'" %
-                     tag_label)
-            for r in cursor.execute(query):
-                ids.append(r[0])
-        except Exception as e:
-            raise InternalError(_("Could not get tag ids: "),
-                                query=query, source=e)
+        for tag in self.__get_tags(label=tag_label):
+            ids.append(tag.target)
         return ids
 
     def delete_tag_id(self, tag_id):
