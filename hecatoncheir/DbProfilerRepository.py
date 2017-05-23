@@ -380,7 +380,7 @@ INSERT INTO repo VALUES ('{database_name}','{schema_name}','{table_name}',
         self.delete_tags(target=tagid)
         if tab.get('tags'):
             for label in tab['tags']:
-                self.put_tag(tagid, label)
+                self.put_tag(Tag(label, tagid))
 
         log.trace("append_table: end")
         return True
@@ -508,7 +508,7 @@ SELECT data
                                 query=query, source=e)
         return True
 
-    def __put_tag(self, tag):
+    def put_tag(self, tag):
         assert isinstance(tag, Tag)
 
         log.trace('put_tag: start %s %s' % (tag.target, tag.label))
@@ -527,11 +527,6 @@ SELECT data
                                 query=query, source=e)
         log.trace('put_tag: end')
         return True
-
-    def put_tag(self, tag_id, tag_label):
-        if not tag_label:
-            return False
-        return self.__put_tag(Tag(tag_label, tag_id))
 
     def set_tag_comment(self, tag_label, tag_comment):
         self.delete_textelement(u'tag_comment:%s' % tag_label)

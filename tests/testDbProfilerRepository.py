@@ -9,6 +9,7 @@ sys.path.append('..')
 
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir.exception import InternalError
+from hecatoncheir.metadata import Tag
 
 class TestDbProfilerRepository(unittest.TestCase):
     repo = None
@@ -552,23 +553,23 @@ class TestDbProfilerRepository(unittest.TestCase):
 
 
     def test_put_tag_001(self):
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
 
         # fail
         with self.assertRaises(InternalError) as cm:
-            self.repo.put_tag(u'd.s.t2\'', u'tag3')
+            self.repo.put_tag(Tag(u'tag3', u'd.s.t2\''))
         self.assertEqual("Could not register tag: ", cm.exception.value)
 
     def test_get_tags_001(self):
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
 
         self.assertEqual(['tag1', 'tag2'], [x.label for x in self.repo.get_tags(target=u'd.s.t')])
 
-        self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag3'))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag3', u'd.s.t2')))
 
         self.assertEqual(['tag1', 'tag2'], [x.label for x in self.repo.get_tags(target=u'd.s.t')])
         self.assertEqual(['tag3'], [x.label for x in self.repo.get_tags(target=u'd.s.t2')])
@@ -680,12 +681,12 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual([], self.repo.get_files('table', 'TABLE1'))
 
     def test_get_tags_002(self):
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
-        self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag1'))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t2')))
 
         self.assertEqual(['d.s.t', 'd.s.t2'], [x.target for x in self.repo.get_tags(label=u'tag1')])
 
-        self.assertTrue(self.repo.put_tag(u'd.s.t3', u'tag2'))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t3')))
         self.assertEqual(['d.s.t', 'd.s.t2'], [x.target for x in self.repo.get_tags(label=u'tag1')])
         self.assertEqual(['d.s.t3'], [x.target for x in self.repo.get_tags(label=u'tag2')])
 
@@ -695,8 +696,8 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual("Could not get tags: ", cm.exception.value)
 
     def test_delete_tags_001(self):
-        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
-        self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag1'))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
+        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t2')))
 
         self.assertEqual(['d.s.t', 'd.s.t2'], [x.target for x in self.repo.get_tags(label=u'tag1')])
 
