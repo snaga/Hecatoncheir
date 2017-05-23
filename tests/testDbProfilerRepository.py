@@ -123,20 +123,20 @@ class TestDbProfilerRepository(unittest.TestCase):
     def testAppend_table_003(self):
         # append table records with tags
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = ['tag1', 'tag2']
+        t['tags'] = [u'tag1', u'tag2']
 
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table2'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table2'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = ['tag2', 'tag3']
+        t['tags'] = [u'tag2', u'tag3']
 
         self.assertTrue(self.repo.append_table(t))
 
@@ -505,25 +505,25 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def test_get_tags_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = ['tag1','tag2']
+        t['tags'] = [u'tag1',u'tag2']
         self.assertTrue(self.repo.append_table(t))
 
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table2'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table2'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = ['tag1']
+        t['tags'] = [u'tag1']
         self.assertTrue(self.repo.append_table(t))
 
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema2'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema2'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = ['tag3']
+        t['tags'] = [u'tag3']
         self.assertTrue(self.repo.append_table(t))
 
         self.assertEqual([[u'tag1', 2],
@@ -539,11 +539,11 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def test_has_table_record_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = ['tag1','tag2']
+        t['tags'] = [u'tag1',u'tag2']
         self.assertFalse(self.repo.has_table_record(t))
 
         self.assertTrue(self.repo.append_table(t))
@@ -552,23 +552,23 @@ class TestDbProfilerRepository(unittest.TestCase):
 
 
     def test_put_tag_001(self):
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag1'))
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag2'))
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag2'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
 
         # fail
         with self.assertRaises(InternalError) as cm:
-            self.repo.put_tag('d.s.t2\'', 'tag3')
+            self.repo.put_tag(u'd.s.t2\'', u'tag3')
         self.assertEqual("Could not register tag: ", cm.exception.value)
 
     def test_get_tag_labels_001(self):
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag1'))
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag2'))
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag2'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag2'))
 
         self.assertEqual(['tag1', 'tag2'], self.repo.get_tag_labels('d.s.t'))
 
-        self.assertTrue(self.repo.put_tag('d.s.t2', 'tag3'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag3'))
 
         self.assertEqual(['tag1', 'tag2'], self.repo.get_tag_labels('d.s.t'))
         self.assertEqual(['tag3'], self.repo.get_tag_labels('d.s.t2'))
@@ -680,12 +680,12 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual([], self.repo.get_files('table', 'TABLE1'))
 
     def test_get_tag_ids_001(self):
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag1'))
-        self.assertTrue(self.repo.put_tag('d.s.t2', 'tag1'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag1'))
 
         self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids('tag1'))
 
-        self.assertTrue(self.repo.put_tag('d.s.t3', 'tag2'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t3', u'tag2'))
         self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids('tag1'))
         self.assertEqual(['d.s.t3'], self.repo.get_tag_ids('tag2'))
 
@@ -695,8 +695,8 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual("Could not get tag ids: ", cm.exception.value)
 
     def test_delete_tag_id_001(self):
-        self.assertTrue(self.repo.put_tag('d.s.t', 'tag1'))
-        self.assertTrue(self.repo.put_tag('d.s.t2', 'tag1'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t', u'tag1'))
+        self.assertTrue(self.repo.put_tag(u'd.s.t2', u'tag1'))
 
         self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids('tag1'))
 

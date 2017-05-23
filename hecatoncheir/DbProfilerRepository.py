@@ -505,18 +505,18 @@ SELECT data
         log.trace('delete_tag_id: end')
         return True
 
-    def put_tag(self, tag_id, tag_label):
-        log.trace('put_tag: start %s %s' % (tag_id, tag_label))
-        if not tag_label:
-            return False
+    def __put_tag(self, tag):
+        assert isinstance(tag, Tag)
+
+        log.trace('put_tag: start %s %s' % (tag.target, tag.label))
         try:
             cursor = self._conn.cursor()
             query = (u"DELETE FROM tags WHERE tag_id = '%s' "
                      u"AND tag_label = '%s'" %
-                     (tag_id, tag_label))
+                     (tag.target, tag.label))
             cursor.execute(query)
             query = (u"INSERT INTO tags VALUES ('%s', '%s')" %
-                     (tag_id, tag_label))
+                     (tag.target, tag.label))
             cursor.execute(query)
             self._conn.commit()
         except Exception as e:
@@ -524,6 +524,11 @@ SELECT data
                                 query=query, source=e)
         log.trace('put_tag: end')
         return True
+
+    def put_tag(self, tag_id, tag_label):
+        if not tag_label:
+            return False
+        return self.__put_tag(Tag(tag_label, tag_id))
 
     def set_tag_comment(self, tag_label, tag_comment):
         self.delete_textelement(u'tag_comment:%s' % tag_label)
