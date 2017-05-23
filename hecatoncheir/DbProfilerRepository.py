@@ -467,7 +467,7 @@ SELECT data
 
         return table_history
 
-    def __get_tags(self, label=None, target=None):
+    def get_tags(self, label=None, target=None):
         assert isinstance(label, unicode) or label is None
         assert isinstance(target, unicode) or target is None
 
@@ -487,18 +487,6 @@ SELECT data
             raise InternalError(_("Could not get tags: "),
                                 query=query, source=e)
         return tags
-
-    def get_tag_labels(self, tag_id):
-        labels = []
-        for tag in self.__get_tags(target=tag_id):
-            labels.append(tag.label)
-        return labels
-
-    def get_tag_ids(self, tag_label):
-        ids = []
-        for tag in self.__get_tags(label=tag_label):
-            ids.append(tag.target)
-        return ids
 
     def delete_tags(self, label=None, target=None):
         assert isinstance(label, unicode) or label is None
