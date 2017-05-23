@@ -72,9 +72,9 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testAppend_table_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
         self.assertTrue(self.repo.append_table(t))
@@ -82,9 +82,9 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         # fail with query error
         t = {}
-        t['database_name'] = 'test\'_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test\'_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
         with self.assertRaises(InternalError) as cm:
@@ -94,16 +94,16 @@ class TestDbProfilerRepository(unittest.TestCase):
     def testAppend_table_002(self):
         # different timestamp must go to the different records.
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-28T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
@@ -151,16 +151,16 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertIsNone(tab)
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:40.653836'
         self.assertTrue(self.repo.append_table(t))
 
@@ -177,9 +177,9 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testSet_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         d = []
         d.append(t)
@@ -196,9 +196,9 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         d = []
         d.append(t)
@@ -215,9 +215,9 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_table_002(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
         self.assertTrue(self.repo.append_table(t))
@@ -233,23 +233,23 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_table_003(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-28T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-26T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
@@ -263,9 +263,9 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_table_list_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
         self.assertTrue(self.repo.append_table(t))
@@ -278,17 +278,17 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_table_list_002(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-28T10:06:41.653836'
 
         self.assertTrue(self.repo.append_table(t))
@@ -302,17 +302,17 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_table_list_003(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table2'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table2'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
 
         self.assertTrue(self.repo.append_table(t))
@@ -329,30 +329,30 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_table_list_004(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table2'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table2'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema3'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema3'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database4'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database4'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
@@ -390,23 +390,23 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def testGet_table_history_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-28T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-26T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
@@ -475,21 +475,21 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def test_get_schemas_001(self):
         t = {}
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema'
-        t['table_name'] = 'test_table2'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table2'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
-        t['database_name'] = 'test_database'
-        t['schema_name'] = 'test_schema2'
-        t['table_name'] = 'test_table'
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema2'
+        t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
         self.assertTrue(self.repo.append_table(t))
 
@@ -700,14 +700,14 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         self.assertEqual(['d.s.t', 'd.s.t2'], self.repo.get_tag_ids(u'tag1'))
 
-        self.assertTrue(self.repo.delete_tag_id('d.s.t2'))
+        self.assertTrue(self.repo.delete_tag_id(u'd.s.t2'))
 
         self.assertEqual(['d.s.t'], self.repo.get_tag_ids(u'tag1'))
 
         # fail
         with self.assertRaises(InternalError) as cm:
-            self.repo.delete_tag_id('tag2\'')
-        self.assertEqual("Could not delete tag id: ", cm.exception.value)
+            self.repo.delete_tag_id(u'tag2\'')
+        self.assertEqual("Could not delete tags: ", cm.exception.value)
 
     def test_put_textelement_001(self):
         self.assertTrue(self.repo.put_textelement('id1', 'elem1'))
@@ -749,9 +749,9 @@ class TestDbProfilerRepository(unittest.TestCase):
     def testPut_fk_001(self):
         # append table records with tags
         t1 = {}
-        t1['database_name'] = 'test_database'
-        t1['schema_name'] = 'test_schema'
-        t1['table_name'] = 'test_table'
+        t1['database_name'] = u'test_database'
+        t1['schema_name'] = u'test_schema'
+        t1['table_name'] = u'test_table'
         t1['timestamp'] = '2016-04-27T10:06:41.653836'
         t1['columns'] = [{'column_name': 'c1'},
                          {'column_name': 'c2'}]
@@ -759,9 +759,9 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.append_table(t1))
 
         t2 = {}
-        t2['database_name'] = 'test_database'
-        t2['schema_name'] = 'test_schema'
-        t2['table_name'] = 'test_table2'
+        t2['database_name'] = u'test_database'
+        t2['schema_name'] = u'test_schema'
+        t2['table_name'] = u'test_table2'
         t2['timestamp'] = '2016-04-27T10:06:41.653836'
         t2['columns'] = [{'column_name': 'c1'},
                          {'column_name': 'c2'}]
@@ -800,9 +800,9 @@ class TestDbProfilerRepository(unittest.TestCase):
     def testRemove_fk_001(self):
         # append table records with tags
         t1 = {}
-        t1['database_name'] = 'test_database'
-        t1['schema_name'] = 'test_schema'
-        t1['table_name'] = 'test_table'
+        t1['database_name'] = u'test_database'
+        t1['schema_name'] = u'test_schema'
+        t1['table_name'] = u'test_table'
         t1['timestamp'] = '2016-04-27T10:06:41.653836'
         t1['columns'] = [{'column_name': 'c1',
                           'fk': ['test_schema.test_table2.c1']}]
@@ -810,9 +810,9 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.append_table(t1))
 
         t2 = {}
-        t2['database_name'] = 'test_database'
-        t2['schema_name'] = 'test_schema'
-        t2['table_name'] = 'test_table2'
+        t2['database_name'] = u'test_database'
+        t2['schema_name'] = u'test_schema'
+        t2['table_name'] = u'test_table2'
         t2['timestamp'] = '2016-04-27T10:06:41.653836'
         t2['columns'] = [{'column_name': 'c1',
                           'fk_ref': ['test_schema.test_table.c1']}]
@@ -839,9 +839,9 @@ class TestDbProfilerRepository(unittest.TestCase):
     def testClear_fk_001(self):
         # append table records with tags
         t1 = {}
-        t1['database_name'] = 'test_database'
-        t1['schema_name'] = 'test_schema'
-        t1['table_name'] = 'test_table'
+        t1['database_name'] = u'test_database'
+        t1['schema_name'] = u'test_schema'
+        t1['table_name'] = u'test_table'
         t1['timestamp'] = '2016-04-27T10:06:41.653836'
         t1['columns'] = [{'column_name': 'c1',
                           'fk': ['test_schema.test_table2.c1']}]
@@ -849,9 +849,9 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.append_table(t1))
 
         t2 = {}
-        t2['database_name'] = 'test_database'
-        t2['schema_name'] = 'test_schema'
-        t2['table_name'] = 'test_table2'
+        t2['database_name'] = u'test_database'
+        t2['schema_name'] = u'test_schema'
+        t2['table_name'] = u'test_table2'
         t2['timestamp'] = '2016-04-27T10:06:41.653836'
         t2['columns'] = [{'column_name': 'c1',
                           'fk_ref': ['test_schema.test_table.c1']}]

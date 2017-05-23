@@ -500,18 +500,31 @@ SELECT data
             ids.append(tag.target)
         return ids
 
-    def delete_tag_id(self, tag_id):
-        log.trace('delete_tag_id: start %s' % tag_id)
+    def __delete_tags(self, label=None, target=None):
+        assert isinstance(label, unicode) or label is None
+        assert isinstance(target, unicode) or target is None
+
         try:
             cursor = self._conn.cursor()
-            query = u"DELETE FROM tags WHERE tag_id = '%s'" % tag_id
+            where = u''
+            if label:
+                where = u"WHERE tag_label = '%s'" % label
+            elif target:
+                where = u"WHERE tag_id = '%s'" % target
+
+            query = u"DELETE FROM tags %s" % where
             cursor.execute(query)
             self._conn.commit()
         except Exception as e:
-            raise InternalError(_("Could not delete tag id: "),
+            raise InternalError(_("Could not delete tags: "),
                                 query=query, source=e)
-        log.trace('delete_tag_id: end')
         return True
+
+    def delete_tag_id(self, tag_id):
+        log.trace('delete_tag_id: start %s' % tag_id)
+        rc = self.__delete_tags(target=tag_id)
+        log.trace('delete_tag_id: end')
+        return rc
 
     def __put_tag(self, tag):
         assert isinstance(tag, Tag)
