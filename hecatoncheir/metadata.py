@@ -187,9 +187,6 @@ class TagDesc:
     def __init__(self, label, desc=None, comment=None):
         if not label:
             raise ValueError("Invalid tag label: '%s'" % label)
-        if not desc and not comment:
-            raise ValueError("Invalid tag desc/comment: '%s/%s'" %
-                             (desc, comment))
 
         self.label = label
         self.desc = desc

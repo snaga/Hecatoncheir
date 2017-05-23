@@ -9,6 +9,7 @@ import sys
 import hecatoncheir.CSVUtils as CSVUtils
 import hecatoncheir.DbProfilerRepository as DbProfilerRepository
 import hecatoncheir.logger as log
+from hecatoncheir.metadata import TagDesc
 from hecatoncheir.msgutil import gettext as _
 
 table_csv_keys = [
@@ -72,6 +73,7 @@ schema_comment_csv_attrs = [
 
 tag_comment_csv_keys = [
     'TAG_NAME',
+    'TAG_DESCRIPTION',
     'TAG_COMMENT'
 ]
 
@@ -253,7 +255,7 @@ if __name__ == "__main__":
                                     r['schema_comment'])
             merged += 1
         elif format == 'tagcomment':
-            repo.set_tag_comment(r['tag_name'], r['tag_comment'])
+            repo.set_tag_description(TagDesc(r['tag_name'], r['tag_description'], r['tag_comment']))
             merged += 1
 
     for fk in fk_list:

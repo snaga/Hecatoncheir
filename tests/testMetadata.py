@@ -349,9 +349,5 @@ class TestTagDesc(unittest.TestCase):
             t = TagDesc(u'', u'd', u'c')
         self.assertEqual("Invalid tag label: ''", cm.exception[0])
 
-        with self.assertRaises(ValueError) as cm:
-            t = TagDesc(u'a', None, None)
-        self.assertEqual("Invalid tag desc/comment: 'None/None'", cm.exception[0])
-
 if __name__ == '__main__':
     unittest.main()

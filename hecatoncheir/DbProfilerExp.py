@@ -161,7 +161,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
                  repo.get_files('tag', tag) else [])
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_tag[tag],
-                comment=repo.get_tag_comment(tag),
+                comment=(repo.get_tag_description(tag)).comment,
                 files=['tag-%s/%s' % (tag, x) for x in files],
                 tags=[[tag, len(tables_by_tag[tag])]],
                 reponame=tag, glossary_terms=terms,

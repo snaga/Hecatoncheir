@@ -9,7 +9,7 @@ sys.path.append('..')
 
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir.exception import InternalError
-from hecatoncheir.metadata import Tag
+from hecatoncheir.metadata import Tag, TagDesc
 
 class TestDbProfilerRepository(unittest.TestCase):
     repo = None
@@ -579,24 +579,16 @@ class TestDbProfilerRepository(unittest.TestCase):
             self.repo.get_tags(label=u'd.s.t2\'')
         self.assertEqual("Could not get tags: ", cm.exception.value)
 
-    def test_set_tag_comment_001(self):
-        self.assertTrue(self.repo.set_tag_comment('tag1', 'comment'))
-        self.assertTrue(self.repo.set_tag_comment('tag1', ''))
+    def test_set_tag_description_001(self):
+        desc = TagDesc(u'tag1')
+        self.repo.set_tag_description(desc)
+        self.assertTrue(self.repo.set_tag_description(desc))
 
-        self.assertTrue(self.repo.set_tag_comment(u'タグ2', u'コメント'))
+        desc = TagDesc(u'tag1', u'short desc')
+        self.assertTrue(self.repo.set_tag_description(desc))
 
-    def test_get_tag_comment_001(self):
-        self.repo.set_tag_comment('tag1', 'comment')
-        self.assertEqual('comment', self.repo.get_tag_comment('tag1'))
-        self.repo.set_tag_comment('tag1', '')
-        self.assertEqual('', self.repo.get_tag_comment('tag1'))
-
-        self.repo.set_tag_comment(u'タグ2', u'コメント')
-        self.assertEqual(u'コメント', self.repo.get_tag_comment(u'タグ2'))
-
-        self.assertEqual('', self.repo.get_tag_comment('tag1'))
-
-        self.assertEqual(None, self.repo.get_tag_comment('nosuchtag1'))
+        desc = TagDesc(u'tag1', u'short desc', u'comment')
+        self.assertTrue(self.repo.set_tag_description(desc))
 
     def test_set_schema_comment_001(self):
         self.assertTrue(self.repo.set_schema_comment('schema1', 'comment'))

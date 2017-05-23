@@ -108,20 +108,22 @@ Tag Comment CSV
 
 A CSV file to import Tag Comment must have following fields in its header line (the 1st line).
 
-+--------------+------------------------+-----------+
-| Field Name   | Value                  | Required? |
-+==============+========================+===========+
-| TAG_NAME     | Tag Name               | Required  |
-+--------------+------------------------+-----------+
-| TAG_COMMENT  | Tag Comment            | Required  |
-+--------------+------------------------+-----------+
++-----------------+------------------------+-----------+
+| Field Name      | Value                  | Required? |
++=================+========================+===========+
+| TAG_NAME        | Tag Name               | Required  |
++-----------------+------------------------+-----------+
+| TAG_DESCRIPTION | Short Tag Description  | Required  |
++-----------------+------------------------+-----------+
+| TAG_COMMENT     | Tag Comment            | Required  |
++-----------------+------------------------+-----------+
 
 Tag comment can be written in the Markdown format.
 
 ::
 
-  TAG_NAME,TAG_COMMENT
-  TAG1,This a comment on TAG1.
+  TAG_NAME,TAG_DESCRIPTION,TAG_COMMENT
+  TAG1,Data Set AAA,This a comment on TAG1.
 
 
 Data Mapping CSV

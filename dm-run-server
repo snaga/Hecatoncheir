@@ -150,7 +150,7 @@ def index_tag(tag):
         tab = repo.get_table(t[0], t[1], t[2])
         tables.append(tab)
     html = DbProfilerFormatter.to_index_html(tables,
-                                             comment=repo.get_tag_comment(tag),
+                                             comment=(repo.get_tag_description(tag)).comment,
                                              tags=[[tag, len(tables)]],
                                              reponame=tag,
                                              glossary_terms=terms,

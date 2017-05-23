@@ -380,7 +380,8 @@ INSERT INTO repo VALUES ('{database_name}','{schema_name}','{table_name}',
         self.delete_tags(target=tagid)
         if tab.get('tags'):
             for label in tab['tags']:
-                self.put_tag(Tag(label, tagid))
+                if label:
+                    self.put_tag(Tag(label, tagid))
 
         log.trace("append_table: end")
         return True
@@ -528,13 +529,21 @@ SELECT data
         log.trace('put_tag: end')
         return True
 
-    def set_tag_comment(self, tag_label, tag_comment):
-        self.delete_textelement(u'tag_comment:%s' % tag_label)
-        return self.put_textelement(u'tag_comment:%s' % tag_label, tag_comment)
+    def set_tag_description(self, tdesc):
+        assert isinstance(tdesc, TagDesc)
 
-    def get_tag_comment(self, tag_label):
-        elem = self.get_textelements(u'tag_comment:%s' % tag_label)
-        return elem[0] if elem else None
+        self.delete_textelement(u'tag_desc:%s' % tdesc.label)
+        self.delete_textelement(u'tag_comment:%s' % tdesc.label)
+        if tdesc.desc is not None:
+            self.put_textelement(u'tag_desc:%s' % tdesc.label, tdesc.desc)
+        if tdesc.comment is not None:
+            self.put_textelement(u'tag_comment:%s' % tdesc.label, tdesc.comment)
+        return True
+
+    def get_tag_description(self, label):
+        desc = self.get_textelements(u'tag_desc:%s' % label)
+        comment = self.get_textelements(u'tag_comment:%s' % label)
+        return TagDesc(label, desc[0] if desc else None, comment[0] if comment else None)
 
     def set_schema_comment(self, schema_name, schema_comment):
         self.delete_textelement(u'schema_comment:%s' % schema_name)
@@ -617,6 +626,7 @@ SELECT data
             cursor = self._conn.cursor()
             query = u"SELECT text_ FROM textelement WHERE id_= '%s'" % id_
             for r in cursor.execute(query):
+                assert isinstance(r[0], unicode)
                 texts.append(r[0])
         except Exception as e:
             raise InternalError(_("Could not get text element: "),
