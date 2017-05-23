@@ -165,3 +165,38 @@ class TableMeta:
 
     def __repr__(self):
         return self.to_json()
+
+
+class Tag:
+    def __init__(self, label, target):
+        if not label:
+            raise ValueError("Invalid tag label: '%s'" % label)
+        if not target:
+            raise ValueError("Invalid tag target: '%s'" % target)
+
+        self.label = label
+        self.target = target
+        self.__assert()
+
+    def __assert(self):
+        assert isinstance(self.label, unicode)
+        assert isinstance(self.target, unicode)
+
+
+class TagDesc:
+    def __init__(self, label, desc=None, comment=None):
+        if not label:
+            raise ValueError("Invalid tag label: '%s'" % label)
+        if not desc and not comment:
+            raise ValueError("Invalid tag desc/comment: '%s/%s'" %
+                             (desc, comment))
+
+        self.label = label
+        self.desc = desc
+        self.comment = comment
+        self.__assert()
+
+    def __assert(self):
+        assert isinstance(self.label, unicode)
+        assert isinstance(self.desc, unicode) or self.desc is None
+        assert isinstance(self.comment, unicode) or self.comment is None

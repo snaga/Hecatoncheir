@@ -9,6 +9,7 @@ from datetime import datetime
 import DbProfilerFormatter
 import logger as log
 from exception import DbProfilerException, InternalError
+from metadata import Tag, TagDesc
 from logger import str2unicode as _s2u
 from msgutil import gettext as _
 
