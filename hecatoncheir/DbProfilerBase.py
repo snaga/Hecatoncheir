@@ -410,8 +410,11 @@ class DbProfilerBase(object):
             log.info(_("Min/Max values: start"))
             minmax = self.get_column_min_max(schema_name, table_name)
             for col in tablemeta.column_names:
-                columnmeta[col].min = _2u(str(minmax[col][0]))
-                columnmeta[col].max = _2u(str(minmax[col][1]))
+                if isinstance(minmax[col][0], str):
+                    minmax[col][0] = minmax[col][0].decode('utf-8')
+                    minmax[col][1] = minmax[col][1].decode('utf-8')
+                columnmeta[col].min = u'%s' % minmax[col][0]
+                columnmeta[col].max = u'%s' % minmax[col][1]
             log.info(_("Min/Max values: end"))
 
         if self.profile_most_freq_values_enabled > 0:

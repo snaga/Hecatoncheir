@@ -123,7 +123,7 @@ SELECT COLUMN_NAME,
     def get_row_count(self, schema_name, table_name):
         if (schema_name, table_name) not in self.column_cache:
             self.__get_column_profile_phase1(schema_name, table_name)
-        return self.column_cache[(schema_name, table_name)][0]
+        return long(self.column_cache[(schema_name, table_name)][0])
 
     def get_column_nulls(self, schema_name, table_name):
         if (schema_name, table_name) not in self.column_cache:
