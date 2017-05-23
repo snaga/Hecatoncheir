@@ -9,7 +9,7 @@ from datetime import datetime
 import DbProfilerFormatter
 import logger as log
 from exception import DbProfilerException, InternalError
-from metadata import Tag, TagDesc
+from metadata import Tag, TagDesc, SchemaDesc
 from logger import str2unicode as _s2u
 from msgutil import gettext as _
 
@@ -543,16 +543,27 @@ SELECT data
     def get_tag_description(self, label):
         desc = self.get_textelements(u'tag_desc:%s' % label)
         comment = self.get_textelements(u'tag_comment:%s' % label)
+        if not desc and not comment:
+            return None
         return TagDesc(label, desc[0] if desc else None, comment[0] if comment else None)
 
-    def set_schema_comment(self, schema_name, schema_comment):
-        self.delete_textelement(u'schema_comment:%s' % schema_name)
-        return self.put_textelement(u'schema_comment:%s' %
-                                    schema_name, schema_comment)
+    def set_schema_description(self, sdesc):
+        assert isinstance(sdesc, SchemaDesc)
 
-    def get_schema_comment(self, schema_name):
-        elem = self.get_textelements(u'schema_comment:%s' % schema_name)
-        return elem[0] if elem else None
+        self.delete_textelement(u'schema_desc:%s' % sdesc.name)
+        self.delete_textelement(u'schema_comment:%s' % sdesc.name)
+        if sdesc.desc is not None:
+            self.put_textelement(u'schema_desc:%s' % sdesc.name, sdesc.desc)
+        if sdesc.comment is not None:
+            self.put_textelement(u'schema_comment:%s' % sdesc.name, sdesc.comment)
+        return True
+
+    def get_schema_description(self, name):
+        desc = self.get_textelements(u'schema_desc:%s' % name)
+        comment = self.get_textelements(u'schema_comment:%s' % name)
+        if not desc and not comment:
+            return None
+        return SchemaDesc(name, desc[0] if desc else None, comment[0] if comment else None)
 
     def add_file(self, objtype, objid, filename):
         """Assign a file name to the object.

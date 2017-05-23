@@ -146,9 +146,10 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         filename = output_path + "/%s.html" % schema
         files = (repo.get_files('schema', schema) if
                  repo.get_files('schema', schema) else [])
+        desc = repo.get_schema_description(schema)
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_schema[schema],
-                comment=repo.get_schema_comment(schema),
+                comment=desc.comment if desc else None,
                 files=['%s/%s' % (schema, x) for x in files],
                 schemas=[[d, s, len(tables_by_schema[schema])]],
                 reponame=schema, glossary_terms=terms,
@@ -159,9 +160,10 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         filename = output_path + "/tag-%s.html" % tag
         files = (repo.get_files('tag', tag) if
                  repo.get_files('tag', tag) else [])
+        desc = repo.get_tag_description(tag)
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_tag[tag],
-                comment=(repo.get_tag_description(tag)).comment,
+                comment=desc.comment if desc else None,
                 files=['tag-%s/%s' % (tag, x) for x in files],
                 tags=[[tag, len(tables_by_tag[tag])]],
                 reponame=tag, glossary_terms=terms,

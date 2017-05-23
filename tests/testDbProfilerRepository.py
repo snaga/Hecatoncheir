@@ -9,7 +9,7 @@ sys.path.append('..')
 
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir.exception import InternalError
-from hecatoncheir.metadata import Tag, TagDesc
+from hecatoncheir.metadata import Tag, TagDesc, SchemaDesc
 
 class TestDbProfilerRepository(unittest.TestCase):
     repo = None
@@ -580,34 +580,45 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual("Could not get tags: ", cm.exception.value)
 
     def test_set_tag_description_001(self):
-        desc = TagDesc(u'tag1')
-        self.repo.set_tag_description(desc)
-        self.assertTrue(self.repo.set_tag_description(desc))
+        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1')))
+        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc')))
+        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc', u'comment')))
 
-        desc = TagDesc(u'tag1', u'short desc')
-        self.assertTrue(self.repo.set_tag_description(desc))
+    def test_get_tag_description_001(self):
+        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1')))
+        self.assertIsNone(self.repo.get_tag_description(u'tag1'))
 
-        desc = TagDesc(u'tag1', u'short desc', u'comment')
-        self.assertTrue(self.repo.set_tag_description(desc))
+        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc')))
+        self.assertEqual({'comment': None, 'label': u'tag1', 'desc': u'short desc'},
+                         self.repo.get_tag_description(u'tag1').__dict__)
 
-    def test_set_schema_comment_001(self):
-        self.assertTrue(self.repo.set_schema_comment('schema1', 'comment'))
-        self.assertTrue(self.repo.set_schema_comment('schema1', ''))
+        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc2', u'comment2')))
+        self.assertEqual({'comment': u'comment2', 'label': u'tag1', 'desc': u'short desc2'},
+                         self.repo.get_tag_description(u'tag1').__dict__)
 
-        self.assertTrue(self.repo.set_schema_comment(u'スキーマ2', u'コメント'))
+        self.assertIsNone(self.repo.get_tag_description(u'nosuchtag1'))
 
-    def test_get_schema_comment_001(self):
-        self.repo.set_schema_comment('schema1', 'comment')
-        self.assertEqual('comment', self.repo.get_schema_comment('schema1'))
-        self.repo.set_schema_comment('schema1', '')
-        self.assertEqual('', self.repo.get_schema_comment('schema1'))
+    def test_set_schema_description_001(self):
+        self.assertTrue(self.repo.set_schema_description(SchemaDesc(u'schema1', u'desc', u'comment')))
+        self.assertTrue(self.repo.set_schema_description(SchemaDesc(u'schema1', u'', u'')))
+        self.assertTrue(self.repo.set_schema_description(SchemaDesc(u'スキーマ2', u'短い説明', u'コメント')))
 
-        self.repo.set_schema_comment(u'スキーマ2', u'コメント')
-        self.assertEqual(u'コメント', self.repo.get_schema_comment(u'スキーマ2'))
+    def test_get_schema_description_001(self):
+        self.repo.set_schema_description(SchemaDesc(u'schema1', u'desc', u'comment'))
+        self.assertEqual({'comment': u'comment', 'name': u'schema1', 'desc': u'desc'},
+                         self.repo.get_schema_description(u'schema1').__dict__)
+        self.repo.set_schema_description(SchemaDesc(u'schema1', u'', u''))
+        self.assertEqual({'comment': u'', 'name': u'schema1', 'desc': u''},
+                         self.repo.get_schema_description(u'schema1').__dict__)
 
-        self.assertEqual('', self.repo.get_schema_comment('schema1'))
+        self.repo.set_schema_description(SchemaDesc(u'スキーマ2', u'短い説明', u'コメント'))
+        self.assertEqual({'comment': u'コメント', 'name': u'スキーマ2', 'desc': u'短い説明'},
+                         self.repo.get_schema_description(u'スキーマ2').__dict__)
 
-        self.assertEqual(None, self.repo.get_schema_comment('nosuchschema1'))
+        self.assertEqual({'comment': u'', 'name': u'schema1', 'desc': u''},
+                         self.repo.get_schema_description(u'schema1').__dict__)
+
+        self.assertEqual(None, self.repo.get_schema_description(u'nosuchschema1'))
 
     def test_add_file_001(self):
         # tag1: 1st item

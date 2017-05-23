@@ -197,3 +197,19 @@ class TagDesc:
         assert isinstance(self.label, unicode)
         assert isinstance(self.desc, unicode) or self.desc is None
         assert isinstance(self.comment, unicode) or self.comment is None
+
+
+class SchemaDesc:
+    def __init__(self, name, desc=None, comment=None):
+        if not name:
+            raise ValueError("Invalid schema name: '%s'" % name)
+
+        self.name = name
+        self.desc = desc
+        self.comment = comment
+        self.__assert()
+
+    def __assert(self):
+        assert isinstance(self.name, unicode)
+        assert isinstance(self.desc, unicode) or self.desc is None
+        assert isinstance(self.comment, unicode) or self.comment is None

@@ -126,9 +126,10 @@ def index_schema(db, schema):
         if t[0] == db and t[1] == schema:
             tab = repo.get_table(t[0], t[1], t[2])
             tables.append(tab)
+    desc = repo.get_schema_description(u'%s.%s' % (db, schema))
     html = DbProfilerFormatter.to_index_html(
         tables,
-        comment=repo.get_schema_comment('%s.%s' % (db, schema)),
+        comment=desc.comment if desc else None,
         schemas=[[db, schema, len(tables)]],
         reponame=schema, glossary_terms=terms,
         editable=True).encode('utf-8')

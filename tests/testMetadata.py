@@ -8,7 +8,7 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir.DbProfilerBase import migrate_table_meta
-from hecatoncheir.metadata import TableColumnMeta, TableMeta, Tag, TagDesc
+from hecatoncheir.metadata import TableColumnMeta, TableMeta, Tag, TagDesc, SchemaDesc
 
 class TestTableColumnMeta(unittest.TestCase):
     def setUp(self):
@@ -348,6 +348,25 @@ class TestTagDesc(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             t = TagDesc(u'', u'd', u'c')
         self.assertEqual("Invalid tag label: ''", cm.exception[0])
+
+
+class TestSchemaDesc(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        pass
+
+    def test_schemadesc_001(self):
+        t = SchemaDesc(u's', u'd', u'c')
+        self.assertEqual(u's', t.name)
+        self.assertEqual(u'd', t.desc)
+        self.assertEqual(u'c', t.comment)
+
+        with self.assertRaises(AssertionError) as cm:
+            t = SchemaDesc('s', u'd', u'c')
+
+        with self.assertRaises(ValueError) as cm:
+            t = SchemaDesc(u'', u'd', u'c')
+        self.assertEqual("Invalid schema name: ''", cm.exception[0])
 
 if __name__ == '__main__':
     unittest.main()
