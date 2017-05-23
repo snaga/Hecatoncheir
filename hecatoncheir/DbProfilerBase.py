@@ -457,8 +457,7 @@ class DbProfilerBase(object):
                 columnmeta[col].validation = validation[col]
         log.info(_("Record validation: end"))
 
-    def run_postscan_validation(self, schema_name, table_name, tablemeta,
-                                columnmeta, table_data, validation_rules):
+    def run_postscan_validation(self, table_data, validation_rules):
         if not validation_rules:
             return table_data
 
@@ -549,9 +548,7 @@ class DbProfilerBase(object):
             log.info(_("Skipping column statistics validation "
                        "and SQL validation."))
         else:
-            table_data = self.run_postscan_validation(schema_name, table_name,
-                                                      tablemeta, columnmeta,
-                                                      table_data,
+            table_data = self.run_postscan_validation(table_data,
                                                       validation_rules)
         log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
 
