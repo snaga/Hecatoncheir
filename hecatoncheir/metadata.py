@@ -9,7 +9,7 @@ from datetime import datetime
 import dateutil.parser
 
 from hecatoncheir import logger as log
-from hecatoncheir.DbProfilerFormatter import DbProfilerJSONEncoder
+from hecatoncheir.msgutil import DbProfilerJSONEncoder
 
 
 class TableColumnMeta:

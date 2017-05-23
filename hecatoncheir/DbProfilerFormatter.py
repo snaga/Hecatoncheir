@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import copy
-import datetime
-import decimal
 import json
 import os
 import re
@@ -15,6 +13,7 @@ import CSVUtils
 import DbProfilerVerify
 import logger as log
 from exception import DbProfilerException
+from msgutil import DbProfilerJSONEncoder
 from msgutil import gettext as _
 
 
@@ -22,24 +21,6 @@ def coalesce2(d, s, r):
     if s in d and d[s] is not None:
         return d[s]
     return r
-
-
-class DbProfilerJSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        try:
-            iterable = iter(o)
-        except TypeError:
-            pass
-        else:
-            return list(iterable)
-
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-        elif isinstance(o, datetime.date):
-            return o.isoformat()
-        elif isinstance(o, decimal.Decimal):
-            return (str(o) for o in [o])
-        return super(DbProfilerJSONEncoder, self).default(o)
 
 
 def jsonize(data):

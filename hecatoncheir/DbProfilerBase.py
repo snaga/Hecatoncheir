@@ -11,7 +11,6 @@ import dateutil.parser
 
 import DbProfilerValidator
 import logger as log
-from DbProfilerFormatter import DbProfilerJSONEncoder
 from exception import DbProfilerException, InternalError, QueryError
 from logger import str2unicode as _s2u, to_unicode as _2u
 from metadata import TableColumnMeta, TableMeta
