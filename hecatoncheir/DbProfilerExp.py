@@ -50,12 +50,14 @@ def append_schema_desc(repo, schemas):
         tmp.append([s[0], s[1], s[2], desc.desc if desc else None])
     return tmp
 
+
 def append_tag_desc(repo, tags):
     tmp = []
     for s in tags:
         desc = repo.get_tag_description(s[0])
         tmp.append([s[0], s[1], desc.desc if desc else None])
     return tmp
+
 
 def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
                 output_title='title', output_path='./html'):
@@ -165,7 +167,8 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
                 tables_by_schema[schema],
                 comment=desc.comment if desc else None,
                 files=['%s/%s' % (schema, x) for x in files],
-                schemas=[[d, s, len(tables_by_schema[schema]), desc.desc if desc else None]],
+                schemas=[[d, s, len(tables_by_schema[schema]),
+                          desc.desc if desc else None]],
                 reponame=schema, glossary_terms=terms,
                 template_file=template_index))
 
@@ -179,7 +182,8 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
                 tables_by_tag[tag],
                 comment=desc.comment if desc else None,
                 files=['tag-%s/%s' % (tag, x) for x in files],
-                tags=[[tag, len(tables_by_tag[tag]), desc.desc if desc else None]],
+                tags=[[tag, len(tables_by_tag[tag]),
+                       desc.desc if desc else None]],
                 reponame=tag, glossary_terms=terms,
                 template_file=template_index))
 
