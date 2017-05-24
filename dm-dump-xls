@@ -6,7 +6,7 @@ import sys
 
 import xlrd
 
-import hecatoncheir.CSVUtils
+from hecatoncheir import CSVUtils
 from hecatoncheir.logger import to_unicode
 
 
