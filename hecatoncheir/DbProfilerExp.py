@@ -216,11 +216,11 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         tags = []
     tags2 = []
     tags3 = []
-    for t in sorted(repo.get_tag_label_with_count()):
-        if t[0] in tags:
-            tags2.append(t)
+    for label in sorted(repo.get_tag_labels()):
+        if label in tags:
+            tags2.append([label, repo.get_table_count_by_tag(label)])
         else:
-            tags3.append(t)
+            tags3.append([label, repo.get_table_count_by_tag(label)])
     # sort by tags
     tags2 = [y for x in tags for y in tags2 if x == y[0]]
     tags2.extend(tags3)

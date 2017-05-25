@@ -504,7 +504,7 @@ class TestDbProfilerRepository(unittest.TestCase):
             repo.get_schemas()
         self.assertEqual("Could not get schema names: ", cm.exception.value)
 
-    def test_get_tag_label_with_count_001(self):
+    def test_get_table_count_001(self):
         t = {}
         t['database_name'] = u'test_database'
         t['schema_name'] = u'test_schema'
@@ -513,6 +513,10 @@ class TestDbProfilerRepository(unittest.TestCase):
         t['tags'] = [u'tag1',u'tag2']
         self.assertTrue(self.repo.append_table(t))
 
+        self.assertEqual(1, self.repo.get_table_count_by_tag(u'tag1'))
+        self.assertEqual(1, self.repo.get_table_count_by_tag(u'tag2'))
+        self.assertEqual(0, self.repo.get_table_count_by_tag(u'tag3'))
+
         t['database_name'] = u'test_database'
         t['schema_name'] = u'test_schema'
         t['table_name'] = u'test_table2'
@@ -520,23 +524,9 @@ class TestDbProfilerRepository(unittest.TestCase):
         t['tags'] = [u'tag1']
         self.assertTrue(self.repo.append_table(t))
 
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema2'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = [u'tag3']
-        self.assertTrue(self.repo.append_table(t))
-
-        self.assertEqual([[u'tag1', 2],
-                          [u'tag2', 1],
-                          [u'tag3', 1]],
-                         self.repo.get_tag_label_with_count())
-
-        # fail
-        repo = DbProfilerRepository.DbProfilerRepository("/dev/null")
-        with self.assertRaises(InternalError) as cm:
-            repo.get_tag_label_with_count()
-        self.assertEqual("Could not get tag info: ", cm.exception.value)
+        self.assertEqual(2, self.repo.get_table_count_by_tag(u'tag1'))
+        self.assertEqual(1, self.repo.get_table_count_by_tag(u'tag2'))
+        self.assertEqual(0, self.repo.get_table_count_by_tag(u'tag3'))
 
     def test_has_table_record_001(self):
         t = {}
@@ -561,6 +551,15 @@ class TestDbProfilerRepository(unittest.TestCase):
         with self.assertRaises(InternalError) as cm:
             self.repo.put_tag(Tag(u'tag3', u'd.s.t2\''))
         self.assertEqual("Could not register tag: ", cm.exception.value)
+
+    def test_get_tag_labels_001(self):
+        self.assertEqual([], self.repo.get_tag_labels())
+
+        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
+        self.assertEqual([u'tag1'], self.repo.get_tag_labels())
+
+        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
+        self.assertEqual([u'tag1', u'tag2'], self.repo.get_tag_labels())
 
     def test_get_tags_001(self):
         self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))

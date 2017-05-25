@@ -249,38 +249,33 @@ SELECT database_name,
         log.trace("get_schemas: end")
         return schemas
 
-    def get_tag_label_with_count(self):
-        """Get a list of tag names and number of tags associated with tables.
+    def get_table_count_by_tag(self, tag_label):
+        """
+        Get a number of tables associated with the tag.
+
+        Args:
+            tag_label(unciode): a tag label
 
         Returns:
-            list: a list of lists: [[tag,num of tables], ...]
+            a number of tables
         """
-        log.trace("get_tag_label_with_count: start")
+        assert isinstance(tag_label, unicode)
 
-        query = """
-SELECT tag_label,
-       COUNT(*)
+        n = None
+        query = u"""
+SELECT COUNT(*)
   FROM tags
- WHERE tag_label <> ''
- GROUP BY
-       tag_label
- ORDER BY
-       COUNT(*) DESC
-"""
-
-        tags = []
+ WHERE tag_label = '{0}'
+""".format(tag_label)
         try:
-            cursor = self._conn.cursor()
-            log.debug("get_tag_label_with_count: query = %s" % query)
-            for r in cursor.execute(query):
-                tags.append([r[0], r[1]])
+            cur = self._conn.cursor()
+            cur.execute(query)
+            r = cur.fetchone()
+            n = r[0]
         except Exception as e:
-            log.trace("get_tag_label_with_count: " + unicode(e))
-            raise InternalError(_("Could not get tag info: "),
+            raise InternalError(_("Could not get table count: "),
                                 query=query, source=e)
-
-        log.trace("get_tag_label_with_count: end")
-        return tags
+        return n
 
     def has_table_record(self, tab):
         """
@@ -467,6 +462,25 @@ SELECT data
                 query=query, source=e)
 
         return table_history
+
+    def get_tag_labels(self):
+        """
+        Get all tag labels in the repository.
+
+        Returns:
+            a list of tag labels.
+        """
+        labels = []
+        try:
+            query = u"SELECT DISTINCT tag_label FROM tags"
+            cur = self._conn.cursor()
+            for r in cur.execute(query):
+                assert isinstance(r[0], unicode)
+                labels.append(r[0])
+        except Exception as e:
+            raise InternalError(_("Could not get tag labels: "),
+                                query=query, source=e)
+        return labels
 
     def get_tags(self, label=None, target=None):
         assert isinstance(label, unicode) or label is None
