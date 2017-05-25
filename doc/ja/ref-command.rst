@@ -76,6 +76,9 @@ dm-export-repoコマンド
       --tags <TAG>[,<TAG>]            Tag names to be shown on the top page.
       --schemas <SCHEMA>[,<SCHEMA>]   Schema names to be shown on the top page.
       --template <STRING>             Directory name for template files.
+  
+  Options for CSV format:
+      --encoding <STRING>             Character encoding for output files.
 
 ``repo file`` はレポジトリファイル名です。
 
@@ -88,6 +91,8 @@ dm-export-repoコマンド
 ``--schemas`` はデータカタログとして出力する際、トップページに優先的に表示するスキーマ名を指定します（指定していないものはスキーマ名順にソートして表示）。
 
 ``--templates`` はデータカタログとしてHTMLを生成する際に使用するテンプレートファイルのあるディレクトリです。
+
+``--encoding`` は出力するCSVファイルのエンコーディングを指定します。デフォルトは ``utf-8`` です。
 
 
 dm-import-csvコマンド

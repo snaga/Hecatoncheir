@@ -76,6 +76,9 @@ The repository data can be exported in the following forms.
       --tags <TAG>[,<TAG>]            Tag names to be shown on the top page.
       --schemas <SCHEMA>[,<SCHEMA>]   Schema names to be shown on the top page.
       --template <STRING>             Directory name for template files.
+  
+  Options for CSV format:
+      --encoding <STRING>             Character encoding for output files.
 
 ``repo file`` should be a file name of the repository.
 
@@ -88,6 +91,8 @@ The repository data can be exported in the following forms.
 ``--schemas`` specifies the schema names which must be appeared on the home page of the data catalog. (by default, schema names will be sorted by the name)
 
 ``--templates`` specifies a directory name which contains the template files for generating html files for data catalog.
+
+``--encoding`` specifies character encoding for the output csv files. By default, ``utf-8``.
 
 
 dm-import-csv
