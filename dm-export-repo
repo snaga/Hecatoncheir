@@ -8,10 +8,9 @@ import re
 import shutil
 import sys
 
-import hecatoncheir.DbProfilerExp as DbProfilerExp
-from hecatoncheir.DbProfilerExp import export_html
-import hecatoncheir.DbProfilerRepository as DbProfilerRepository
 import hecatoncheir.logger as log
+from hecatoncheir import DbProfilerExp, DbProfilerRepository
+from hecatoncheir.DbProfilerExp import export_csv, export_html
 from hecatoncheir.msgutil import gettext as _
 
 
@@ -28,13 +27,17 @@ Options for HTML format:
     --schemas <SCHEMA>[,<SCHEMA>]   Schema names to be shown on the top page.
     --template <STRING>             Directory name for template files.
 
+Options for CSV format:
+    --encoding <STRING>             Character encoding for output files.
+
 ''' % os.path.basename(sys.argv[0])
 
 if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:], "",
                                    ["format=", "tags=", "schemas=",
-                                    "template=", "help", "debug"])
+                                    "template=", "encoding=",
+                                    "help", "debug"])
     except getopt.GetoptError as err:
         log.error(unicode(err))
         usage()
@@ -46,6 +49,7 @@ if __name__ == "__main__":
     tags = None
     schemas = None
     template_path = None
+    csv_encoding = None
 
     for o, a in opts:
         if o in ("--debug"):
@@ -58,6 +62,8 @@ if __name__ == "__main__":
             schemas = a.decode('utf-8').split(',')
         elif o in ("--template"):
             template_path = a
+        elif o in ("--encoding"):
+            csv_encoding = a
         elif o in ("--help"):
             usage()
             sys.exit(0)
@@ -128,7 +134,8 @@ if __name__ == "__main__":
     elif format == 'json':
         export_json(repo, tables=table_list, output_path=output_path)
     elif format == 'csv':
-        export_csv(repo, tables=table_list, output_path=output_path)
+        export_csv(repo, tables=table_list, output_path=output_path,
+                   encoding=csv_encoding)
     else:
         log.error(_("Unsupported output format: %s") % format)
         log.error(_("Abort."))

@@ -13,6 +13,7 @@ import DbProfilerFormatter
 import DbProfilerRepository
 import DbProfilerVerify
 import logger as log
+from CSVUtils import list2csv
 from msgutil import gettext as _
 
 
@@ -286,7 +287,10 @@ def export_json(repo, tables=[], output_path='./json'):
     return True
 
 
-def export_csv(repo, tables=[], output_path='./csv'):
+def export_csv(repo, tables=[], output_path='./csv', encoding=None):
+    if not encoding:
+        encoding = 'utf-8'
+
     try:
         f = open(output_path + "/TABLE_COLUMN_META.CSV", "w")
         f2 = open(output_path + "/TABLE_COLUMN_VALIDATION.CSV", "w")
@@ -295,16 +299,16 @@ def export_csv(repo, tables=[], output_path='./csv'):
         header = [u'TIMESTAMP', u'DATABASE_NAME', u'SCHEMA_NAME',
                   u'TABLE_NAME', u'COLUMN_NAME', u'DATA_TYPE', u'DATA_LEN',
                   u'MIN', u'MAX', u'NULLS', u'NON_NULLS', u'CARDINARLITY']
-        f.write(str(list2csv(header)) + "\n")
+        f.write(list2csv(header).encode(encoding) + "\n")
 
         header2 = [u'TIMESTAMP', u'DATABASE_NAME', u'SCHEMA_NAME',
                    u'TABLE_NAME', u'COLUMN_NAME', u'VALIDATION_RULE',
                    u'INVALID_RECORDS']
-        f2.write(str(list2csv(header2)) + "\n")
+        f2.write(list2csv(header2).encode(encoding) + "\n")
 
         head_tab = [u'TIMESTAMP', u'DATABASE_NAME', u'SCHEMA_NAME',
                     u'TABLE_NAME', u'ROW_COUNT']
-        f_tab.write(str(list2csv(head_tab)) + "\n")
+        f_tab.write(list2csv(head_tab).encode(encoding) + "\n")
 
         for tab in tables:
             database_name = tab[0]
@@ -319,7 +323,7 @@ def export_csv(repo, tables=[], output_path='./csv'):
                                  database_name, schema_name, table_name,
                                  data['row_count']])
                 log.trace(line)
-                f_tab.write(line.encode('utf-8') + "\n")
+                f_tab.write(line.encode(encoding) + "\n")
 
                 for c in data['columns']:
                     log.trace("export_csv: " + unicode(c))
@@ -335,17 +339,17 @@ def export_csv(repo, tables=[], output_path='./csv'):
                                      data['row_count'] - c['nulls'],
                                      c['cardinality']])
                     log.trace(line)
-                    f.write(line.encode('utf-8') + "\n")
+                    f.write(line.encode(encoding) + "\n")
 
                     # validation result
-                    if 'validation' in c:
-                        for k in c['validation']:
-                            tmp = data['timestamp'].replace('T', ' ')
-                            line = list2csv([re.sub(r'\.\d+$', '', tmp),
-                                             database_name, schema_name,
-                                             table_name, c['column_name'],
-                                             k, c['validation'][k]])
-                            f2.write(str(line) + "\n")
+                    for k in c.get('validation', []):
+                        tmp = data['timestamp'].replace('T', ' ')
+                        # timestamp,db,schema,table,column,desc,result
+                        line = list2csv([re.sub(r'\.\d+$', '', tmp),
+                                         database_name, schema_name,
+                                         table_name, c['column_name'],
+                                         k['description'], k['invalid_count']])
+                        f2.write(line.encode(encoding) + "\n")
         f.close()
         f2.close()
         f_tab.close()

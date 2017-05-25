@@ -37,6 +37,7 @@ def list2csv(listitem):
             csv = i
         else:
             csv = csv + "," + i
+    assert isinstance(csv, unicode)
     return csv
 
 

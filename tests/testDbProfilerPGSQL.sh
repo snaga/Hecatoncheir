@@ -72,6 +72,14 @@ CMD="python ${_topdir}/dm-export-repo testDbProfilerPGSQL.db /vagrant/testDbProf
 echo $CMD
 $CMD
 
+CMD="python ${_topdir}/dm-export-repo --format csv testDbProfilerPGSQL.db /vagrant/testDbProfilerPGSQL/csv"
+echo $CMD
+$CMD
+
+CMD="python ${_topdir}/dm-export-repo --format csv --encoding sjis testDbProfilerPGSQL.db /vagrant/testDbProfilerPGSQL/csv"
+echo $CMD
+$CMD
+
 CMD="python ${_topdir}/dm-verify-results testDbProfilerPGSQL.db"
 echo $CMD
 $CMD
