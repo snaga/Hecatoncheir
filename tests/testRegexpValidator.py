@@ -26,21 +26,13 @@ class TestRegexpValidator(unittest.TestCase):
         self.assertFalse(v.validate(cols, ['aaa','bbb','ccc']))
         self.assertTrue(v.validate(cols, ['aaa','aaa','ccc']))
 
-#    def test_add_rule_regexp_001(self):
-#        v = DbProfilerValidator.DbProfilerColumnValidator("S1", "T1", "C1")
-#        v.add_rule_regexp('C1:regexp', '^$')
-#        self.assertEqual([['C1:regexp', '^$']], v.rule_regexp_pattern)
-#        v.add_rule_regexp('C1:regexp2', '^\.$')
-#        self.assertEqual([['C1:regexp', '^$'], ['C1:regexp2', '^\.$']], v.rule_regexp_pattern)
+    def test_validate_002(self):
+        v = RegexpValidator.RegexpValidator('foo', rule=['c_custkey', '^\\d+$'])
+        cols = ['c_custkey','c_custname','c_custaddress']
 
-#    def test_eval_rule_regexp_001(self):
-#        v = DbProfilerValidator.DbProfilerColumnValidator("S1", "T1", "C1")
-#        v.add_rule_regexp('C1:regexp1', '^$')
-#        self.assertEqual({'C1:regexp1': 0}, v.eval_rule_regexp(''))
-#        self.assertEqual({'C1:regexp1': 1}, v.eval_rule_regexp(' '))
-#
-#        v.add_rule_regexp('C1:regexp2', '^\.$')
-#        self.assertEqual({'C1:regexp1': 1, 'C1:regexp2': 1}, v.eval_rule_regexp(' '))
+        self.assertEqual('foo', v.label)
+        self.assertTrue(v.validate(cols, ['123','bbb','ccc']))
+        self.assertFalse(v.validate(cols, ['12a','bbb','ccc']))
 
 if __name__ == '__main__':
     unittest.main()
