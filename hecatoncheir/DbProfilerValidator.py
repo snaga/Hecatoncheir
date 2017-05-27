@@ -247,6 +247,18 @@ class DbProfilerValidator():
 
         return (validated_count, failed_count)
 
+    def equals(self, a, b):
+        return (a['column_names'] == b['column_names'] and
+                a['description'] == b['description'] and
+                a['rule'] == b['rule'] and
+                a['label'] == b['label'])
+
+    def to_str(self, a):
+        return (u'label:%s, column:%s, desc:%s, rule:%s, invalid:%s, '
+                u'stats:%s') % (a['label'], a['column_names'],
+                                a['description'], a['rule'],
+                                a['invalid_count'], a.get('statistics'))
+
     def update_table_data(self, table_data):
         # Update table data with failed count and column validation results.
         log.trace('update_table_data: start table_data=%s' % table_data)
@@ -254,24 +266,34 @@ class DbProfilerValidator():
 
         res = self.get_validation_results()
         log.trace("update_table_data: res = %s" % res)
-        for tabcol in table_data['columns']:
-            if tabcol['column_name'] in res:
-                tabcol['validation'] = (
-                    copy.deepcopy(res[tabcol['column_name']]))
-            log.trace("  tabcol['column_name'] = %s, "
-                      "tabcol['validation'] = %s" %
-                      (tabcol['column_name'], tabcol['validation']))
-            colcounter = self._column_counter.get(tabcol['column_name'])
-            log.trace("  colcounter = %s" % colcounter)
-            if colcounter is None:
-                continue
 
-            for v in tabcol['validation']:
-                label = v['label']
-                log.trace("  updating label %s, count %d add %d" %
-                          (label, v['invalid_count'], colcounter[label]))
-                v['invalid_count'] += colcounter[label]
-            log.trace("  tabcol['validation'] = %s" % tabcol['validation'])
+        # walk through every column on the table
+        for tabcol in table_data['columns']:
+            colname = tabcol['column_name']
+            log.trace("update_table_data: %s" % colname)
+
+            # Update validation results (statistics and invalid_count)
+            # on each column.
+            if colname not in res:
+                continue   # nothing to update for this column.
+            for newone in res[colname]:
+                log.trace("newone: %s" % self.to_str(newone))
+                copied = False
+                for oldone in tabcol['validation']:
+                    log.trace("oldone: %s" % self.to_str(oldone))
+                    if (self.equals(newone, oldone)):
+                        if 'statistics' not in oldone:
+                            oldone['statistics'] = [0, 0]
+                        if 'statistics' not in newone:
+                            newone['statistics'] = [0, 0]
+                        oldone['statistics'][0] += newone['statistics'][0]
+                        oldone['statistics'][1] += newone['statistics'][1]
+                        oldone['invalid_count'] += newone['invalid_count']
+                        copied = True
+                        log.trace("updated: %s" % self.to_str(oldone))
+                if not copied:
+                    tabcol['validation'].append(copy.deepcopy(newone))
+                    log.trace("appended: %s" % self.to_str(newone))
         log.trace('update_table_data: end table_data=%s' % table_data)
 
     def validate_sql(self, dbdriver):
