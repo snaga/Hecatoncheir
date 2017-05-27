@@ -79,6 +79,29 @@ class TestDbProfilerBase(unittest.TestCase):
                            'invalid_count': 1}],
                          columnmeta['c_custkey'].validation)
 
+    def test_run_postscan_validation_001(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        self.assertTrue(p.connect())
+
+        tablemeta = TableMeta(self.dbname, u'public', u'customer')
+        tablemeta.column_names = ['c_custkey','c_name','c_address','c_nationkey','c_phone','c_acctbal','c_mktsegment','c_comment']
+        for col in tablemeta.column_names:
+            tablemeta.columns.append(TableColumnMeta(unicode(col)))
+
+        r = [(0, u'dqwbtest', u'public', u'customer', u'c_custkey', u'sql count', u'sql', u'select count(*) from customer', u'{count} == 8')]
+
+        table_data = tablemeta.makedic()
+        table_data = p.run_postscan_validation(table_data, r)
+
+        self.assertEqual(1, len(table_data['columns'][0]['validation']))
+        self.assertEqual({'column_names': [u'c_custkey'],
+                          'description': u'sql count',
+                          'rule': [u'c_custkey', u'select count(*) from customer', u'{count} == 8'],
+                          'label': 0,
+                          'query': u'select count(*) from customer',
+                          'invalid_count': 1},
+                         table_data['columns'][0]['validation'][0])
+
     def test_run_001(self):
         p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         self.assertTrue(p.connect())
