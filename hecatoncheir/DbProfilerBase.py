@@ -397,13 +397,14 @@ class DbProfilerBase(object):
         cur.close()
         return (count, failed)
 
-    def run_column_profiling(self, tablemeta, columnmeta):
+    def run_column_profiling(self, tablemeta):
         if self.profile_nulls_enabled is True:
             log.info(_("Number of nulls: start"))
             nulls = self.get_column_nulls(tablemeta.schema_name,
                                           tablemeta.table_name)
             for col in tablemeta.column_names:
-                columnmeta[col].nulls = long(nulls[col])
+                cm = tablemeta.get_column_meta(col)
+                cm.nulls = long(nulls[col])
             log.info(_("Number of nulls: end"))
 
         if self.profile_min_max_enabled is True:
@@ -414,8 +415,9 @@ class DbProfilerBase(object):
                 if isinstance(minmax[col][0], str):
                     minmax[col][0] = minmax[col][0].decode('utf-8')
                     minmax[col][1] = minmax[col][1].decode('utf-8')
-                columnmeta[col].min = u'%s' % minmax[col][0]
-                columnmeta[col].max = u'%s' % minmax[col][1]
+                cm = tablemeta.get_column_meta(col)
+                cm.min = u'%s' % minmax[col][0]
+                cm.max = u'%s' % minmax[col][1]
             log.info(_("Min/Max values: end"))
 
         if self.profile_most_freq_values_enabled > 0:
@@ -428,8 +430,9 @@ class DbProfilerBase(object):
                 tablemeta.schema_name,
                 tablemeta.table_name)
             for col in tablemeta.column_names:
-                columnmeta[col].most_freq_values = most_freqs[col]
-                columnmeta[col].least_freq_values = least_freqs[col]
+                cm = tablemeta.get_column_meta(col)
+                cm.most_freq_values = most_freqs[col]
+                cm.least_freq_values = least_freqs[col]
             log.info(_("Most/Least freq values: end"))
 
         if self.profile_column_cardinality_enabled is True:
@@ -438,13 +441,13 @@ class DbProfilerBase(object):
                 tablemeta.schema_name,
                 tablemeta.table_name)
             for col in tablemeta.column_names:
-                columnmeta[col].cardinality = column_cardinality[col]
+                cm = tablemeta.get_column_meta(col)
+                cm.cardinality = column_cardinality[col]
             log.info(_("Column cardinality: end"))
 
         return True
 
-    def _run_record_validation(self, tablemeta, columnmeta,
-                               validation_rules,
+    def _run_record_validation(self, tablemeta, validation_rules,
                                skip_record_validation):
         log.info(_("Record validation: start"))
         if skip_record_validation:
@@ -461,7 +464,8 @@ class DbProfilerBase(object):
 
         for col in tablemeta.column_names:
             if validation and col in validation:
-                columnmeta[col].validation = validation[col]
+                cm = tablemeta.get_column_meta(col)
+                cm.validation = validation[col]
         log.info(_("Record validation: end"))
         return True
 
@@ -507,6 +511,8 @@ class DbProfilerBase(object):
         columnmeta = {}
         for col in tablemeta.column_names:
             columnmeta[col] = TableColumnMeta(unicode(col))
+            # Add all column meta data to the table meta.
+            tablemeta.columns.append(columnmeta[col])
 
         log.info(_("Data types: start"))
         data_types = self.get_column_datatypes(schema_name, table_name)
@@ -540,14 +546,9 @@ class DbProfilerBase(object):
                         "the table has more than %s rows") %
                       ("{:,d}".format(self.column_profiling_threshold))))
         else:
-            self.run_column_profiling(tablemeta, columnmeta)
-            self._run_record_validation(tablemeta, columnmeta,
-                                        validation_rules,
+            self.run_column_profiling(tablemeta)
+            self._run_record_validation(tablemeta, validation_rules,
                                         skip_record_validation)
-
-        # Add all column meta data to the table meta.
-        for col in tablemeta.column_names:
-            tablemeta.columns.append(columnmeta[col])
 
         table_data = tablemeta.makedic()
         if (self.skip_column_profiling or

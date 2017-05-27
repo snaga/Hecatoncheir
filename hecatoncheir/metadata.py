@@ -10,6 +10,7 @@ import dateutil.parser
 
 from hecatoncheir import logger as log
 from hecatoncheir.msgutil import DbProfilerJSONEncoder
+from hecatoncheir.msgutil import gettext as _
 
 
 class TableColumnMeta:
@@ -133,6 +134,13 @@ class TableMeta:
         assert isinstance(self.columns, list) or self.columns is None
         assert isinstance(self.comment, unicode) or self.comment is None
         assert isinstance(self.sample_rows, list) or self.sample_rows is None
+
+    def get_column_meta(self, column_name):
+        for c in self.columns:
+            if c.name == column_name:
+                return c
+        raise ValueError(_(u'Column "%s" not found on table "%s.%s".') %
+                         (column_name, self.schema_name, self.table_name))
 
     def makedic(self):
         self.__assert()
