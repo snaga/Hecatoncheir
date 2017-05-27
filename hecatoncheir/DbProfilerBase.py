@@ -397,18 +397,19 @@ class DbProfilerBase(object):
         cur.close()
         return (count, failed)
 
-    def run_column_profiling(self, schema_name, table_name, tablemeta,
-                             columnmeta):
+    def run_column_profiling(self, tablemeta, columnmeta):
         if self.profile_nulls_enabled is True:
             log.info(_("Number of nulls: start"))
-            nulls = self.get_column_nulls(schema_name, table_name)
+            nulls = self.get_column_nulls(tablemeta.schema_name,
+                                          tablemeta.table_name)
             for col in tablemeta.column_names:
                 columnmeta[col].nulls = long(nulls[col])
             log.info(_("Number of nulls: end"))
 
         if self.profile_min_max_enabled is True:
             log.info(_("Min/Max values: start"))
-            minmax = self.get_column_min_max(schema_name, table_name)
+            minmax = self.get_column_min_max(tablemeta.schema_name,
+                                             tablemeta.table_name)
             for col in tablemeta.column_names:
                 if isinstance(minmax[col][0], str):
                     minmax[col][0] = minmax[col][0].decode('utf-8')
@@ -419,11 +420,13 @@ class DbProfilerBase(object):
 
         if self.profile_most_freq_values_enabled > 0:
             log.info(_("Most/Least freq values(1/2): start"))
-            most_freqs = self.get_column_most_freq_values(schema_name,
-                                                          table_name)
+            most_freqs = self.get_column_most_freq_values(
+                tablemeta.schema_name,
+                tablemeta.table_name)
             log.info(_("Most/Least freq values(2/2): start"))
-            least_freqs = self.get_column_least_freq_values(schema_name,
-                                                            table_name)
+            least_freqs = self.get_column_least_freq_values(
+                tablemeta.schema_name,
+                tablemeta.table_name)
             for col in tablemeta.column_names:
                 columnmeta[col].most_freq_values = most_freqs[col]
                 columnmeta[col].least_freq_values = least_freqs[col]
@@ -431,11 +434,14 @@ class DbProfilerBase(object):
 
         if self.profile_column_cardinality_enabled is True:
             log.info(_("Column cardinality: start"))
-            column_cardinality = self.get_column_cardinalities(schema_name,
-                                                               table_name)
+            column_cardinality = self.get_column_cardinalities(
+                tablemeta.schema_name,
+                tablemeta.table_name)
             for col in tablemeta.column_names:
                 columnmeta[col].cardinality = column_cardinality[col]
             log.info(_("Column cardinality: end"))
+
+        return True
 
     def _run_record_validation(self, schema_name, table_name, tablemeta,
                                columnmeta, validation_rules,
@@ -532,8 +538,7 @@ class DbProfilerBase(object):
                         "the table has more than %s rows") %
                       ("{:,d}".format(self.column_profiling_threshold))))
         else:
-            self.run_column_profiling(schema_name, table_name, tablemeta,
-                                      columnmeta)
+            self.run_column_profiling(tablemeta, columnmeta)
             self._run_record_validation(schema_name, table_name, tablemeta,
                                         columnmeta, validation_rules,
                                         skip_record_validation)

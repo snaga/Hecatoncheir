@@ -9,6 +9,7 @@ sys.path.append('..')
 
 from hecatoncheir import logger as log
 from hecatoncheir.exception import DriverError, QueryError
+from hecatoncheir.metadata import TableColumnMeta, TableMeta
 from hecatoncheir.pgsql import PgProfiler
 
 """
@@ -37,6 +38,25 @@ class TestDbProfilerBase(unittest.TestCase):
             self.assertTrue(p.connect())
         self.assertEqual(u'Could not connect to the server: FATAL:  role "nosuchuser" does not exist',
                          cm.exception.value)
+
+    def test_run_column_profiling_001(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        self.assertTrue(p.connect())
+
+        tablemeta = TableMeta(self.dbname, u'public', u'customer')
+        tablemeta.column_names = ['c_custkey','c_name','c_address','c_nationkey','c_phone','c_acctbal','c_mktsegment','c_comment']
+        columnmeta = {}
+        for col in tablemeta.column_names:
+            columnmeta[col] = TableColumnMeta(unicode(col))
+
+        self.assertTrue(p.run_column_profiling(tablemeta, columnmeta))
+        self.assertEqual(0, columnmeta['c_custkey'].nulls)
+        self.assertEqual('3373', columnmeta['c_custkey'].min)
+        self.assertEqual('147004', columnmeta['c_custkey'].max)
+
+        self.assertEqual(10, len(columnmeta['c_comment'].most_freq_values))
+        self.assertEqual(10, len(columnmeta['c_comment'].least_freq_values))
+        self.assertEqual(28, columnmeta['c_comment'].cardinality)
 
     def test_run_001(self):
         p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
