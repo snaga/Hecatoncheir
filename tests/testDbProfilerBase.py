@@ -58,6 +58,27 @@ class TestDbProfilerBase(unittest.TestCase):
         self.assertEqual(10, len(columnmeta['c_comment'].least_freq_values))
         self.assertEqual(28, columnmeta['c_comment'].cardinality)
 
+    def test__run_record_validation_001(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        self.assertTrue(p.connect())
+
+        tablemeta = TableMeta(self.dbname, u'public', u'customer')
+        tablemeta.column_names = ['c_custkey','c_name','c_address','c_nationkey','c_phone','c_acctbal','c_mktsegment','c_comment']
+        columnmeta = {}
+        for col in tablemeta.column_names:
+            columnmeta[col] = TableColumnMeta(unicode(col))
+
+        r = [(0, u'dqwbtest', u'public', u'customer', u'c_custkey', u'eval desc', u'eval', u'{c_custkey} > 10000', u'')]
+
+        self.assertTrue(p._run_record_validation(tablemeta, columnmeta, r, False))
+        self.assertEqual([{'statistics': [28, 1],
+                           'description': u'eval desc',
+                           'rule': [u'c_custkey', u'{c_custkey} > 10000'],
+                           'label': 0,
+                           'column_names': [u'c_custkey'],
+                           'invalid_count': 1}],
+                         columnmeta['c_custkey'].validation)
+
     def test_run_001(self):
         p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         self.assertTrue(p.connect())

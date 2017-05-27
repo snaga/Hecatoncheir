@@ -443,8 +443,8 @@ class DbProfilerBase(object):
 
         return True
 
-    def _run_record_validation(self, schema_name, table_name, tablemeta,
-                               columnmeta, validation_rules,
+    def _run_record_validation(self, tablemeta, columnmeta,
+                               validation_rules,
                                skip_record_validation):
         log.info(_("Record validation: start"))
         if skip_record_validation:
@@ -454,7 +454,8 @@ class DbProfilerBase(object):
             log.info(_("Record validation: no validation rule"))
             return
 
-        validation = self.run_record_validation(schema_name, table_name,
+        validation = self.run_record_validation(tablemeta.schema_name,
+                                                tablemeta.table_name,
                                                 validation_rules)
         assert isinstance(validation, dict)
 
@@ -462,6 +463,7 @@ class DbProfilerBase(object):
             if validation and col in validation:
                 columnmeta[col].validation = validation[col]
         log.info(_("Record validation: end"))
+        return True
 
     def run_postscan_validation(self, table_data, validation_rules):
         if not validation_rules:
@@ -539,8 +541,8 @@ class DbProfilerBase(object):
                       ("{:,d}".format(self.column_profiling_threshold))))
         else:
             self.run_column_profiling(tablemeta, columnmeta)
-            self._run_record_validation(schema_name, table_name, tablemeta,
-                                        columnmeta, validation_rules,
+            self._run_record_validation(tablemeta, columnmeta,
+                                        validation_rules,
                                         skip_record_validation)
 
         # Add all column meta data to the table meta.
