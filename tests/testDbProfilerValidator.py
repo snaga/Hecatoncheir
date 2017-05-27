@@ -274,7 +274,7 @@ class TestDbProfilerValidator(unittest.TestCase):
         "max": "200000",
         "min": "1",
         "nulls": 0,
-        "validation": {}
+        "validation": []
       },
       {
         "cardinality": 200000,
@@ -286,7 +286,7 @@ class TestDbProfilerValidator(unittest.TestCase):
         "max": "200000",
         "min": "1",
         "nulls": 3,
-        "validation": {}
+        "validation": []
       }
     ],
     "database_name": "orcl",
@@ -318,18 +318,18 @@ class TestDbProfilerValidator(unittest.TestCase):
         v.update_table_data(table_data)
 
         self.assertEqual(6, len(table_data['columns'][0]['validation']))
-        self.assertEqual(2, table_data['columns'][0]['validation'][0]['invalid_count']) # c1:unique
-        self.assertEqual(2, table_data['columns'][0]['validation'][1]['invalid_count']) # c1:minmax
+        self.assertEqual(1, table_data['columns'][0]['validation'][0]['invalid_count']) # c1:unique
+        self.assertEqual(1, table_data['columns'][0]['validation'][1]['invalid_count']) # c1:minmax
         self.assertEqual(0, table_data['columns'][0]['validation'][2]['invalid_count']) # c1:notnull
         self.assertEqual(0, table_data['columns'][0]['validation'][3]['invalid_count']) # c1:cardinality
-        self.assertEqual(2, table_data['columns'][0]['validation'][4]['invalid_count']) # c1:notnull3
-        self.assertEqual(2, table_data['columns'][0]['validation'][5]['invalid_count']) # c1:notnull2
+        self.assertEqual(1, table_data['columns'][0]['validation'][4]['invalid_count']) # c1:notnull3
+        self.assertEqual(1, table_data['columns'][0]['validation'][5]['invalid_count']) # c1:notnull2
 
         self.assertEqual(4, len(table_data['columns'][1]['validation']))
         self.assertEqual(0, table_data['columns'][1]['validation'][0]['invalid_count']) # c2:minmax
         self.assertEqual(0, table_data['columns'][1]['validation'][1]['invalid_count']) # c2:unique
-        self.assertEqual(2, table_data['columns'][1]['validation'][2]['invalid_count']) # c2:cardinality
-        self.assertEqual(2, table_data['columns'][1]['validation'][3]['invalid_count']) # c2:notnull
+        self.assertEqual(1, table_data['columns'][1]['validation'][2]['invalid_count']) # c2:cardinality
+        self.assertEqual(1, table_data['columns'][1]['validation'][3]['invalid_count']) # c2:notnull
 
     def test_validate_sql_001(self):
         pg = PgDriver.PgDriver('host=/tmp dbname=%s' % "dqwbtest", "dqwbuser", "dqwbuser")

@@ -29,6 +29,7 @@ function mssql()
 
 python2.7 testCSVUtils.py
 python2.7 testColumnValidationCounter.py
+python2.7 testDbProfilerBase.py
 python2.7 testDbProfilerExp.py
 python2.7 testDbProfilerFormatter.py
 python2.7 testDbProfilerRepository.py

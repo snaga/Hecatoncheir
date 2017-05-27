@@ -178,6 +178,21 @@ class TestTableMeta(unittest.TestCase):
             c = TableMeta(u'd', None, u't')
         self.assertEqual("Invalid schema name: 'None'", cm.exception[0])
 
+    def test_get_column_meta_001(self):
+        tablemeta = TableMeta(u'db', u'public', u'customer')
+        tablemeta.column_names = ['c_custkey','c_name','c_address','c_nationkey','c_phone','c_acctbal','c_mktsegment','c_comment']
+        columnmeta = {}
+        for col in tablemeta.column_names:
+            tablemeta.columns.append(TableColumnMeta(unicode(col)))
+
+        self.assertEqual(u'c_custkey', tablemeta.get_column_meta('c_custkey').name)
+        self.assertEqual(u'c_comment', tablemeta.get_column_meta('c_comment').name)
+
+        with self.assertRaises(ValueError) as cm:
+            tablemeta.get_column_meta('nosuch')
+        self.assertEqual('Column "nosuch" not found on table "public.customer".',
+                         cm.exception[0])
+
     def test_makedic_001(self):
         m = TableMeta(u'd', u's', u't')
         self.assertEqual('d', m.database_name)
