@@ -10,10 +10,10 @@ import sys
 
 from flask import Flask, request, Response, jsonify
 
-import hecatoncheir.DbProfilerFormatter as DbProfilerFormatter
-import hecatoncheir.DbProfilerRepository as DbProfilerRepository
-import hecatoncheir.DbProfilerVerify as DbProfilerVerify
-import hecatoncheir.logger as log
+from hecatoncheir import DbProfilerFormatter
+from hecatoncheir import DbProfilerRepository
+from hecatoncheir import DbProfilerVerify
+from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
 
 app = Flask(__name__)

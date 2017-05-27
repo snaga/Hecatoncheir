@@ -8,8 +8,8 @@ import re
 import shutil
 import sys
 
-import hecatoncheir.logger as log
 from hecatoncheir import DbProfilerExp, DbProfilerRepository
+from hecatoncheir import logger as log
 from hecatoncheir.DbProfilerExp import export_csv, export_html
 from hecatoncheir.msgutil import gettext as _
 

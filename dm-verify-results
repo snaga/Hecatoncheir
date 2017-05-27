@@ -5,8 +5,8 @@ import getopt
 import os
 import sys
 
-import hecatoncheir.DbProfilerVerify as DbProfilerVerify
-import hecatoncheir.logger as log
+from hecatoncheir import DbProfilerVerify
+from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
 
 

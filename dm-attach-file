@@ -6,8 +6,8 @@ import os
 import shutil
 import sys
 
-import hecatoncheir.DbProfilerRepository as DbProfilerRepository
-import hecatoncheir.logger as log
+from hecatoncheir import DbProfilerRepository
+from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
 
 input_encoding = 'utf-8'

@@ -6,9 +6,9 @@ import json
 import os
 import sys
 
-import hecatoncheir.CSVUtils as CSVUtils
-import hecatoncheir.DbProfilerRepository as DbProfilerRepository
-import hecatoncheir.logger as log
+from hecatoncheir import CSVUtils
+from hecatoncheir import DbProfilerRepository
+from hecatoncheir import logger as log
 from hecatoncheir.metadata import TagDesc, SchemaDesc
 from hecatoncheir.msgutil import gettext as _
 
