@@ -80,6 +80,18 @@ CMD="python ${_topdir}/dm-export-repo --format csv --encoding sjis testDbProfile
 echo $CMD
 $CMD
 
+CMD="python ${_topdir}/dm-repo-cmd testDbProfilerPGSQL.db ls"
+echo $CMD
+$CMD
+
+CMD="python ${_topdir}/dm-repo-cmd testDbProfilerPGSQL.db rm dqwbtest.public.nation2"
+echo $CMD
+$CMD
+
+CMD="python ${_topdir}/dm-repo-cmd testDbProfilerPGSQL.db ls"
+echo $CMD
+$CMD
+
 CMD="python ${_topdir}/dm-verify-results testDbProfilerPGSQL.db"
 echo $CMD
 $CMD

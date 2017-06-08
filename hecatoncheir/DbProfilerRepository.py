@@ -424,6 +424,36 @@ SELECT data
         log.trace('get_table: end')
         return table
 
+    def remove_table(self, database_name, schema_name, table_name):
+        """
+        Remove table record(s) from the repository by object name.
+
+        Args:
+            database_name(str): database name
+            schema_name(str):   schema name
+            table_name(str):    table name
+
+        Returns:
+            True on success or nothing to be deleted.
+        """
+        assert database_name and schema_name and table_name
+
+        query = """
+DELETE FROM repo
+ WHERE database_name = '{0}'
+   AND schema_name = '{1}'
+   AND table_name = '{2}'
+""".format(database_name, schema_name, table_name)
+
+        try:
+            cursor = self._conn.cursor()
+            cursor.execute(query)
+            self._conn.commit()
+        except Exception as e:
+            raise InternalError(_("Could not remove table data: "),
+                                query=query, source=e)
+        return True
+
     def get_table_history(self, database_name, schema_name, table_name):
         """
         Get a table record history from the repository by object name,

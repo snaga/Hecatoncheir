@@ -144,6 +144,27 @@ dm-import-datamappingコマンド
 CSVファイルのフォーマットについては「:ref:`ref-csv-format`」を参照してください。
 
 
+dm-repo-cmdコマンド
+===================
+
+``dm-repo-cmd`` コマンドは、レポジトリに保存されているデータの操作を行います。
+
+::
+
+  Usage: dm-repo-cmd [options...] [repo file] [cmd] [args...]
+  
+  Commands:
+      ls
+      rm <db.schema.table>
+  
+  Options:
+      --help      Print this help.
+
+``ls`` を指定すると、レポジトリに含まれるテーブル名の一覧を「データベース名.スキーマ名.テーブル名」の形式で取得します。
+
+``rm`` をテーブル名（データベース名.スキーマ名.テーブル名）とともに指定すると、レポジトリに含まれる当該テーブルのデータを削除します。
+
+
 dm-run-profilerコマンド
 =======================
 

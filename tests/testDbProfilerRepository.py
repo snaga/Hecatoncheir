@@ -176,6 +176,33 @@ class TestDbProfilerRepository(unittest.TestCase):
             self.repo.get_table('test\'_database', 'test_schema', 'test_table')
         self.assertEqual("Could not get table data: ", cm.exception.value)
 
+    def test_remove_table_001(self):
+        t = {}
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
+        t['timestamp'] = '2016-04-27T10:06:41.653836'
+
+        # remove single entry at once.
+        self.assertIsNone(self.repo.get_table('test_database', 'test_schema', 'test_table'))
+        self.assertTrue(self.repo.append_table(t))
+        self.assertIsNotNone(self.repo.get_table('test_database', 'test_schema', 'test_table'))
+
+        self.assertTrue(self.repo.remove_table('test_database', 'test_schema', 'test_table'))
+        self.assertIsNone(self.repo.get_table('test_database', 'test_schema', 'test_table'))
+
+        # remove two entries at once.
+        self.assertTrue(self.repo.append_table(t))
+        self.assertTrue(self.repo.append_table(t))
+        self.assertIsNotNone(self.repo.get_table('test_database', 'test_schema', 'test_table'))
+        self.assertTrue(self.repo.remove_table('test_database', 'test_schema', 'test_table'))
+        self.assertIsNone(self.repo.get_table('test_database', 'test_schema', 'test_table'))
+
+        # fail with query error
+        with self.assertRaises(InternalError) as cm:
+            self.repo.remove_table('test\'_database', 'test_schema', 'test_table')
+        self.assertEqual("Could not remove table data: ", cm.exception.value)
+
     def testSet_001(self):
         t = {}
         t['database_name'] = u'test_database'
