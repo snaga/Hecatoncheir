@@ -1,4 +1,4 @@
-TARGETS=dm-attach-file dm-dump-xls dm-export-repo dm-import-csv dm-import-datamapping dm-run-profiler dm-run-server dm-verify-results
+TARGETS=dm-attach-file dm-dump-xls dm-export-repo dm-import-csv dm-import-datamapping dm-run-profiler dm-run-server dm-verify-results dm-repo-cmd
 
 all: ja.mo
 

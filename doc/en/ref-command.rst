@@ -144,6 +144,28 @@ dm-import-datamapping
 See ":ref:`ref-csv-format`" for more information about the CSV format.
 
 
+dm-repo-cmd
+===========
+
+``dm-repo-cmd`` command allows you to manipulate table data in the repository directly.
+
+::
+
+  Usage: dm-repo-cmd [options...] [repo file] [cmd] [args...]
+  
+  Commands:
+      ls
+      rm <db.schema.table>
+  
+  Options:
+      --help      Print this help.
+
+``ls`` shows a list of table names (in db.schema.table form) in the repository.
+
+``rm`` removes table data in the repository by supplying table names (in db.schema.table form).
+
+
+
 dm-run-profiler
 ===============
 

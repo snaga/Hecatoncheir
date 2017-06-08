@@ -12,7 +12,7 @@ setup(
     package_dir = {'hecatoncheir': 'hecatoncheir'},
     scripts=['dm-import-datamapping', 'dm-run-profiler', 'dm-export-repo',
              'dm-import-csv', 'dm-verify-results', 'dm-run-server',
-             'dm-attach-file', 'dm-dump-xls'],
+             'dm-attach-file', 'dm-dump-xls', 'dm-repo-cmd'],
 
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
