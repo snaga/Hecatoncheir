@@ -128,6 +128,13 @@ class TestMyProfiler(unittest.TestCase):
         c = p.get_row_count(self.dbname, u'customer')
         self.assertEqual(28, c)
 
+    def test_get_row_count_002(self):
+        p = MyProfiler.MyProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            p.get_row_count(self.dbname, u'customer', use_statistics=True)
+        self.assertEqual(u'use_statistics option is not yet implemented.', unicode(cm.exception))
+
     def test_get_column_nulls_001(self):
         p = MyProfiler.MyProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         c = p.get_column_nulls(self.dbname, u'customer')
@@ -140,6 +147,13 @@ class TestMyProfiler(unittest.TestCase):
         self.assertEqual(0, c['c_acctbal'])
         self.assertEqual(0, c['c_mktsegment'])
         self.assertEqual(0, c['c_comment'])
+
+    def test_get_column_nulls_002(self):
+        p = MyProfiler.MyProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            p.get_column_nulls(self.dbname, u'customer', use_statistics=True)
+        self.assertEqual(u'use_statistics option is not yet implemented.', unicode(cm.exception))
 
     def test_has_minmax_001(self):
         self.assertFalse(MyProfiler.MyProfiler.has_minmax(['tinyblob', 1]))
