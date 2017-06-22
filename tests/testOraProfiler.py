@@ -102,7 +102,7 @@ class TestOracleProfiler(unittest.TestCase):
                           'Supplier#000000011       ',
                           'JfwTs,LZrV, M,9C',
                           18,
-                          '28-613-996-1505',
+                          None,
                           3393.08008,
                           'quickly bold asymptotes mold carefully unusual pearls. requests boost at the blith'],
                          c[10])
@@ -143,29 +143,27 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_column_nulls_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_nulls(u'SCOTT', u'CUSTOMER')
+        c = p.get_column_nulls(u'SCOTT', u'SUPPLIER')
 
-        self.assertEqual(0, c['C_CUSTKEY'])
-        self.assertEqual(0, c['C_NAME'])
-        self.assertEqual(0, c['C_ADDRESS'])
-        self.assertEqual(0, c['C_NATIONKEY'])
-        self.assertEqual(0, c['C_PHONE'])
-        self.assertEqual(0, c['C_ACCTBAL'])
-        self.assertEqual(0, c['C_MKTSEGMENT'])
-        self.assertEqual(0, c['C_COMMENT'])
+        self.assertEqual(0, c['S_SUPPKEY'])
+        self.assertEqual(0, c['S_NAME'])
+        self.assertEqual(0, c['S_ADDRESS'])
+        self.assertEqual(0, c['S_NATIONKEY'])
+        self.assertEqual(1, c['S_PHONE'])
+        self.assertEqual(0, c['S_ACCTBAL'])
+        self.assertEqual(0, c['S_COMMENT'])
 
     def test_get_column_nulls_002(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_nulls(u'SCOTT', u'CUSTOMER', use_statistics=True)
+        c = p.get_column_nulls(u'SCOTT', u'SUPPLIER', use_statistics=True)
 
-        self.assertEqual(0, c['C_CUSTKEY'])
-        self.assertEqual(0, c['C_NAME'])
-        self.assertEqual(0, c['C_ADDRESS'])
-        self.assertEqual(0, c['C_NATIONKEY'])
-        self.assertEqual(0, c['C_PHONE'])
-        self.assertEqual(0, c['C_ACCTBAL'])
-        self.assertEqual(0, c['C_MKTSEGMENT'])
-        self.assertEqual(0, c['C_COMMENT'])
+        self.assertEqual(0, c['S_SUPPKEY'])
+        self.assertEqual(0, c['S_NAME'])
+        self.assertEqual(0, c['S_ADDRESS'])
+        self.assertEqual(0, c['S_NATIONKEY'])
+        self.assertEqual(1, c['S_PHONE'])
+        self.assertEqual(0, c['S_ACCTBAL'])
+        self.assertEqual(0, c['S_COMMENT'])
 
     def test_has_minmax_001(self):
         self.assertFalse(OraProfiler.OraProfiler.has_minmax(['blob', None]))
