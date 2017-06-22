@@ -11,7 +11,8 @@ import dateutil.parser
 
 import DbProfilerValidator
 import logger as log
-from exception import DbProfilerException, InternalError, QueryError
+from exception import (DbProfilerException, InternalError, QueryError,
+                       QueryTimeout)
 from logger import str2unicode as _s2u, to_unicode as _2u
 from metadata import TableColumnMeta, TableMeta
 from msgutil import gettext as _
@@ -527,7 +528,19 @@ class DbProfilerBase(object):
             log.info(_("Skipping table profiling."))
         elif self.profile_row_count_enabled is True:
             log.info(_("Row count: start"))
-            tablemeta.row_count = self.get_row_count(schema_name, table_name)
+            try:
+                tablemeta.row_count = self.get_row_count(schema_name,
+                                                         table_name)
+            except QueryTimeout as e:
+                log.info(_("Row count: Timeout caught. Using the database "
+                           "statistics."))
+                tablemeta.row_count = self.get_row_count(schema_name,
+                                                         table_name,
+                                                         use_statistics=True)
+                # Once timeout occured, column profiling should be skipped
+                # in order to avoid heavy loads.
+                self.skip_column_profiling = True
+
             log.info(_("Row count: end (%s)") %
                      "{:,d}".format(tablemeta.row_count))
 
