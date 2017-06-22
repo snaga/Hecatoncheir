@@ -78,21 +78,54 @@ SELECT column_name,
 
     def get_row_count(self, schema_name, table_name, use_statistics=False):
         if use_statistics:
-            raise NotImplementedError('use_statistics option is '
-                                      'not yet implemented.')
+            return self.__get_row_count_statistics(schema_name, table_name)
 
         if (schema_name, table_name) not in self.column_cache:
             self.__get_column_profile_phase1(schema_name, table_name)
         return self.column_cache[(schema_name, table_name)][0]
 
+    def __get_row_count_statistics(self, schema_name, table_name):
+        query = u"""
+SELECT c.reltuples
+  FROM pg_stat_all_tables t,
+       pg_class c
+ WHERE t.relid = c.oid
+   AND c.relkind = 'r'
+   AND t.schemaname = '{0}'
+   AND t.relname = '{1}'
+""".format(schema_name, table_name)
+
+        for r in self.dbdriver.q2rs(query).resultset:
+            return long(r[0]) if r[0] is not None else None
+
     def get_column_nulls(self, schema_name, table_name, use_statistics=False):
         if use_statistics:
-            raise NotImplementedError('use_statistics option is '
-                                      'not yet implemented.')
+            return self.__get_column_nulls_statistics(schema_name, table_name)
 
         if (schema_name, table_name) not in self.column_cache:
             self.__get_column_profile_phase1(schema_name, table_name)
         return self.column_cache[(schema_name, table_name)][2]
+
+    def __get_column_nulls_statistics(self, schema_name, table_name):
+        query = u"""
+SELECT s.attname,
+       (c.reltuples * s.null_frac)::bigint,
+       s.null_frac,
+       c.reltuples
+  FROM pg_stats s,
+       pg_stat_all_tables t,
+       pg_class c
+ WHERE s.schemaname = '{0}'
+   AND s.tablename = '{1}'
+   AND s.schemaname = t.schemaname
+   AND s.tablename = t.relname
+   AND t.relid = c.oid
+""".format(schema_name, table_name)
+
+        nulls = {}
+        for r in self.dbdriver.q2rs(query).resultset:
+            nulls[r[0]] = long(r[1]) if r[1] is not None else None
+        return nulls
 
     @staticmethod
     def has_minmax(data_type):
