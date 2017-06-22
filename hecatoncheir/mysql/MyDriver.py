@@ -83,11 +83,11 @@ class MyDriver(DbDriverBase.DbDriverBase):
         log.trace('query_to_resultset: start query=%s' % query)
 
         res = QueryResult(query)
+        monitor = None
         try:
             if self.conn is None:
                 self.connect()
 
-            monitor = None
             if timeout and int(timeout) > 0:
                 self.conn_id = self.__get_connection_id()
                 monitor = threading.Timer(timeout, self.cancel_callback)
