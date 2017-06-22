@@ -95,11 +95,11 @@ class MSSQLDriver(DbDriverBase.DbDriverBase):
                 'Query timeout is not implemented on SQL Server')
 
         res = QueryResult(query)
+        monitor = None
         try:
             if self.conn is None:
                 self.connect()
 
-            monitor = None
             if timeout and int(timeout) > 0:
                 self.__spid = self.__get_spid()
                 monitor = threading.Timer(timeout, self.cancel_callback)
