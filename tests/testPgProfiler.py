@@ -167,6 +167,13 @@ class TestPgProfiler(unittest.TestCase):
             c = p.get_row_count(u'PUBLIC', u'customer')
         self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
 
+    def test_get_row_count_002(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            p.get_row_count(u'public', u'customer', use_statistics=True)
+        self.assertEqual(u'use_statistics option is not yet implemented.', unicode(cm.exception))
+
     def test_get_column_nulls_001(self):
         p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         c = p.get_column_nulls(u'public', u'customer')
@@ -187,6 +194,13 @@ class TestPgProfiler(unittest.TestCase):
         with self.assertRaises(QueryError) as cm:
             c = p.get_column_nulls(u'PUBLIC', u'customer')
         self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
+
+    def test_get_column_nulls_002(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            p.get_column_nulls(u'public', u'customer', use_statistics=True)
+        self.assertEqual(u'use_statistics option is not yet implemented.', unicode(cm.exception))
 
     def test_has_minmax_001(self):
         self.assertFalse(PgProfiler.PgProfiler.has_minmax(['byteA', 1]))

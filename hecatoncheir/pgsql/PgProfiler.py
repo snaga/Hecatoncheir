@@ -76,12 +76,20 @@ SELECT column_name,
 
         return self._query_column_datetypes(q)
 
-    def get_row_count(self, schema_name, table_name):
+    def get_row_count(self, schema_name, table_name, use_statistics=False):
+        if use_statistics:
+            raise NotImplementedError('use_statistics option is '
+                                      'not yet implemented.')
+
         if (schema_name, table_name) not in self.column_cache:
             self.__get_column_profile_phase1(schema_name, table_name)
         return self.column_cache[(schema_name, table_name)][0]
 
-    def get_column_nulls(self, schema_name, table_name):
+    def get_column_nulls(self, schema_name, table_name, use_statistics=False):
+        if use_statistics:
+            raise NotImplementedError('use_statistics option is '
+                                      'not yet implemented.')
+
         if (schema_name, table_name) not in self.column_cache:
             self.__get_column_profile_phase1(schema_name, table_name)
         return self.column_cache[(schema_name, table_name)][2]

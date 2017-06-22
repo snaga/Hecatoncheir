@@ -136,9 +136,27 @@ class TestOracleProfiler(unittest.TestCase):
         c = p.get_row_count(u'SCOTT', u'CUSTOMER')
         self.assertEqual(28, c)
 
+    def test_get_row_count_002(self):
+        p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        c = p.get_row_count(u'SCOTT', u'CUSTOMER', use_statistics=True)
+        self.assertEqual(28, c)
+
     def test_get_column_nulls_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         c = p.get_column_nulls(u'SCOTT', u'CUSTOMER')
+
+        self.assertEqual(0, c['C_CUSTKEY'])
+        self.assertEqual(0, c['C_NAME'])
+        self.assertEqual(0, c['C_ADDRESS'])
+        self.assertEqual(0, c['C_NATIONKEY'])
+        self.assertEqual(0, c['C_PHONE'])
+        self.assertEqual(0, c['C_ACCTBAL'])
+        self.assertEqual(0, c['C_MKTSEGMENT'])
+        self.assertEqual(0, c['C_COMMENT'])
+
+    def test_get_column_nulls_002(self):
+        p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        c = p.get_column_nulls(u'SCOTT', u'CUSTOMER', use_statistics=True)
 
         self.assertEqual(0, c['C_CUSTKEY'])
         self.assertEqual(0, c['C_NAME'])

@@ -111,6 +111,13 @@ class TestMSSQLProfiler(unittest.TestCase):
         c = p.get_row_count(u'dbo', u'customer')
         self.assertEqual(28, c)
 
+    def test_get_row_count_002(self):
+        p = MSSQLProfiler.MSSQLProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            p.get_row_count(u'dbo', u'customer', use_statistics=True)
+        self.assertEqual(u'use_statistics option is not yet implemented.', unicode(cm.exception))
+
     def test_get_column_nulls_001(self):
         p = MSSQLProfiler.MSSQLProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         c = p.get_column_nulls(u'dbo', u'customer')
@@ -123,6 +130,13 @@ class TestMSSQLProfiler(unittest.TestCase):
         self.assertEqual(0, c['c_acctbal'])
         self.assertEqual(0, c['c_mktsegment'])
         self.assertEqual(0, c['c_comment'])
+
+    def test_get_column_nulls_002(self):
+        p = MSSQLProfiler.MSSQLProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+
+        with self.assertRaises(NotImplementedError) as cm:
+            p.get_column_nulls(u'dbo', u'customer', use_statistics=True)
+        self.assertEqual(u'use_statistics option is not yet implemented.', unicode(cm.exception))
 
     def test_has_minmax_001(self):
         self.assertFalse(MSSQLProfiler.MSSQLProfiler.has_minmax(['BINary', 1]))
