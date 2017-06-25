@@ -106,11 +106,13 @@ class OraDriver(DbDriverBase.DbDriverBase):
         except DriverError as e:
             raise e
         except Exception as e:
-            if unicode(e).startswith('ORA-01013: '):
+            emsg = str(e.args[0])
+            if emsg.startswith('ORA-01013: '):
                 raise QueryTimeout(
                     "Query timeout: %s" % query,
                     query=query, source=e)
-            msg = "Could not execute a query: %s" % unicode(e).split('\n')[0]
+            msg = "Could not execute a query: %s" % (
+                emsg.decode('utf-8').split('\n')[0])
             raise QueryError(msg, query=query, source=e)
         finally:
             if monitor:

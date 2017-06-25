@@ -11,7 +11,8 @@ import dateutil.parser
 
 import DbProfilerValidator
 import logger as log
-from exception import DbProfilerException, InternalError, QueryError
+from exception import (DbProfilerException, InternalError, QueryError,
+                       QueryTimeout)
 from logger import str2unicode as _s2u, to_unicode as _2u
 from metadata import TableColumnMeta, TableMeta
 from msgutil import gettext as _
@@ -487,6 +488,59 @@ class DbProfilerBase(object):
         v.update_table_data(table_data)
         return table_data
 
+    def _profile_data_types(self, tm):
+        log.info(_("Data types: start"))
+        data_types = self.get_column_datatypes(tm.schema_name, tm.table_name)
+        if len(data_types) == 0:
+            log.error(_("Could not get data types."))
+            raise InternalError(_("Could not get column data types at all."))
+        for col in tm.columns:
+            col.datatype = data_types[col.name]
+        log.info(_("Data types: end"))
+
+    def _profile_row_count(self, tm):
+        if not self.profile_row_count_enabled:
+            return
+
+        log.info(_("Row count: start"))
+        try:
+            rows = self.get_row_count(tm.schema_name, tm.table_name)
+        except QueryTimeout as e:
+            log.info(_("Row count: Timeout caught. Using the database "
+                       "statistics."))
+            rows = self.get_row_count(tm.schema_name, tm.table_name,
+                                      use_statistics=True)
+            # Once timeout occured, column profiling should be skipped
+            # in order to avoid heavy loads.
+            self.skip_column_profiling = True
+
+        tm.row_count = rows
+        log.info(_("Row count: end (%s)") %
+                 "{:,d}".format(tm.row_count))
+
+    def _profile_sample_rows(self, tm):
+        if not self.profile_sample_rows:
+            log.info(_("Sample rows: skipping"))
+            return
+
+        log.info(_("Sample rows: start"))
+        tm.sample_rows = self.get_sample_rows(tm.schema_name,
+                                              tm.table_name)
+        log.info(_("Sample rows: end"))
+
+    def _build_tablemeta(self, schema_name, table_name):
+        # table meta
+        tablemeta = TableMeta(self.dbname, schema_name, table_name)
+        tablemeta.timestamp = datetime.now()
+        tablemeta.column_names = self.get_column_names(schema_name, table_name)
+        # column meta
+        columnmeta = {}
+        for col in tablemeta.column_names:
+            columnmeta[col] = TableColumnMeta(unicode(col))
+            # Add all column meta data to the table meta.
+            tablemeta.columns.append(columnmeta[col])
+        return tablemeta
+
     def run(self, schema_name=None, table_name=None,
             skip_record_validation=False, validation_rules=None,
             timeout=None):
@@ -503,61 +557,42 @@ class DbProfilerBase(object):
         if isinstance(validation_rules, list):
             log.info(_("%d validation rule(s)") % len(validation_rules))
 
-        # table meta
-        tablemeta = TableMeta(self.dbname, schema_name, table_name)
-        tablemeta.timestamp = datetime.now()
-        tablemeta.column_names = self.get_column_names(schema_name, table_name)
-        # column meta
-        columnmeta = {}
-        for col in tablemeta.column_names:
-            columnmeta[col] = TableColumnMeta(unicode(col))
-            # Add all column meta data to the table meta.
-            tablemeta.columns.append(columnmeta[col])
+        # build table and column meta data.
+        tablemeta = self._build_tablemeta(schema_name, table_name)
 
-        log.info(_("Data types: start"))
-        data_types = self.get_column_datatypes(schema_name, table_name)
-        if len(data_types) == 0:
-            log.error(_("Could not get data types."))
-            raise InternalError(_("Could not get column data types at all."))
-        for col in tablemeta.column_names:
-            columnmeta[col].datatype = data_types[col]
-        log.info(_("Data types: end"))
+        # data types
+        self._profile_data_types(tablemeta)
 
+        # sample rows
+        self._profile_sample_rows(tablemeta)
+
+        # continue to profile table?
         if self.skip_table_profiling:
-            log.info(_("Skipping table profiling."))
-        elif self.profile_row_count_enabled is True:
-            log.info(_("Row count: start"))
-            tablemeta.row_count = self.get_row_count(schema_name, table_name)
-            log.info(_("Row count: end (%s)") %
-                     "{:,d}".format(tablemeta.row_count))
+            log.info(_("Skipping table and column profiling."))
+            return tablemeta.makedic()
 
-        if self.profile_sample_rows:
-            log.info(_("Sample rows: start"))
-            tablemeta.sample_rows = self.get_sample_rows(schema_name,
-                                                         table_name)
-            log.info(_("Sample rows: end"))
-        else:
-            log.info(_("Sample rows: skipping"))
+        # number of rows
+        self._profile_row_count(tablemeta)
 
+        # continue to profile columns?
         if self.skip_column_profiling:
             log.info(_("Skipping column profiling."))
-        elif tablemeta.row_count > self.column_profiling_threshold:
+            return tablemeta.makedic()
+
+        # exceeded the threshold.
+        if tablemeta.row_count > self.column_profiling_threshold:
             log.info((_("Skipping column profiling because "
                         "the table has more than %s rows") %
                       ("{:,d}".format(self.column_profiling_threshold))))
-        else:
-            self.run_column_profiling(tablemeta)
-            self._run_record_validation(tablemeta, validation_rules,
-                                        skip_record_validation)
+            return tablemeta.makedic()
 
+        # column profiling and validation
+        self.run_column_profiling(tablemeta)
+        self._run_record_validation(tablemeta, validation_rules,
+                                    skip_record_validation)
         table_data = tablemeta.makedic()
-        if (self.skip_column_profiling or
-                tablemeta.row_count > self.column_profiling_threshold):
-            log.info(_("Skipping column statistics validation "
-                       "and SQL validation."))
-        else:
-            table_data = self.run_postscan_validation(table_data,
-                                                      validation_rules)
+        table_data = self.run_postscan_validation(table_data,
+                                                  validation_rules)
         log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
 
         return table_data

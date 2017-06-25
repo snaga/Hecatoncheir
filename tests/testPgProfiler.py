@@ -167,18 +167,49 @@ class TestPgProfiler(unittest.TestCase):
             c = p.get_row_count(u'PUBLIC', u'customer')
         self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
 
+    def test_get_row_count_002(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        c = p.get_row_count(u'public', u'customer', use_statistics=True)
+
+        # case-sensitive?
+        with self.assertRaises(QueryError) as cm:
+            c = p.get_row_count(u'public', u'CUSTOMER')
+        self.assertEqual('Could not execute a query: relation "public.CUSTOMER" does not exist', cm.exception.value)
+        with self.assertRaises(QueryError) as cm:
+            c = p.get_row_count(u'PUBLIC', u'customer')
+        self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
+
     def test_get_column_nulls_001(self):
         p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_nulls(u'public', u'customer')
+        c = p.get_column_nulls(u'public', u'SUPPLIER')
 
-        self.assertEqual(0, c['c_custkey'])
-        self.assertEqual(0, c['c_name'])
-        self.assertEqual(0, c['c_address'])
-        self.assertEqual(0, c['c_nationkey'])
-        self.assertEqual(0, c['c_phone'])
-        self.assertEqual(0, c['c_acctbal'])
-        self.assertEqual(0, c['c_mktsegment'])
-        self.assertEqual(0, c['c_comment'])
+        self.assertEqual(0, c['s_suppkey'])
+        self.assertEqual(0, c['S_NAME'])
+        self.assertEqual(0, c['s_address'])
+        self.assertEqual(0, c['s_nationkey'])
+        self.assertEqual(1, c['s_phone'])
+        self.assertEqual(0, c['s_acctbal'])
+        self.assertEqual(0, c['s_comment'])
+
+        # case-sensitive?
+        with self.assertRaises(QueryError) as cm:
+            c = p.get_column_nulls(u'public', u'CUSTOMER')
+        self.assertEqual('Could not execute a query: relation "public.CUSTOMER" does not exist', cm.exception.value)
+        with self.assertRaises(QueryError) as cm:
+            c = p.get_column_nulls(u'PUBLIC', u'customer')
+        self.assertEqual('Could not execute a query: relation "PUBLIC.customer" does not exist', cm.exception.value)
+
+    def test_get_column_nulls_002(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        c = p.get_column_nulls(u'public', u'SUPPLIER', use_statistics=True)
+
+        self.assertEqual(0, c['s_suppkey'])
+        self.assertEqual(0, c['S_NAME'])
+        self.assertEqual(0, c['s_address'])
+        self.assertEqual(0, c['s_nationkey'])
+        self.assertEqual(1, c['s_phone'])
+        self.assertEqual(0, c['s_acctbal'])
+        self.assertEqual(0, c['s_comment'])
 
         # case-sensitive?
         with self.assertRaises(QueryError) as cm:

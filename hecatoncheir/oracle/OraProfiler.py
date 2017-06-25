@@ -120,15 +120,58 @@ SELECT COLUMN_NAME,
             return '/*+ PARALLEL(%d) */' % self.parallel_degree
         return ''
 
-    def get_row_count(self, schema_name, table_name):
+    def get_row_count(self, schema_name, table_name, use_statistics=False):
+        if use_statistics:
+            return self.__get_row_count_statistics(schema_name, table_name)
+
         if (schema_name, table_name) not in self.column_cache:
             self.__get_column_profile_phase1(schema_name, table_name)
         return long(self.column_cache[(schema_name, table_name)][0])
 
-    def get_column_nulls(self, schema_name, table_name):
+    def __get_row_count_statistics(self, schema_name, table_name):
+        query = u"""
+SELECT
+  NUM_ROWS,
+  LAST_ANALYZED
+FROM
+  ALL_TABLES
+WHERE
+  OWNER = '{0}'
+AND
+  TABLE_NAME = '{1}'
+""".format(schema_name, table_name)
+
+        for r in self.dbdriver.q2rs(query).resultset:
+            return long(r[0]) if r[0] is not None else None
+
+    def get_column_nulls(self, schema_name, table_name, use_statistics=False):
+        if use_statistics:
+            return self.__get_column_nulls_statistics(schema_name, table_name)
+
         if (schema_name, table_name) not in self.column_cache:
             self.__get_column_profile_phase1(schema_name, table_name)
         return self.column_cache[(schema_name, table_name)][2]
+
+    def __get_column_nulls_statistics(self, schema_name, table_name):
+        query = u"""
+SELECT
+  COLUMN_NAME,
+  LOW_VALUE,
+  HIGH_VALUE,
+  NUM_NULLS,
+  LAST_ANALYZED
+FROM
+  ALL_TAB_COL_STATISTICS
+WHERE
+  OWNER = '{0}'
+AND
+  TABLE_NAME = '{1}'
+""".format(schema_name, table_name)
+
+        nulls = {}
+        for r in self.dbdriver.q2rs(query).resultset:
+            nulls[r[0]] = long(r[3]) if r[3] is not None else None
+        return nulls
 
     @staticmethod
     def has_minmax(data_type):
