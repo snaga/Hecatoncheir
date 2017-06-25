@@ -155,7 +155,7 @@
         <div class="col-md-12">
           <table id="table-list" class="table table-hover">
             <thead>
-              <tr><th></th><th>Database</th><th>Schema</th><th colspan="2">Table</th><th>Rows</th><th>Columns</th><th>Validation</th><th>Comment</th><th>Last Profiled</th>{% if editable %}<th>Edit</th>{% endif %}</tr>
+              <tr><th></th><th>Database</th><th>Schema</th><th colspan="2">Table</th><th class="number">Rows</th><th class="number">Columns</th><th>Validation</th><th>Comment</th><th>Last Profiled</th>{% if editable %}<th>Edit</th>{% endif %}</tr>
             </thead>
 
             <tbody>
@@ -166,8 +166,8 @@
                 <td>{{ t.schema_name }}</td>
                 <td><a href="{{ t.database_name }}.{{ t.schema_name }}.{{ t.table_name }}.html" target="_blank">{{ t.table_name }}</a></td>
                 <td>{{ t.table_name_nls }}</td>
-                <td>{{ t.row_count }}</td>
-                <td>{{ t.num_columns }}</td>
+                <td class="number">{{ t.row_count }}</td>
+                <td class="number">{{ t.num_columns }}</td>
                 <td class="center">
   {% if t.validation is defined %}
     {% if t.invalid > 0 %}
