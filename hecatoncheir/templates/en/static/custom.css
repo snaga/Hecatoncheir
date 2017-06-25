@@ -91,6 +91,10 @@ strong {
   font-weight: 400;
 }
 
+.number {
+  text-align: right;
+}
+
 .hscroll {
     box-sizing: border-box;
     overflow-x: scroll;
