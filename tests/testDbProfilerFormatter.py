@@ -267,8 +267,8 @@ class TestDbProfilerFormatter(unittest.TestCase):
                 <td>public</td>
                 <td><a href="orcl.public.t1.html" target="_blank">t1</a></td>
                 <td></td>
-                <td>200,000</td>
-                <td>2</td>
+                <td class="number">200,000</td>
+                <td class="number">2</td>
 """
         self.assertTrue(html.find(t) > 0)
 
