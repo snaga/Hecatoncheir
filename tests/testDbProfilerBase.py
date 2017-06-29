@@ -156,7 +156,8 @@ class TestDbProfilerBase(unittest.TestCase):
                           'rule': [u'c_custkey', u'select count(*) from customer', u'{count} == 8'],
                           'label': 0,
                           'query': u'select count(*) from customer',
-                          'invalid_count': 1},
+                          'invalid_count': 1,
+                          'statistics': [1, 1]},
                          table_data['columns'][0]['validation'][0])
 
     def test_run_sql_validation_002(self):
@@ -179,7 +180,8 @@ class TestDbProfilerBase(unittest.TestCase):
                           'rule': [u'c_custkey', u'select count(*) from customer', u'{count} == 28'],
                           'label': 0,
                           'query': u'select count(*) from customer',
-                          'invalid_count': 0},
+                          'invalid_count': 0,
+                          'statistics': [1, 0]},
                          table_data['columns'][0]['validation'][0])
 
     def test_run_001(self):

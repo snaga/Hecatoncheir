@@ -40,6 +40,7 @@ class SQLValidator():
     label = None
     rule = None
     queryresult = None
+    statistics = None
 
     def __init__(self, label, rule):
         """Constructor
@@ -54,12 +55,14 @@ class SQLValidator():
         self.rule = rule
         self.column_names = rule[0].replace(' ', '').split(',')
         self.query = rule[1]
+        self.statistics = [0, 0]
 
     def validate(self, dbdriver):
         if dbdriver is None:
             raise DriverError(
                 _("Database driver not found."))
 
+        self.statistics[0] += 1
         try:
             res = dbdriver.q2rs(self.query)
         except QueryError as e:
@@ -75,7 +78,10 @@ class SQLValidator():
         for k, v in zip(res.column_names, res.resultset[0]):
             kv[k] = v
 
-        return validate_eval(kv, self.rule[2])
+        res = validate_eval(kv, self.rule[2])
+        if not res:
+            self.statistics[1] += 1
+        return res
 
     def __repr__(self):
         return u'SQLValidator:' + repr({'label': self.label, 'rule': self.rule,

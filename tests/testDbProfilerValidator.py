@@ -11,6 +11,7 @@ sys.path.append('..')
 from hecatoncheir import DbProfilerValidator
 from hecatoncheir.exception import DriverError, InternalError
 from hecatoncheir.pgsql import PgDriver
+from hecatoncheir.metadata import TableMeta, TableColumnMeta
 
 class TestDbProfilerValidator(unittest.TestCase):
     # --------------------------------
@@ -258,6 +259,12 @@ class TestDbProfilerValidator(unittest.TestCase):
         self.assertEqual(c1, v.table_data_get_column_data(table_data, 'c1'))
         self.assertIsNone(v.table_data_get_column_data(table_data, 'nosuch'))
 
+    def _validx(self, validations, label):
+        for idx, val in enumerate(validations):
+            if val['label'] == label:
+                return idx
+        return None
+
     def test_validate_table_001(self):
         v = DbProfilerValidator.DbProfilerValidator("public", "t1")
 
@@ -318,18 +325,29 @@ class TestDbProfilerValidator(unittest.TestCase):
         v.update_table_data(table_data)
 
         self.assertEqual(6, len(table_data['columns'][0]['validation']))
-        self.assertEqual(1, table_data['columns'][0]['validation'][0]['invalid_count']) # c1:unique
-        self.assertEqual(1, table_data['columns'][0]['validation'][1]['invalid_count']) # c1:minmax
-        self.assertEqual(0, table_data['columns'][0]['validation'][2]['invalid_count']) # c1:notnull
-        self.assertEqual(0, table_data['columns'][0]['validation'][3]['invalid_count']) # c1:cardinality
-        self.assertEqual(1, table_data['columns'][0]['validation'][4]['invalid_count']) # c1:notnull3
-        self.assertEqual(1, table_data['columns'][0]['validation'][5]['invalid_count']) # c1:notnull2
+        print(table_data['columns'][0]['validation'])
+        i = self._validx(table_data['columns'][0]['validation'], 'c1:unique')
+        self.assertEqual(1, table_data['columns'][0]['validation'][i]['invalid_count']) # c1:unique
+        i = self._validx(table_data['columns'][0]['validation'], 'c1:minmax')
+        self.assertEqual(1, table_data['columns'][0]['validation'][i]['invalid_count']) # c1:minmax
+        i = self._validx(table_data['columns'][0]['validation'], 'c1:notnull')
+        self.assertEqual(0, table_data['columns'][0]['validation'][i]['invalid_count']) # c1:notnull
+        i = self._validx(table_data['columns'][0]['validation'], 'c1:cardinality')
+        self.assertEqual(0, table_data['columns'][0]['validation'][i]['invalid_count']) # c1:cardinality
+        i = self._validx(table_data['columns'][0]['validation'], 'c1:notnull3')
+        self.assertEqual(1, table_data['columns'][0]['validation'][i]['invalid_count']) # c1:notnull3
+        i = self._validx(table_data['columns'][0]['validation'], 'c1:notnull2')
+        self.assertEqual(1, table_data['columns'][0]['validation'][i]['invalid_count']) # c1:notnull2
 
         self.assertEqual(4, len(table_data['columns'][1]['validation']))
-        self.assertEqual(0, table_data['columns'][1]['validation'][0]['invalid_count']) # c2:minmax
-        self.assertEqual(0, table_data['columns'][1]['validation'][1]['invalid_count']) # c2:unique
-        self.assertEqual(1, table_data['columns'][1]['validation'][2]['invalid_count']) # c2:cardinality
-        self.assertEqual(1, table_data['columns'][1]['validation'][3]['invalid_count']) # c2:notnull
+        i = self._validx(table_data['columns'][1]['validation'], 'c2:minmax')
+        self.assertEqual(0, table_data['columns'][1]['validation'][i]['invalid_count']) # c2:minmax
+        i = self._validx(table_data['columns'][1]['validation'], 'c2:unique')
+        self.assertEqual(0, table_data['columns'][1]['validation'][i]['invalid_count']) # c2:unique
+        i = self._validx(table_data['columns'][1]['validation'], 'c2:cardinality')
+        self.assertEqual(1, table_data['columns'][1]['validation'][i]['invalid_count']) # c2:cardinality
+        i = self._validx(table_data['columns'][1]['validation'], 'c2:notnull')
+        self.assertEqual(1, table_data['columns'][1]['validation'][i]['invalid_count']) # c2:notnull
 
     def test_validate_sql_001(self):
         pg = PgDriver.PgDriver('host=/tmp dbname=%s' % "dqwbtest", "dqwbuser", "dqwbuser")
@@ -366,6 +384,29 @@ class TestDbProfilerValidator(unittest.TestCase):
         with self.assertRaises(DriverError) as cm:
             v.validate_sql(None)
         self.assertEqual(u"Database driver not found.", cm.exception.value)
+
+    def test_validate_sql_004(self):
+        pg = PgDriver.PgDriver('host=/tmp dbname=%s' % "dqwbtest", "dqwbuser", "dqwbuser")
+        pg.connect()
+
+        tablemeta = TableMeta(u"dqwbtest", u"public", u"t1")
+        tablemeta.columns.append(TableColumnMeta(u'c_custkey'))
+
+        v = DbProfilerValidator.DbProfilerValidator("public", "customer")
+
+        v.add_rule_sql("c_custkey:count", "c_custkey", u'select count(distinct c_custkey) from customer', '{count} <= 28')
+        v.add_rule_sql("c_custkey:count2", "c_custkey", u'select count(distinct c_custkey) from customer', '{count} < 28')
+
+        self.assertEqual((2, 1), v.validate_sql(pg))
+
+        table_data = tablemeta.makedic()
+        v.update_table_data(table_data)
+
+        self.assertEqual(1, table_data['columns'][0]['validation'][0]['invalid_count'])
+        self.assertEqual([1, 1], table_data['columns'][0]['validation'][0]['statistics'])
+
+        self.assertEqual(0, table_data['columns'][0]['validation'][1]['invalid_count'])
+        self.assertEqual([1, 0], table_data['columns'][0]['validation'][1]['statistics'])
 
 if __name__ == '__main__':
     unittest.main()

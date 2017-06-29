@@ -9,7 +9,6 @@ import re
 import sys
 
 import CSVUtils
-import ColumnValidationCounter
 import logger as log
 from CSVUtils import list2csv
 from exception import DriverError, InternalError, ValidationError
@@ -43,8 +42,6 @@ class DbProfilerValidator():
         self.table_name = table_name
         self.caller = caller
 
-        self._column_counter = (
-            ColumnValidationCounter.ColumnValidationCounter())
         self.record_validators = {}
         self.statistics_validators = {}
         self.sql_validators = {}
@@ -71,13 +68,11 @@ class DbProfilerValidator():
         # new record validator
         v = RegexpValidator(label, rule=[column_name, regexpr])
         self.record_validators[label] = v
-        self._column_counter.add(column_name, label)
 
     def add_rule_eval(self, label, column_name, format):
         # new record validator
         v = EvalValidator(label, rule=[column_name, format])
         self.record_validators[label] = v
-        self._column_counter.add(column_name, label)
 
     # -----------------------------
     # validation with column statistics
@@ -86,7 +81,6 @@ class DbProfilerValidator():
         # new statistics validator
         v = StatEvalValidator(label, rule=[column_name, format])
         self.statistics_validators[label] = v
-        self._column_counter.add(column_name, label)
 
     # -----------------------------
     # SQL validation
@@ -94,7 +88,6 @@ class DbProfilerValidator():
     def add_rule_sql(self, label, column_name, query, expr):
         v = SQLValidator(label, rule=[column_name, query, expr])
         self.sql_validators[label] = v
-        self._column_counter.add(column_name, label)
 
     # -----------------------------
     # Add a validation rule
@@ -145,8 +138,6 @@ class DbProfilerValidator():
                     log.trace("VALIDATION FAILED: %s %s %s %s" %
                               (validator.label, unicode(validator.rule),
                                validator.column_names, unicode(column_values)))
-                    self._column_counter.incr(validator.rule[0],
-                                              validator.label)
                     failed_count += 1
                 else:
                     log.trace("VALIDATION OK: %s %s %s %s" %
@@ -157,7 +148,6 @@ class DbProfilerValidator():
                 log.trace("VALIDATION FAILED: %s %s %s %s" %
                           (validator.label, unicode(validator.rule),
                            validator.column_names, unicode(column_values)))
-                self._column_counter.incr(validator.rule[0], validator.label)
                 failed_count += 1
                 continue
 
@@ -189,6 +179,20 @@ class DbProfilerValidator():
             return self.sql_validators[label]
         return None
 
+    def _val_to_res(self, validator, desc):
+        val = validator.__dict__.copy()
+        val['invalid_count'] = validator.statistics[1]
+        val['description'] = desc
+        return val
+
+    def validator_to_results(self, validator, desc, results):
+        for col in validator.column_names:
+            # assign this result to every column
+            if col not in results:
+                results[col] = []
+            results[col].append(self._val_to_res(validator, desc))
+        return results
+
     def get_validation_results(self):
         """Get validation results for each column
 
@@ -207,14 +211,18 @@ class DbProfilerValidator():
                                        ...]
         """
         dd = {}
-        for col in self._column_counter._column_counter:
-            dd[col] = []
-            for label in self._column_counter._column_counter[col]:
-                d = self.get_validator_by_label(label).__dict__.copy()
-                d['invalid_count'] = (
-                    self._column_counter._column_counter[col][label])
-                d['description'] = self.descriptions.get(label, '')
-                dd[col].append(d)
+        for label in self.record_validators:
+            validator = self.record_validators[label]
+            desc = self.descriptions.get(label, '')
+            self.validator_to_results(validator, desc, dd)
+        for label in self.statistics_validators:
+            validator = self.statistics_validators[label]
+            desc = self.descriptions.get(label, '')
+            self.validator_to_results(validator, desc, dd)
+        for label in self.sql_validators:
+            validator = self.sql_validators[label]
+            desc = self.descriptions.get(label, '')
+            self.validator_to_results(validator, desc, dd)
         return dd
 
     # post scan (offline) validation
@@ -225,8 +233,8 @@ class DbProfilerValidator():
         # Run statistics validators.
         for label in self.statistics_validators:
             validator = self.statistics_validators[label]
-            log.info(_("Validating column statistics: %s") %
-                     '; '.join(validator.rule))
+            log.info(_("Validating column statistics: [%s] %s") %
+                     (label, '; '.join(validator.rule)))
             validated_count += 1
             try:
                 res = validator.validate(table_data)
@@ -238,7 +246,6 @@ class DbProfilerValidator():
                 log.trace("VALIDATION FAILED: %s %s %s" %
                           (validator.label, unicode(validator.rule),
                            validator.column_names))
-                self._column_counter.incr(validator.rule[0], validator.label)
                 failed_count += 1
             else:
                 log.trace("VALIDATION OK: %s %s %s" %
@@ -262,7 +269,6 @@ class DbProfilerValidator():
     def update_table_data(self, table_data):
         # Update table data with failed count and column validation results.
         log.trace('update_table_data: start table_data=%s' % table_data)
-        log.trace('  self._column_counter = %s' % self._column_counter)
 
         res = self.get_validation_results()
         log.trace("update_table_data: res = %s" % res)
@@ -313,12 +319,10 @@ class DbProfilerValidator():
                 log.error(_("SQL validation error: %s") %
                           '; '.join(validator.rule),
                           detail=e.source.value if e.source else None)
-                self._column_counter.incr(validator.rule[0], validator.label)
                 failed_count += 1
                 continue
 
             if res is False:
-                self._column_counter.incr(validator.rule[0], validator.label)
                 failed_count += 1
 
         return (validated_count, failed_count)
