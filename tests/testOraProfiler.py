@@ -194,7 +194,7 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_column_most_freq_values_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        p.profile_most_freq_values_enabled = 20
+        p.num_freq_values = 20
         c = p.get_column_most_freq_values(u'SCOTT', u'CUSTOMER')
 
         self.assertEqual([[3373, 1],
@@ -231,7 +231,7 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_column_least_freq_values_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        p.profile_most_freq_values_enabled = 20
+        p.num_freq_values = 20
         c = p.get_column_least_freq_values(u'SCOTT', u'CUSTOMER')
 
         self.assertEqual([[3373, 1],

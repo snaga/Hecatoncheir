@@ -298,8 +298,8 @@ if __name__ == "__main__":
     log.info(_("Min/Max values: %s") % profiler.profile_min_max_enabled)
     log.info(_("Number of null values: %s") % profiler.profile_nulls_enabled)
     log.info(_("Top-N most/least freq values: %d values") %
-             profiler.profile_most_freq_values_enabled)
-    tmp = profiler.profile_column_cardinality_enabled
+             profiler.num_freq_values)
+    tmp = profiler.column_cardinality_enabled
     log.info(_("Column cardinality: %s") % tmp)
     log.info(_("Data validation: %s") % enable_validation)
     log.info(_("Obtaining sample records: %s") % enable_sample_rows)

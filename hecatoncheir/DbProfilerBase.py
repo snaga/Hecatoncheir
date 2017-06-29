@@ -2,20 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import copy
-import json
 import sys
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
-import dateutil.parser
-
-import DbProfilerValidator
-import logger as log
-from exception import (DbProfilerException, InternalError, QueryError,
-                       QueryTimeout)
-from logger import str2unicode as _s2u, to_unicode as _2u
-from metadata import TableColumnMeta, TableMeta
-from msgutil import gettext as _
+from hecatoncheir import logger as log
+from hecatoncheir.DbProfilerValidator import DbProfilerValidator
+from hecatoncheir.exception import (DbProfilerException, InternalError,
+                                    QueryError, QueryTimeout)
+from hecatoncheir.logger import str2unicode as _s2u
+from hecatoncheir.metadata import TableColumnMeta, TableMeta
+from hecatoncheir.msgutil import gettext as _
 
 
 def migrate_table_meta(olddata, newdata):
@@ -29,13 +26,13 @@ def migrate_table_meta(olddata, newdata):
     newdata['owner'] = olddata.get('owner')
 
     # column meta data to be migrated
-    for c in newdata['columns']:
+    for col in newdata['columns']:
         for oldc in olddata.get('columns', []):
-            if oldc['column_name'] == c['column_name']:
-                c['column_name_nls'] = oldc.get('column_name_nls')
-                c['comment'] = oldc.get('comment')
-                c['fk'] = oldc.get('fk')
-                c['fk_ref'] = oldc.get('fk_ref')
+            if oldc['column_name'] == col['column_name']:
+                col['column_name_nls'] = oldc.get('column_name_nls')
+                col['comment'] = oldc.get('comment')
+                col['fk'] = oldc.get('fk')
+                col['fk_ref'] = oldc.get('fk_ref')
 
     return newdata
 
@@ -48,12 +45,14 @@ class DbProfilerBase(object):
     dbname = None
     dbuser = None
     dbpass = None
+    dbconn = None
+    dbdriver = None
 
     profile_row_count_enabled = True
     profile_min_max_enabled = True
     profile_nulls_enabled = True
-    profile_most_freq_values_enabled = 10
-    profile_column_cardinality_enabled = True
+    num_freq_values = 10
+    column_cardinality_enabled = True
     profile_sample_rows = True
     column_profiling_threshold = 100000000
     skip_table_profiling = False
@@ -75,9 +74,9 @@ class DbProfilerBase(object):
             log.info(_("Connecting the database."))
             try:
                 self.dbdriver.connect()
-            except DbProfilerException as e:
+            except DbProfilerException as ex:
                 log.error(_("Could not connect to the database."),
-                          detail=e.source)
+                          detail=ex.source)
                 log.error(_("Abort."))
                 sys.exit(1)
 
@@ -89,7 +88,7 @@ class DbProfilerBase(object):
     def get_schema_names(self):
         raise NotImplementedError
 
-    def _query_schema_names(self, query, ignores=[]):
+    def _query_schema_names(self, query, ignores=None):
         """Common code shared by PostgreSQL/MySQL/Oracle/MSSQL profilers
         to get schema names.
 
@@ -100,12 +99,12 @@ class DbProfilerBase(object):
         Returns:
           list: a list of the schema names.
         """
-        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
+        res = self.dbdriver.q2rs(query, timeout=self.timeout)
         schema_names = []
-        for r in rs.resultset:
-            if r[0] not in ignores:
-                schema_names.append(_s2u(r[0]))
-            log.trace("_query_schema_names: " + unicode(r))
+        for row in res.resultset:
+            if row[0] not in ignores if ignores else []:
+                schema_names.append(_s2u(row[0]))
+            log.trace("_query_schema_names: " + unicode(row))
         return schema_names
 
     @abstractmethod
@@ -122,11 +121,11 @@ class DbProfilerBase(object):
         Returns:
           list: a list of the table names.
         """
-        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
+        res = self.dbdriver.q2rs(query, timeout=self.timeout)
         table_names = []
-        for r in rs.resultset:
-            table_names.append(_s2u(r[0]))
-            log.trace("_query_table_names: " + unicode(r))
+        for row in res.resultset:
+            table_names.append(_s2u(row[0]))
+            log.trace("_query_table_names: " + unicode(row))
         return table_names
 
     @abstractmethod
@@ -143,11 +142,11 @@ class DbProfilerBase(object):
         Returns:
           list: a list of the column names.
         """
-        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
+        res = self.dbdriver.q2rs(query, timeout=self.timeout)
         column_names = []
-        for r in rs.resultset:
-            column_names.append(_s2u(r[0]))
-            log.trace("_query_column_names: " + unicode(r))
+        for row in res.resultset:
+            column_names.append(_s2u(row[0]))
+            log.trace("_query_column_names: " + unicode(row))
         return column_names
 
     @abstractmethod
@@ -165,11 +164,11 @@ class DbProfilerBase(object):
           list: a list of the column names and rows:
                 [[column names], [row1], [row2], ...]
         """
-        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
+        res = self.dbdriver.q2rs(query, timeout=self.timeout)
         sample_rows = []
-        sample_rows.append(list(rs.column_names))
-        for r in rs.resultset:
-            sample_rows.append(list(r))
+        sample_rows.append(list(res.column_names))
+        for row in res.resultset:
+            sample_rows.append(list(row))
         return sample_rows
 
     @abstractmethod
@@ -196,14 +195,14 @@ class DbProfilerBase(object):
           dict: {column_name, [type, len]}
         """
         data_types = {}
-        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
-        for r in rs.resultset:
-            data_types[r[0]] = [r[1], r[2]]
-            log.trace("_query_column_datetypes: " + unicode(r))
+        res = self.dbdriver.q2rs(query, timeout=self.timeout)
+        for row in res.resultset:
+            data_types[row[0]] = [row[1], row[2]]
+            log.trace("_query_column_datetypes: " + unicode(row))
         return data_types
 
     @abstractmethod
-    def get_row_count(self, schema_name, table_name):
+    def get_row_count(self, schema_name, table_name, use_statistics=False):
         raise NotImplementedError
 
     @abstractmethod
@@ -249,27 +248,28 @@ class DbProfilerBase(object):
         _nulls = {}
         num_rows = None
         try:
-            rs = self.dbdriver.q2rs(query, timeout=self.timeout)
-            assert len(rs.resultset) == 1
+            res = self.dbdriver.q2rs(query, timeout=self.timeout)
+            assert len(res.resultset) == 1
 
-            a = copy.copy(list(rs.resultset[0]))
-            num_rows = a.pop(0)
+            row = copy.copy(list(res.resultset[0]))
+            num_rows = row.pop(0)
             log.trace("_query_column_profile: rows %d" % num_rows)
             i = 0
-            while len(a) > 0:
-                nulls = a.pop(0)
-                colmin = a.pop(0)
-                colmax = a.pop(0)
+            assert (len(row) % 3) == 0
+            while row:
+                nulls = row.pop(0)
+                colmin = row.pop(0)
+                colmax = row.pop(0)
                 log.trace(("_query_column_profile: col %s %d %s %s" %
-                          (column_names[i], nulls, colmin, colmax)))
+                           (column_names[i], nulls, colmin, colmax)))
                 _minmax[column_names[i]] = [colmin, colmax]
                 _nulls[column_names[i]] = nulls
                 i += 1
-        except QueryError as e:
+        except QueryError as ex:
             log.error(_("Could not get row count/num of "
                         "nulls/min/max values."),
-                      detail=e.value, query=query)
-            raise e
+                      detail=ex.value, query=query)
+            raise ex
 
         log.trace("_query_column_profile: %s" % str(_minmax))
         return (num_rows, _minmax, _nulls)
@@ -311,11 +311,11 @@ class DbProfilerBase(object):
           freqs(dict): a dictionary which holds the frequencies of the columns.
                        This function updates this dictionary as output.
         """
-        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
-        for r in rs.resultset:
+        res = self.dbdriver.q2rs(query, timeout=self.timeout)
+        for row in res.resultset:
             log.trace(("_query_value_freqs: col %s val %s freq %d" %
-                       (column_name, _s2u(r[0]), _s2u(r[1]))))
-            freqs[column_name].append([_s2u(r[0]), _s2u(r[1])])
+                       (column_name, _s2u(row[0]), _s2u(row[1]))))
+            freqs[column_name].append([_s2u(row[0]), _s2u(row[1])])
 
     @abstractmethod
     def get_column_cardinalities(self, schema_name, table_name):
@@ -341,15 +341,15 @@ class DbProfilerBase(object):
           cardinality(dict): a dictionary which holds the column cardinality.
                              This function updates this dictionary as output.
         """
-        rs = self.dbdriver.q2rs(query, timeout=self.timeout)
-        for r in rs.resultset:
-            cardinalities[column_name] = int(r[0])
+        res = self.dbdriver.q2rs(query, timeout=self.timeout)
+        for row in res.resultset:
+            cardinalities[column_name] = int(row[0])
             log.trace(("_query_column_cardinality: col %s cardinality %d" %
                        (column_name, cardinalities[column_name])))
 
     @abstractmethod
     def run_record_validation(self, schema_name, table_name, validation_rules,
-                              fetch_size):
+                              fetch_size=None):
         """Get validation results of each column
 
         Args:
@@ -388,11 +388,11 @@ class DbProfilerBase(object):
         count = 0
         failed = 0
         while True:
-            rs = cur.fetchmany(fetch_size)
-            if not rs:
+            res = cur.fetchmany(fetch_size)
+            if not res:
                 break
-            for r in rs:
-                if not validator.validate_record(fnames, r):
+            for row in res:
+                if not validator.validate_record(fnames, row):
                     failed += 1
                 count += 1
         cur.close()
@@ -404,8 +404,8 @@ class DbProfilerBase(object):
             nulls = self.get_column_nulls(tablemeta.schema_name,
                                           tablemeta.table_name)
             for col in tablemeta.column_names:
-                cm = tablemeta.get_column_meta(col)
-                cm.nulls = long(nulls[col])
+                colmeta = tablemeta.get_column_meta(col)
+                colmeta.nulls = long(nulls[col])
             log.info(_("Number of nulls: end"))
 
         if self.profile_min_max_enabled is True:
@@ -416,12 +416,12 @@ class DbProfilerBase(object):
                 if isinstance(minmax[col][0], str):
                     minmax[col][0] = minmax[col][0].decode('utf-8')
                     minmax[col][1] = minmax[col][1].decode('utf-8')
-                cm = tablemeta.get_column_meta(col)
-                cm.min = u'%s' % minmax[col][0]
-                cm.max = u'%s' % minmax[col][1]
+                colmeta = tablemeta.get_column_meta(col)
+                colmeta.min = u'%s' % minmax[col][0]
+                colmeta.max = u'%s' % minmax[col][1]
             log.info(_("Min/Max values: end"))
 
-        if self.profile_most_freq_values_enabled > 0:
+        if self.num_freq_values > 0:
             log.info(_("Most/Least freq values(1/2): start"))
             most_freqs = self.get_column_most_freq_values(
                 tablemeta.schema_name,
@@ -431,19 +431,19 @@ class DbProfilerBase(object):
                 tablemeta.schema_name,
                 tablemeta.table_name)
             for col in tablemeta.column_names:
-                cm = tablemeta.get_column_meta(col)
-                cm.most_freq_values = most_freqs[col]
-                cm.least_freq_values = least_freqs[col]
+                colmeta = tablemeta.get_column_meta(col)
+                colmeta.most_freq_values = most_freqs[col]
+                colmeta.least_freq_values = least_freqs[col]
             log.info(_("Most/Least freq values: end"))
 
-        if self.profile_column_cardinality_enabled is True:
+        if self.column_cardinality_enabled:
             log.info(_("Column cardinality: start"))
             column_cardinality = self.get_column_cardinalities(
                 tablemeta.schema_name,
                 tablemeta.table_name)
             for col in tablemeta.column_names:
-                cm = tablemeta.get_column_meta(col)
-                cm.cardinality = column_cardinality[col]
+                colmeta = tablemeta.get_column_meta(col)
+                colmeta.cardinality = column_cardinality[col]
             log.info(_("Column cardinality: end"))
 
         return True
@@ -465,8 +465,8 @@ class DbProfilerBase(object):
 
         for col in tablemeta.column_names:
             if validation and col in validation:
-                cm = tablemeta.get_column_meta(col)
-                cm.validation = validation[col]
+                colmeta = tablemeta.get_column_meta(col)
+                colmeta.validation = validation[col]
         log.info(_("Record validation: end"))
         return True
 
@@ -474,58 +474,61 @@ class DbProfilerBase(object):
         if not validation_rules:
             return table_data
 
-        v = DbProfilerValidator.DbProfilerValidator(table_data['schema_name'],
-                                                    table_data['table_name'],
-                                                    self, validation_rules)
+        validator = DbProfilerValidator(table_data['schema_name'],
+                                        table_data['table_name'],
+                                        self, validation_rules)
 
         log.info(_("Column statistics validation: start"))
-        validated1, failed1 = v.validate_table(table_data)
+        validated1, failed1 = validator.validate_table(table_data)
         log.info(_("Column statistics validation: end (%d)") % validated1)
         log.info(_("SQL validation: start"))
-        validated2, failed2 = v.validate_sql(self.dbdriver)
+        validated2, failed2 = validator.validate_sql(self.dbdriver)
         log.info(_("SQL validation: end (%d)") % validated2)
 
-        v.update_table_data(table_data)
+        validator.update_table_data(table_data)
         return table_data
 
-    def _profile_data_types(self, tm):
+    def _profile_data_types(self, tablemeta):
         log.info(_("Data types: start"))
-        data_types = self.get_column_datatypes(tm.schema_name, tm.table_name)
-        if len(data_types) == 0:
+        data_types = self.get_column_datatypes(tablemeta.schema_name,
+                                               tablemeta.table_name)
+        if not data_types:
             log.error(_("Could not get data types."))
             raise InternalError(_("Could not get column data types at all."))
-        for col in tm.columns:
+        for col in tablemeta.columns:
             col.datatype = data_types[col.name]
         log.info(_("Data types: end"))
 
-    def _profile_row_count(self, tm):
+    def _profile_row_count(self, tablemeta):
         if not self.profile_row_count_enabled:
             return
 
         log.info(_("Row count: start"))
         try:
-            rows = self.get_row_count(tm.schema_name, tm.table_name)
-        except QueryTimeout as e:
+            rows = self.get_row_count(tablemeta.schema_name,
+                                      tablemeta.table_name)
+        except QueryTimeout as ex:
             log.info(_("Row count: Timeout caught. Using the database "
                        "statistics."))
-            rows = self.get_row_count(tm.schema_name, tm.table_name,
+            rows = self.get_row_count(tablemeta.schema_name,
+                                      tablemeta.table_name,
                                       use_statistics=True)
             # Once timeout occured, column profiling should be skipped
             # in order to avoid heavy loads.
             self.skip_column_profiling = True
 
-        tm.row_count = rows
+        tablemeta.row_count = rows
         log.info(_("Row count: end (%s)") %
-                 "{:,d}".format(tm.row_count))
+                 "{:,d}".format(tablemeta.row_count))
 
-    def _profile_sample_rows(self, tm):
+    def _profile_sample_rows(self, tablemeta):
         if not self.profile_sample_rows:
             log.info(_("Sample rows: skipping"))
             return
 
         log.info(_("Sample rows: start"))
-        tm.sample_rows = self.get_sample_rows(tm.schema_name,
-                                              tm.table_name)
+        tablemeta.sample_rows = self.get_sample_rows(tablemeta.schema_name,
+                                                     tablemeta.table_name)
         log.info(_("Sample rows: end"))
 
     def _build_tablemeta(self, schema_name, table_name):

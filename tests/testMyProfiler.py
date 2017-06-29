@@ -178,7 +178,7 @@ class TestMyProfiler(unittest.TestCase):
 
     def test_get_column_most_freq_values_001(self):
         p = MyProfiler.MyProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        p.profile_most_freq_values_enabled = 20
+        p.num_freq_values = 20
         c = p.get_column_most_freq_values(self.dbname, u'customer')
 
         self.assertEqual([[3373, 1],
@@ -211,7 +211,7 @@ class TestMyProfiler(unittest.TestCase):
 
     def test_get_column_least_freq_values_001(self):
         p = MyProfiler.MyProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        p.profile_most_freq_values_enabled = 20
+        p.num_freq_values = 20
         c = p.get_column_least_freq_values(self.dbname, u'customer')
 
         self.assertEqual([[3373, 1],

@@ -193,7 +193,7 @@ FROM
 WHERE
   RN BETWEEN 0 AND {4}
 '''.format(schema_name, table_name, col, ascdesc,
-                self.profile_most_freq_values_enabled)
+                self.num_freq_values)
 
             self._query_value_freqs(q, col, value_freqs)
         return value_freqs
