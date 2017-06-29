@@ -9,7 +9,7 @@ from datetime import datetime
 
 import dateutil.parser
 
-import DbProfilerValidator
+from DbProfilerValidator import DbProfilerValidator
 import logger as log
 from exception import (DbProfilerException, InternalError, QueryError,
                        QueryTimeout)
@@ -470,23 +470,22 @@ class DbProfilerBase(object):
         log.info(_("Record validation: end"))
         return True
 
-    def run_postscan_validation(self, table_data, validation_rules):
-        if not validation_rules:
-            return table_data
+    def _get_validator(self, tablemeta, validation_rules):
+        return DbProfilerValidator(tablemeta.schema_name,
+                                   tablemeta.table_name,
+                                   self, validation_rules)
 
-        v = DbProfilerValidator.DbProfilerValidator(table_data['schema_name'],
-                                                    table_data['table_name'],
-                                                    self, validation_rules)
-
+    def run_column_statistics_validation(self, validator, table_data):
         log.info(_("Column statistics validation: start"))
-        validated1, failed1 = v.validate_table(table_data)
+        validated1, failed1 = validator.validate_table(table_data)
         log.info(_("Column statistics validation: end (%d)") % validated1)
-        log.info(_("SQL validation: start"))
-        validated2, failed2 = v.validate_sql(self.dbdriver)
-        log.info(_("SQL validation: end (%d)") % validated2)
+        return
 
-        v.update_table_data(table_data)
-        return table_data
+    def run_sql_validation(self, validator):
+        log.info(_("SQL validation: start"))
+        validated2, failed2 = validator.validate_sql(self.dbdriver)
+        log.info(_("SQL validation: end (%d)") % validated2)
+        return
 
     def _profile_data_types(self, tm):
         log.info(_("Data types: start"))
@@ -593,9 +592,18 @@ class DbProfilerBase(object):
         self.run_column_profiling(tablemeta)
         self._run_record_validation(tablemeta, validation_rules,
                                     skip_record_validation)
+
+        # column stats validation and sql validation
+        if not validation_rules:
+            return tablemeta.makedic()
+
+        validator = self._get_validator(tablemeta, validation_rules)
+
         table_data = tablemeta.makedic()
-        table_data = self.run_postscan_validation(table_data,
-                                                  validation_rules)
+        self.run_column_statistics_validation(validator, table_data)
+        self.run_sql_validation(validator)
+        validator.update_table_data(table_data)
+
         log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
 
         return table_data

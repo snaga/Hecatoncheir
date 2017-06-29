@@ -81,19 +81,74 @@ class TestDbProfilerBase(unittest.TestCase):
                            'invalid_count': 1}],
                          tablemeta.get_column_meta('c_custkey').validation)
 
-    def test_run_postscan_validation_001(self):
-        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        self.assertTrue(p.connect())
-
+    def _build_tablemeta(self):
         tablemeta = TableMeta(self.dbname, u'public', u'customer')
         tablemeta.column_names = ['c_custkey','c_name','c_address','c_nationkey','c_phone','c_acctbal','c_mktsegment','c_comment']
         for col in tablemeta.column_names:
             tablemeta.columns.append(TableColumnMeta(unicode(col)))
+        return tablemeta
 
+    def test_run_column_statistics_validation_001(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        self.assertTrue(p.connect())
+
+        tablemeta = self._build_tablemeta()
+
+        r = [(0, u'dqwbtest', u'public', u'customer', u'c_custkey', u'max value', u'columnstat', u'{max} > 100', u'')]
+
+        # invalid
+        tablemeta.columns[0].max = u'100'
+        table_data = tablemeta.makedic()
+        validator = p._get_validator(tablemeta, r)
+        p.run_column_statistics_validation(validator, table_data)
+        validator.update_table_data(table_data)
+
+        self.assertEqual(1, len(table_data['columns'][0]['validation']))
+        self.assertEqual({'column_names': [u'c_custkey'],
+                          'description': u'max value',
+                          'rule': [u'c_custkey', u'{max} > 100'],
+                          'label': 0,
+                          'statistics': [1, 1],
+                          'invalid_count': 1},
+                         table_data['columns'][0]['validation'][0])
+
+    def test_run_column_statistics_validation_002(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        self.assertTrue(p.connect())
+
+        tablemeta = self._build_tablemeta()
+
+        r = [(0, u'dqwbtest', u'public', u'customer', u'c_custkey', u'max value', u'columnstat', u'{max} > 100', u'')]
+
+        # valid
+        tablemeta.columns[0].max = u'101'
+        table_data = tablemeta.makedic()
+        validator = p._get_validator(tablemeta, r)
+        p.run_column_statistics_validation(validator, table_data)
+        validator.update_table_data(table_data)
+
+        self.assertEqual(1, len(table_data['columns'][0]['validation']))
+        self.assertEqual({'column_names': [u'c_custkey'],
+                          'description': u'max value',
+                          'rule': [u'c_custkey', u'{max} > 100'],
+                          'label': 0,
+                          'statistics': [1, 0],
+                          'invalid_count': 0},
+                         table_data['columns'][0]['validation'][0])
+
+    def test_run_sql_validation_001(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        self.assertTrue(p.connect())
+
+        tablemeta = self._build_tablemeta()
+
+        # valid
         r = [(0, u'dqwbtest', u'public', u'customer', u'c_custkey', u'sql count', u'sql', u'select count(*) from customer', u'{count} == 8')]
 
         table_data = tablemeta.makedic()
-        table_data = p.run_postscan_validation(table_data, r)
+        validator = p._get_validator(tablemeta, r)
+        p.run_sql_validation(validator)
+        validator.update_table_data(table_data)
 
         self.assertEqual(1, len(table_data['columns'][0]['validation']))
         self.assertEqual({'column_names': [u'c_custkey'],
@@ -102,6 +157,29 @@ class TestDbProfilerBase(unittest.TestCase):
                           'label': 0,
                           'query': u'select count(*) from customer',
                           'invalid_count': 1},
+                         table_data['columns'][0]['validation'][0])
+
+    def test_run_sql_validation_002(self):
+        p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
+        self.assertTrue(p.connect())
+
+        tablemeta = self._build_tablemeta()
+
+        # valid
+        r = [(0, u'dqwbtest', u'public', u'customer', u'c_custkey', u'sql count', u'sql', u'select count(*) from customer', u'{count} == 28')]
+
+        table_data = tablemeta.makedic()
+        validator = p._get_validator(tablemeta, r)
+        p.run_sql_validation(validator)
+        validator.update_table_data(table_data)
+
+        self.assertEqual(1, len(table_data['columns'][0]['validation']))
+        self.assertEqual({'column_names': [u'c_custkey'],
+                          'description': u'sql count',
+                          'rule': [u'c_custkey', u'select count(*) from customer', u'{count} == 28'],
+                          'label': 0,
+                          'query': u'select count(*) from customer',
+                          'invalid_count': 0},
                          table_data['columns'][0]['validation'][0])
 
     def test_run_001(self):
