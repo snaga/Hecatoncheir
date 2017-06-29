@@ -569,6 +569,7 @@ class DbProfilerBase(object):
         # continue to profile table?
         if self.skip_table_profiling:
             log.info(_("Skipping table and column profiling."))
+            log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
             return tablemeta.makedic()
 
         # number of rows
@@ -577,6 +578,7 @@ class DbProfilerBase(object):
         # continue to profile columns?
         if self.skip_column_profiling:
             log.info(_("Skipping column profiling."))
+            log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
             return tablemeta.makedic()
 
         # exceeded the threshold.
@@ -584,6 +586,7 @@ class DbProfilerBase(object):
             log.info((_("Skipping column profiling because "
                         "the table has more than %s rows") %
                       ("{:,d}".format(self.column_profiling_threshold))))
+            log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
             return tablemeta.makedic()
 
         # column profiling and validation
