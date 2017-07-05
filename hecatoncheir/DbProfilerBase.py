@@ -514,6 +514,9 @@ class DbProfilerBase(object):
             # in order to avoid heavy loads.
             self.skip_column_profiling = True
 
+        if rows is None:
+            raise InternalError(_('Could not obtain number of rows.'))
+
         tm.row_count = rows
         log.info(_("Row count: end (%s)") %
                  "{:,d}".format(tm.row_count))
