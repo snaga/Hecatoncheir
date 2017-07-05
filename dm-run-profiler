@@ -217,8 +217,6 @@ if __name__ == "__main__":
 
     if column_profiling_threshold:
         profiler.column_profiling_threshold = int(column_profiling_threshold)
-    profiler.skip_table_profiling = skip_table_profiling
-    profiler.skip_column_profiling = skip_column_profiling
 
     tables = []
     try:
@@ -316,6 +314,9 @@ if __name__ == "__main__":
         validation_rules = None
         if enable_validation:
             validation_rules = repo.get_validation_rules(dbname, t[0], t[1])
+
+        profiler.skip_table_profiling = skip_table_profiling
+        profiler.skip_column_profiling = skip_column_profiling
 
         try:
             count += 1
