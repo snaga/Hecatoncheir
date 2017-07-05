@@ -361,7 +361,12 @@ if __name__ == "__main__":
         # copy nls_name and comment from previous record.
         prevdata = repo.get_table(dbname, t[0], t[1])
         DbProfilerBase.migrate_table_meta(prevdata, newdata)
-        repo.append_table(newdata)
+        try:
+            repo.append_table(newdata)
+        except InternalError as ex:
+            log.error(_("Could not append table data (%s.%s) to "
+                        "the repository.") % (t[0], t[1]),
+                      detail=str(ex))
 
     try:
         repo.close()
