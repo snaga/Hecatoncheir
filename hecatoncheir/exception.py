@@ -52,6 +52,22 @@ class ValidationError(Exception):
         return self.value
 
 
+class ProfilingError(Exception):
+    source = None
+    query = None
+
+    def __init__(self, value, target=None, query=None, source=None):
+        assert target in ['table', 'column']
+
+        self.value = value
+        self.target = target
+        self.query = query
+        self.source = source
+
+    def __str__(self):
+        return self.value
+
+
 class InternalError(Exception):
     source = None
     query = None

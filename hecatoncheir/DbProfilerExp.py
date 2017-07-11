@@ -330,13 +330,18 @@ def export_csv(repo, tables=[], output_path='./csv', encoding=None):
 
                     # column metadata
                     tmp = data['timestamp'].replace('T', ' ')
+                    if (data.get('row_count') is not None and
+                            c.get('nulls') is not None):
+                        non_null_values = data['row_count'] - c['nulls']
+                    else:
+                        non_null_values = None
                     line = list2csv([re.sub(r'\.\d+$', '', tmp),
                                      database_name, schema_name,
                                      table_name,
                                      c['column_name'], c['data_type'][0],
                                      c['data_type'][1],
                                      c['min'], c['max'], c['nulls'],
-                                     data['row_count'] - c['nulls'],
+                                     non_null_values,
                                      c['cardinality']])
                     log.trace(line)
                     f.write(line.encode(encoding) + "\n")
