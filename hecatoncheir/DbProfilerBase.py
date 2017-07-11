@@ -12,7 +12,7 @@ import dateutil.parser
 import DbProfilerValidator
 import logger as log
 from exception import (DbProfilerException, InternalError, QueryError,
-                       QueryTimeout)
+                       QueryTimeout, ProfilingError)
 from logger import str2unicode as _s2u, to_unicode as _2u
 from metadata import TableColumnMeta, TableMeta
 from msgutil import gettext as _
@@ -265,11 +265,11 @@ class DbProfilerBase(object):
                 _minmax[column_names[i]] = [colmin, colmax]
                 _nulls[column_names[i]] = nulls
                 i += 1
-        except QueryError as e:
-            log.error(_("Could not get row count/num of "
-                        "nulls/min/max values."),
-                      detail=e.value, query=query)
-            raise e
+        except QueryError as ex:
+            raise ProfilingError(_("Could not get row count/num of "
+                                   "nulls/min/max values."),
+                                 target='column',
+                                 query=query, source=ex)
 
         log.trace("_query_column_profile: %s" % str(_minmax))
         return (num_rows, _minmax, _nulls)
@@ -515,7 +515,8 @@ class DbProfilerBase(object):
             self.skip_column_profiling = True
 
         if rows is None:
-            raise InternalError(_('Could not obtain number of rows.'))
+            raise ProfilingError(_('Could not obtain number of rows.'),
+                                 target='table')
 
         tm.row_count = rows
         log.info(_("Row count: end (%s)") %
@@ -576,7 +577,11 @@ class DbProfilerBase(object):
             return tablemeta.makedic()
 
         # number of rows
-        self._profile_row_count(tablemeta)
+        try:
+            self._profile_row_count(tablemeta)
+        except ProfilingError as ex:
+            log.warning(_("Could not get number of rows."))
+            return tablemeta.makedic()
 
         # continue to profile columns?
         if self.skip_column_profiling:
@@ -593,7 +598,12 @@ class DbProfilerBase(object):
             return tablemeta.makedic()
 
         # column profiling and validation
-        self.run_column_profiling(tablemeta)
+        try:
+            self.run_column_profiling(tablemeta)
+        except ProfilingError as ex:
+            log.warning(_("Could not profile one or more columns."))
+            return tablemeta.makedic()
+
         self._run_record_validation(tablemeta, validation_rules,
                                     skip_record_validation)
         table_data = tablemeta.makedic()
