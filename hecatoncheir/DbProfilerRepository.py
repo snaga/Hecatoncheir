@@ -182,9 +182,7 @@ create table textelement (
 
     def set(self, data):
         try:
-            cursor = self._conn.cursor()
-            cursor.execute("DELETE FROM repo")
-            self._conn.commit()
+            self.execute_update(self._conn, "DELETE FROM repo")
         except Exception as e:
             log.error(_("Could not initialize the repository."),
                       detail=unicode(e))
@@ -319,6 +317,52 @@ SELECT COUNT(*)
         log.trace("has_table_record: end")
         return False
 
+    def _build_append_table_query(self, tab):
+        query = None
+        if self.has_table_record(tab):
+            query = u"""
+UPDATE repo
+   SET data = '{4}'
+ WHERE database_name = '{0}'
+   AND schema_name = '{1}'
+   AND table_name = '{2}'
+   AND created_at = datetime('{3}')
+""".format(tab['database_name'], tab['schema_name'],
+                tab['table_name'], tab['timestamp'],
+                DbProfilerFormatter.jsonize(tab).replace("'", "''"))
+        else:
+            query = u"""
+INSERT INTO repo VALUES ('{0}','{1}','{2}',
+                         datetime('{3}'), '{4}')
+""".format(tab['database_name'], tab['schema_name'],
+                tab['table_name'], tab['timestamp'],
+                DbProfilerFormatter.jsonize(tab).replace("'", "''"))
+        return query
+
+    def execute_update(self, conn, query, with_commit=True, max_retry=3):
+        retry = 0
+        err = None
+        rowcount = None
+        while retry < max_retry:
+            try:
+                cursor = conn.cursor()
+                cursor.execute(query)
+                rowcount = cursor.rowcount
+                cursor.close()
+                if with_commit:
+                    conn.commit()
+                err = None
+                break
+            except Exception as ex:
+                conn.rollback()
+                err = ex
+            retry += 1
+        if err:
+            msg = _(u"Excceeded the max retry count (%d) for a query: %s")
+            raise InternalError(msg % (max_retry, query),
+                                source=err)
+        return (rowcount, retry)
+
     def append_table(self, tab):
         """
         Update a table record if the same record (with same timestamp)
@@ -341,31 +385,12 @@ SELECT COUNT(*)
                    tab['table_name']))
 
         try:
-            if self.has_table_record(tab):
-                query = """
-UPDATE repo
-   SET data = '%s'
- WHERE database_name = '{database_name}'
-   AND schema_name = '{schema_name}'
-   AND table_name = '{table_name}'
-   AND created_at = datetime('{timestamp}')
-""".format(**tab) % DbProfilerFormatter.jsonize(tab).replace("'", "''")
-            else:
-                query = """
-INSERT INTO repo VALUES ('{database_name}','{schema_name}','{table_name}',
-                         datetime('{timestamp}'), '%s')
-""".format(**tab) % DbProfilerFormatter.jsonize(tab).replace("'", "''")
-                log.trace("append_table: INSERT")
-
+            query = self._build_append_table_query(tab)
             log.debug("append_table: query = %s" % query)
 
             assert self._conn
-            cursor = self._conn.cursor()
-
-            assert cursor
-            cursor.execute(query)
-            self._conn.commit()
-        except Exception as e:
+            self.execute_update(self._conn, query)
+        except InternalError as e:
             raise InternalError(_("Could not register table data: "),
                                 query=query, source=e)
 
@@ -446,9 +471,7 @@ DELETE FROM repo
 """.format(database_name, schema_name, table_name)
 
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            self._conn.commit()
+            self.execute_update(self._conn, query)
         except Exception as e:
             raise InternalError(_("Could not remove table data: "),
                                 query=query, source=e)
@@ -546,8 +569,7 @@ SELECT data
                 where = u"WHERE tag_id = '%s'" % target
 
             query = u"DELETE FROM tags %s" % where
-            cursor.execute(query)
-            self._conn.commit()
+            self.execute_update(self._conn, query)
         except Exception as e:
             raise InternalError(_("Could not delete tags: "),
                                 query=query, source=e)
@@ -562,11 +584,10 @@ SELECT data
             query = (u"DELETE FROM tags WHERE tag_id = '%s' "
                      u"AND tag_label = '%s'" %
                      (tag.target, tag.label))
-            cursor.execute(query)
+            self.execute_update(self._conn, query)
             query = (u"INSERT INTO tags VALUES ('%s', '%s')" %
                      (tag.target, tag.label))
-            cursor.execute(query)
-            self._conn.commit()
+            self.execute_update(self._conn, query)
         except Exception as e:
             raise InternalError(_("Could not register tag: "),
                                 query=query, source=e)
@@ -667,11 +688,9 @@ SELECT data
     def put_textelement(self, id_, text):
         log.trace('put_textelement: start')
         try:
-            cursor = self._conn.cursor()
             query = (u"INSERT INTO textelement VALUES ('%s', '%s')" %
                      (id_, text if text else ''))
-            cursor.execute(query)
-            self._conn.commit()
+            self.execute_update(self._conn, query)
         except Exception as e:
             raise InternalError(_("Could not register text element: "),
                                 query=query, source=e)
@@ -696,10 +715,8 @@ SELECT data
     def delete_textelement(self, id_):
         log.trace('delete_textelement: start')
         try:
-            cursor = self._conn.cursor()
             query = u"DELETE FROM textelement WHERE id_= '%s'" % id_
-            cursor.execute(query)
-            self._conn.commit()
+            self.execute_update(self._conn, query)
         except Exception as e:
             raise InternalError(_("Could not delete text element: "),
                                 query=query, source=e)
@@ -815,9 +832,7 @@ DELETE FROM datamapping
             datamap.get('record_id', ''))
 
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            self._conn.commit()
+            self.execute_update(self._conn, query)
             log.trace(u'Successfully removed the previous datamap entry: %s' %
                       datamap)
         except Exception as e:
@@ -849,9 +864,7 @@ INSERT INTO datamapping (
             json.dumps(datamap))
 
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            self._conn.commit()
+            self.execute_update(self._conn, query)
             log.trace(u'Successfully stored the datamap entry: %s' % datamap)
         except Exception as e:
             raise InternalError(_("Could not register data mapping."),
@@ -1109,15 +1122,11 @@ INSERT INTO business_glossary (
 
         query = None
         try:
-            cursor = self._conn.cursor()
             query = query1
-            cursor.execute(query1)
+            self.execute_update(self._conn, query1)
 
-            cursor = self._conn.cursor()
             query = query2
-            cursor.execute(query2)
-
-            self._conn.commit()
+            self.execute_update(self._conn, query2)
         except Exception as e:
             raise InternalError(_("Could not register a business term: "),
                                 query=query, source=e)
@@ -1229,11 +1238,10 @@ INSERT INTO validation_rule (id,database_name,schema_name,table_name,
         log.trace("create_validation_rule: %s" % query.replace('\n', ''))
         id = None
         try:
+            self.execute_update(self._conn, query)
             cursor = self._conn.cursor()
-            cursor.execute(query)
             cursor.execute("SELECT max(id) FROM validation_rule")
             id = cursor.fetchone()[0]
-            self._conn.commit()
         except Exception as e:
             raise InternalError(_("Could not register validation rule: "),
                                 query=query, source=e)
@@ -1303,10 +1311,7 @@ UPDATE validation_rule
         log.trace("update_validation_rule: %s" % query.replace('\n', ''))
         rowcount = 0
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            rowcount = cursor.rowcount
-            self._conn.commit()
+            rowcount, retry = self.execute_update(self._conn, query)
         except Exception as e:
             raise InternalError(_("Could not update validation rule: "),
                                 query=query, source=e)
@@ -1328,10 +1333,7 @@ UPDATE validation_rule
         log.trace("delete_validation_rule: %s" % query.replace('\n', ''))
         rowcount = 0
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            rowcount = cursor.rowcount
-            self._conn.commit()
+            rowcount, retry = self.execute_update(self._conn, query)
         except Exception as e:
             raise InternalError(_("Could not delete validation rule: "),
                                 query=query, source=e)
