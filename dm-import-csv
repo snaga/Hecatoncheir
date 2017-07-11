@@ -117,6 +117,13 @@ def open_csv_file(filename, csv_keys):
 
 
 def process_table_csv(repo, r):
+    if not (r['database_name'] and r['schema_name'] and r['table_name']):
+        msg = (_("Database name `%s' or table name `%s.%s' is not correct. "
+                 "Skipping.") %
+               (r['database_name'], r['schema_name'], r['table_name']))
+        log.warning(msg)
+        return 0
+
     tab = repo.get_table(r['database_name'], r['schema_name'],
                          r['table_name'])
     if not tab:
@@ -138,6 +145,13 @@ def process_table_csv(repo, r):
 
 
 def process_column_csv(repo, r):
+    if not (r['database_name'] and r['schema_name'] and r['table_name']):
+        msg = (_("Database name `%s' or table name `%s.%s' is not correct. "
+                 "Skipping.") %
+               (r['database_name'], r['schema_name'], r['table_name']))
+        log.warning(msg)
+        return 0
+
     tab = repo.get_table(r['database_name'], r['schema_name'],
                          r['table_name'])
     if not tab:
