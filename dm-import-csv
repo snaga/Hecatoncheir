@@ -116,6 +116,107 @@ def open_csv_file(filename, csv_keys):
     return reader
 
 
+def process_table_csv(repo, r):
+    tab = repo.get_table(r['database_name'], r['schema_name'],
+                         r['table_name'])
+    if not tab:
+        tmp = (_("Table %s.%s.%s not found in the repository. "
+                 "Skipping.") %
+               (r['database_name'], r['schema_name'], r['table_name']))
+        log.warning(tmp)
+        return 0
+
+    # update if a key exist, otherwise keep the old value.
+    tab["table_name_nls"] = r.get('table_name_nls',
+                                  tab.get("table_name_nls", ''))
+    tab["comment"] = r.get('table_comment', tab.get("comment", ''))
+    tab["owner"] = r.get('table_owner', tab.get("owner", ''))
+    tab["tags"] = [x.strip() for x in r.get('tags', '').split(',')]
+
+    repo.append_table(tab)
+    return 1
+
+
+def process_column_csv(repo, r):
+    tab = repo.get_table(r['database_name'], r['schema_name'],
+                         r['table_name'])
+    if not tab:
+        tmp = (_("Table %s.%s.%s not found in the repository. "
+                 "Skipping.") %
+               (r['database_name'], r['schema_name'], r['table_name']))
+        log.warning(tmp)
+        return 0
+
+    for col in tab["columns"]:
+        if col["column_name"] != r['column_name']:
+            continue
+
+        # update if a key exist, otherwise keep the old value.
+        col["column_name_nls"] = r.get('column_name_nls',
+                                       col.get("column_name_nls", ''))
+        col["comment"] = r.get('column_comment',
+                               col.get("comment", ''))
+        if not r.get('fk'):
+            continue
+        for fk in [x.strip() for x in r['fk'].split(',')]:
+            guess = True if fk[0] == '?' else False
+            tmp = fk[1:].split('.') if guess else fk.split('.')
+            # [table, column]
+            #  -> [schema, table, column]
+            if len(tmp) == 2:
+                tmp.insert(0, tab["schema_name"])
+            # [schema, table, column]
+            #  -> [database, schema, table, column]
+            if len(tmp) == 3:
+                tmp.insert(0, tab["database_name"])
+                tmp2 = [tab["database_name"], tab["schema_name"],
+                        tab["table_name"], col["column_name"]]
+                fk_list.append(tmp2 + tmp + [guess])
+    repo.append_table(tab)
+    return 1
+
+
+def process_glossary_csv(repo, r):
+    if len(r['term']) == 0:
+        return 0
+    repo.put_bg_term(r['term'], r['description_short'],
+                     r['description_long'], r['owner'],
+                     [x.strip() for x in r.get('categories', '')
+                      .split(',')],
+                     [x.strip() for x in r.get('synonyms', '')
+                      .split(',')],
+                     [x.strip() for x in r.get('related_terms', '')
+                      .split(',')],
+                     [x.strip() for x in r.get('related_assets', '')
+                      .split(',')])
+    return 1
+
+
+def process_validation_csv(repo, r):
+    if r['param'] is not None and len(r['param']) == 0:
+        r['param'] = None
+    if r['param2'] is not None and len(r['param2']) == 0:
+        r['param2'] = None
+    repo.create_validation_rule(r['database_name'], r['schema_name'],
+                                r['table_name'], r['column_name'],
+                                r['description'], r['rule'],
+                                r['param'], r['param2'])
+    return 1
+
+
+def process_schemacomment_csv(repo, r):
+    s = u"%s.%s" % (r['database_name'], r['schema_name'])
+    desc = SchemaDesc(s, r['schema_description'], r['schema_comment'])
+    repo.set_schema_description(desc)
+    return 1
+
+
+def process_tagcomment_csv(repo, r):
+    desc = TagDesc(r['tag_name'], r['tag_description'], r['tag_comment'])
+    repo.set_tag_description(desc)
+    return 1
+
+
 if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:], "E:",
@@ -168,98 +269,26 @@ if __name__ == "__main__":
     repo.init()
     repo.open()
 
+    lines = 0
     merged = 0
     fk_list = []
     for r in reader.readline_as_dict(use_lower=True):
+        lines += 1
         if format == 'table':
-            tab = repo.get_table(r['database_name'], r['schema_name'],
-                                 r['table_name'])
-            if not tab:
-                tmp = (_("Table %s.%s.%s not found in the repository. "
-                         "Skipping.") %
-                       (r['database_name'], r['schema_name'], r['table_name']))
-                log.warning(tmp)
-                continue
-
-            # update if a key exist, otherwise keep the old value.
-            tab["table_name_nls"] = r.get('table_name_nls',
-                                          tab.get("table_name_nls", ''))
-            tab["comment"] = r.get('table_comment', tab.get("comment", ''))
-            tab["owner"] = r.get('table_owner', tab.get("owner", ''))
-            tab["tags"] = [x.strip() for x in r.get('tags', '').split(',')]
-            merged += 1
-            repo.append_table(tab)
+            merged += process_table_csv(repo, r)
         elif format == 'column':
-            tab = repo.get_table(r['database_name'], r['schema_name'],
-                                 r['table_name'])
-            if not tab:
-                tmp = (_("Table %s.%s.%s not found in the repository. "
-                         "Skipping.") %
-                       (r['database_name'], r['schema_name'], r['table_name']))
-                log.warning(tmp)
-                continue
-
-            for col in tab["columns"]:
-                if col["column_name"] != r['column_name']:
-                    continue
-
-                # update if a key exist, otherwise keep the old value.
-                col["column_name_nls"] = r.get('column_name_nls',
-                                               col.get("column_name_nls", ''))
-                col["comment"] = r.get('column_comment',
-                                       col.get("comment", ''))
-                if not r.get('fk'):
-                    continue
-                for fk in [x.strip() for x in r['fk'].split(',')]:
-                    guess = True if fk[0] == '?' else False
-                    tmp = fk[1:].split('.') if guess else fk.split('.')
-                    # [table, column]
-                    #  -> [schema, table, column]
-                    if len(tmp) == 2:
-                        tmp.insert(0, tab["schema_name"])
-                    # [schema, table, column]
-                    #  -> [database, schema, table, column]
-                    if len(tmp) == 3:
-                        tmp.insert(0, tab["database_name"])
-                    tmp2 = [tab["database_name"], tab["schema_name"],
-                            tab["table_name"], col["column_name"]]
-                    fk_list.append(tmp2 + tmp + [guess])
-            merged += 1
-            repo.append_table(tab)
+            merged += process_column_csv(repo, r)
         elif format == 'glossary':
-            if len(r['term']) == 0:
-                continue
-            repo.put_bg_term(r['term'], r['description_short'],
-                             r['description_long'], r['owner'],
-                             [x.strip() for x in r.get('categories', '')
-                              .split(',')],
-                             [x.strip() for x in r.get('synonyms', '')
-                              .split(',')],
-                             [x.strip() for x in r.get('related_terms', '')
-                              .split(',')],
-                             [x.strip() for x in r.get('related_assets', '')
-                              .split(',')])
-            merged += 1
+            merged += process_glossary_csv(repo, r)
         elif format == 'validation':
-            if r['param'] is not None and len(r['param']) == 0:
-                r['param'] = None
-            if r['param2'] is not None and len(r['param2']) == 0:
-                r['param2'] = None
-            repo.create_validation_rule(r['database_name'], r['schema_name'],
-                                        r['table_name'], r['column_name'],
-                                        r['description'], r['rule'],
-                                        r['param'], r['param2'])
-            merged += 1
+            merged += process_validation_csv(repo, r)
         elif format == 'schemacomment':
-            s = u"%s.%s" % (r['database_name'], r['schema_name'])
-            desc = SchemaDesc(s, r['schema_description'], r['schema_comment'])
-            repo.set_schema_description(desc)
-            merged += 1
+            merged += process_schemacomment_csv(repo, r)
         elif format == 'tagcomment':
-            desc = TagDesc(r['tag_name'], r['tag_description'],
-                           r['tag_comment'])
-            repo.set_tag_description(desc)
-            merged += 1
+            merged += process_tagcomment_csv(repo, r)
+        else:
+            log.error("Unreachable code.")
+            sys.exit(1)
 
     for fk in fk_list:
         repo.remove_table_fk(fk[0], fk[1], fk[2], fk[3], fk[4], fk[5], fk[6],
