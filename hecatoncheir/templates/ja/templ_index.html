@@ -290,7 +290,7 @@ function edit_table_info_modal(id) {
   $('#owner').val('(loading)');
   $('#comment').val('(loading)');
 
-  $.getJSON("/api/table/" + id + "/table_info", function(data) {
+  $.getJSON("/api/v1/table/" + id, function(data) {
     $('#owner').val(data.owner);
     $('#comment').val(data.comment);
     $('#tags').val(data.tags);
@@ -304,7 +304,7 @@ $(function () {
     var owner = $('#owner').val();
     var comment = $('#comment').val();
     var tags = $('#tags').val();
-    $.post("/api/table/" + id + "/table_info", { 'owner': owner, 'comment': comment, 'tags': tags }, function(data) {
+    $.post("/api/v1/table/" + id, { 'owner': owner, 'comment': comment, 'tags': tags }, function(data) {
       window.location.reload();
     });
   });

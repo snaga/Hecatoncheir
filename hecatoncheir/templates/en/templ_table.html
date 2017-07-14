@@ -316,7 +316,7 @@ function edit_table_info_modal(id) {
   $('#owner').val('(loading)');
   $('#comment').val('(loading)');
 
-  $.getJSON("/api/table/" + id + "/table_info", function(data) {
+  $.getJSON("/api/v1/table/" + id, function(data) {
     $('#owner').val(data.owner);
     $('#comment').val(data.comment);
     $('#tags').val(data.tags);
@@ -331,7 +331,7 @@ $(function () {
     var owner = $('#owner').val();
     var comment = $('#comment').val();
     var tags = $('#tags').val();
-    $.post("/api/table/" + id + "/table_info", { 'owner': owner, 'comment': comment, 'tags': tags }, function(data) {
+    $.post("/api/v1/table/" + id, { 'owner': owner, 'comment': comment, 'tags': tags }, function(data) {
       window.location.reload();
     });
   });
@@ -367,7 +367,7 @@ function set_edit_column_name(d,s,t,c) {
   $('#column_name').val(id);
   $('#column_comment').val('(loading)');
 
-  $.getJSON("/api/comment/" + id, function(data) {
+  $.getJSON("/api/v1/column/" + id, function(data) {
     $('#column_comment').val(data.comment);
   });
 }
@@ -377,7 +377,7 @@ $(function () {
     event.preventDefault();
     var id = $('#column_name').val();
     var comment = $('#column_comment').val();
-    $.post("/api/comment/" + id, { 'comment': comment }, function(data) {
+    $.post("/api/v1/column/" + id, { 'comment': comment }, function(data) {
       window.location.reload();
     });
   });
@@ -493,7 +493,7 @@ function edit_validation_rule_data(id) {
   $('#v_param').val('(loading)');
   $('#v_param2').val('(loading)');
 
-  $.getJSON("/api/validation/" + id, function(data) {
+  $.getJSON("/api/v1/validation/" + id, function(data) {
     $('#v_database_name').val(data.database_name);
     $('#v_schema_name').val(data.schema_name);
     $('#v_table_name').val(data.table_name);
@@ -522,8 +522,8 @@ $(function () {
     event.preventDefault();
     if ($('#v_id').val() < 0) {
       $.ajax({
-        url: "/api/validation",
-        type: 'POST',
+        url: "/api/v1/validation/0",
+        type: 'PUT',
         contentType: "application/json",
         data: JSON.stringify({'database_name': $('#v_database_name').val(),
                'schema_name': $('#v_schema_name').val(),
@@ -540,8 +540,8 @@ $(function () {
     }
     else {
       $.ajax({
-        url: "/api/validation/" + $('#v_id').val(),
-        type: 'PUT',
+        url: "/api/v1/validation/" + $('#v_id').val(),
+        type: 'POST',
         contentType: "application/json",
         data: JSON.stringify({'database_name': $('#v_database_name').val(),
                'schema_name': $('#v_schema_name').val(),
@@ -563,7 +563,7 @@ $(function () {
   $('#delete_validation_rule').on('click', function(event) {
     event.preventDefault();
     $.ajax({
-      url: "/api/validation/" + $('#v_id').val(),
+      url: "/api/v1/validation/" + $('#v_id').val(),
       type: 'DELETE',
       contentType: "application/json",
       success: function(result) {

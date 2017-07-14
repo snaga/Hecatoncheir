@@ -614,6 +614,12 @@ SELECT data
         return TagDesc(label, desc[0] if desc else None,
                        comment[0] if comment else None)
 
+    def delete_tag_description(self, tdesc):
+        assert isinstance(tdesc, TagDesc)
+        self.delete_textelement(u'tag_desc:%s' % tdesc.label)
+        self.delete_textelement(u'tag_comment:%s' % tdesc.label)
+        return True
+
     def set_schema_description(self, sdesc):
         assert isinstance(sdesc, SchemaDesc)
 
