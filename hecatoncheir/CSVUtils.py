@@ -9,7 +9,7 @@ from logger import to_unicode
 def csv2list(s):
     assert isinstance(s, unicode)
     for l in csv.reader([s.encode('utf-8')]):
-        v = [x.decode('utf-8') for x in l]
+        v = [x.decode('utf-8').strip(' \t') for x in l]
     return v
 
 

@@ -17,6 +17,7 @@ class TestCSVUtils(unittest.TestCase):
         self.assertEqual(['1\n','2\r3','4\n\r5'], CSVUtils.csv2list(u'"1\n","2\r3","4\n\r5"'))
         self.assertEqual(['1,','2,3',',4'], CSVUtils.csv2list(u'"1,","2,3",",4"'))
         self.assertEqual(['1"2',''], CSVUtils.csv2list(u'"1""2",'))
+        self.assertEqual(['1','2','3'], CSVUtils.csv2list(u'1,  2,3\t'))
 
     def test_csvquote_001(self):
         self.assertEqual('foo', CSVUtils.csvquote('foo'))
