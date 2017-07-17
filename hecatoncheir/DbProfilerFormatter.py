@@ -191,8 +191,8 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
     tab['schema_name'] = p['schema_name']
     tab['table_name'] = p['table_name']
     tab['timestamp'] = format_timestamp(p['timestamp'])
-    tab['row_count'] = ("{:,d}".format(p['row_count']) if
-                        p['row_count'] is not None else 'N/A')
+    tab['row_count'] = ("{:,d}".format(p['row_count'])
+                        if p.get('row_count') else 'N/A')
     tab['num_columns'] = len(p['columns'])
     tab['tags'] = ([x for x in p.get('tags') if len(x) > 0] if
                    p.get('tags') else [])
@@ -203,7 +203,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
     tab['comment'] = filter_markdown2html(p.get('comment'))
     tab['comment'] = filter_glossaryterms(tab['comment'], glossary_terms)
 
-    row_count = p['row_count']
+    row_count = p.get('row_count')
     tab['columns'] = []
     for c in p['columns']:
         col = {}
@@ -401,8 +401,8 @@ def to_index_html(data, reponame, schemas=None, tags=None,
         tab['table_name_nls'] = coalesce2(t, 'table_name_nls', '')
         tab['table_name_nls'] = filter_glossaryterms(tab['table_name_nls'],
                                                      glossary_terms)
-        tab['row_count'] = ("%s" % "{:,d}".format(t['row_count'])
-                            if t['row_count'] is not None else "")
+        tab['row_count'] = ("{:,d}".format(t['row_count'])
+                            if t.get('row_count') else "")
         tab['timestamp'] = format_timestamp(t['timestamp'])
         tab['num_columns'] = len(t['columns'])
 

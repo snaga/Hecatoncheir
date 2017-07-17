@@ -321,7 +321,7 @@ def export_csv(repo, tables=[], output_path='./csv', encoding=None):
                 tmp = data['timestamp'].replace('T', ' ')
                 line = list2csv([re.sub(r'\.\d+$', '', tmp),
                                  database_name, schema_name, table_name,
-                                 data['row_count']])
+                                 data.get('row_count', u'')])
                 log.trace(line)
                 f_tab.write(line.encode(encoding) + "\n")
 
