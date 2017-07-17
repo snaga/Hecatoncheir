@@ -453,6 +453,7 @@ def to_index_html(data, reponame, schemas=None, tags=None,
     templ_schemas = []
     if schemas:
         for s in schemas:
+            assert len(s) >= 4
             ts = {}
             ts['dbname'] = s[0]
             ts['label'] = s[1]
@@ -463,6 +464,7 @@ def to_index_html(data, reponame, schemas=None, tags=None,
     templ_tags = []
     if tags:
         for s in tags:
+            assert len(s) >= 3
             ts = {}
             ts['label'] = s[0]
             ts['tables'] = s[1]

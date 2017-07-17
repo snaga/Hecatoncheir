@@ -45,10 +45,16 @@ def index():
     for t in table_list:
         tab = repo.get_table(t[0], t[1], t[2])
         tables_all.append(tab)
-    schemas = repo.get_schemas()
+    schemas = []
+    for s in repo.get_schemas():
+        desc = repo.get_schema_description(s[1])
+        s.append(u'' if not desc else desc.desc)
+        schemas.append(s)
     tags = []
     for label in repo.get_tag_labels():
-        tags.append([label, repo.get_table_count_by_tag(label)])
+        desc = repo.get_tag_description(label)
+        tags.append([label, repo.get_table_count_by_tag(label),
+                     u'' if not desc else desc.desc])
 
     reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
     reponame = re.sub('\..*$', '', reponame)
