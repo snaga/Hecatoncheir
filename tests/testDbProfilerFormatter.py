@@ -118,6 +118,14 @@ class TestDbProfilerFormatter(unittest.TestCase):
             DbProfilerFormatter.format_number('a')
         self.assertEqual("Could not convert `a' to long.", cm.exception.value)
 
+    def test_format_minmax_001(self):
+        self.assertEqual('[ 0, 1 ]', DbProfilerFormatter.format_minmax('0', '1'))
+        self.assertEqual('[ 01234567890123456789, 12345678901234567890 ]',
+                         DbProfilerFormatter.format_minmax('012345678901234567890123456789',
+                                                           '123456789012345678901234567890'))
+
+        self.assertEqual('N/A', DbProfilerFormatter.format_minmax(None, None))
+
     def test_to_table_html_001(self):
         data = """
   {

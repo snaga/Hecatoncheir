@@ -188,6 +188,15 @@ def format_number(value):
     return "{:,d}".format(n)
 
 
+def format_minmax(minval, maxval):
+    assert (minval is None and maxval is None) or (minval is not None and maxval is not None)
+
+    if minval and maxval:
+        return '[ %s, %s ]' % (unicode(minval)[0:20],
+                               unicode(maxval)[0:20])
+    return 'N/A'
+
+
 def to_table_html(profile_data, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
@@ -242,11 +251,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                                       tmp[0] + '.' + tmp[1],
                                       tmp[2], guess])
 
-        if c.get('min') is not None and c.get('max') is not None:
-            col['minmax'] = '[ %s, %s ]' % (unicode(c.get('min'))[0:20],
-                                            unicode(c.get('max'))[0:20])
-        else:
-            col['minmax'] = 'N/A'
+        col['minmax'] = format_minmax(c.get('min'), c.get('max'))
 
         # non-null ratio
         nulls = int(c['nulls']) if c['nulls'] is not None else None
