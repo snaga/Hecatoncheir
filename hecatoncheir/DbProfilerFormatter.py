@@ -221,7 +221,6 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
     tab['comment'] = filter_markdown2html(p.get('comment'))
     tab['comment'] = filter_glossaryterms(tab['comment'], glossary_terms)
 
-    row_count = p.get('row_count')
     tab['columns'] = []
     for c in p['columns']:
         col = {}
@@ -254,20 +253,21 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
         col['minmax'] = format_minmax(c.get('min'), c.get('max'))
 
         # non-null ratio
-        nulls = int(c['nulls']) if c['nulls'] is not None else None
-        col['nulls'] = nulls
-        col['non_null_ratio'] = format_non_null_ratio(row_count, nulls)
+        col['nulls'] = format_number(c.get('nulls'))
+        col['non_null_ratio'] = format_non_null_ratio(p.get('row_count'),
+                                                      c.get('nulls'))
 
         # cardinality
-        col['cardinality'] = format_cardinality(row_count, c['cardinality'],
-                                                nulls)
+        col['cardinality'] = format_cardinality(p.get('row_count'),
+                                                c['cardinality'],
+                                                c.get('nulls'))
 
         # null/dist attributes
         col['uniq'] = False
         if ('most_freq_vals' in c and len(c['most_freq_vals']) > 0 and
                 c['most_freq_vals'][0]["freq"] == 1):
             col['uniq'] = True
-        col['notnull'] = True if nulls == 0 else False
+        col['notnull'] = True if c.get('nulls') == 0 else False
 
         # most freq values
         profile_most_freq_values_enabled = (len(c['most_freq_vals']) if
