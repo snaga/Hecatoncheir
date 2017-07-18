@@ -12,7 +12,7 @@ from jinja2 import Template, Environment, FileSystemLoader
 import CSVUtils
 import DbProfilerVerify
 import logger as log
-from exception import DbProfilerException
+from exception import DbProfilerException, InternalError
 from msgutil import DbProfilerJSONEncoder
 from msgutil import gettext as _
 
@@ -178,6 +178,16 @@ def get_default_template_path():
     return os.path.abspath(os.path.dirname(__file__) + "/templates/en")
 
 
+def format_number(value):
+    if not value:
+        return 'N/A'
+    try:
+        n = long(value)
+    except ValueError as ex:
+        raise InternalError(_("Could not convert `%s' to long.") % value)
+    return "{:,d}".format(n)
+
+
 def to_table_html(profile_data, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
@@ -191,8 +201,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
     tab['schema_name'] = p['schema_name']
     tab['table_name'] = p['table_name']
     tab['timestamp'] = format_timestamp(p['timestamp'])
-    tab['row_count'] = ("{:,d}".format(p['row_count'])
-                        if p.get('row_count') else 'N/A')
+    tab['row_count'] = format_number(p.get('row_count'))
     tab['num_columns'] = len(p['columns'])
     tab['tags'] = ([x for x in p.get('tags') if len(x) > 0] if
                    p.get('tags') else [])
@@ -267,7 +276,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                 mfv = {}
                 mfv['i'] = i
                 mfv['value'] = val['value']
-                mfv['freq'] = "{:,d}".format(int(val['freq']))
+                mfv['freq'] = format_number(val['freq'])
                 mfv['ratio'] = format_value_freq_ratio(p['row_count'], c['nulls'],
                                                        val['freq'])
                 most_freq_vals.append(mfv)
@@ -283,7 +292,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                 lfv = {}
                 lfv['i'] = i
                 lfv['value'] = val['value']
-                lfv['freq'] = "{:,d}".format(int(val['freq']))
+                lfv['freq'] = format_number(val['freq'])
                 lfv['ratio'] = format_value_freq_ratio(p['row_count'], c['nulls'],
                                                        val['freq'])
                 least_freq_vals.append(lfv)
@@ -401,8 +410,7 @@ def to_index_html(data, reponame, schemas=None, tags=None,
         tab['table_name_nls'] = coalesce2(t, 'table_name_nls', '')
         tab['table_name_nls'] = filter_glossaryterms(tab['table_name_nls'],
                                                      glossary_terms)
-        tab['row_count'] = ("{:,d}".format(t['row_count'])
-                            if t.get('row_count') else "")
+        tab['row_count'] = format_number(t.get('row_count'))
         tab['timestamp'] = format_timestamp(t['timestamp'])
         tab['num_columns'] = len(t['columns'])
 

@@ -9,7 +9,7 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir import DbProfilerFormatter
-from hecatoncheir.exception import DbProfilerException
+from hecatoncheir.exception import DbProfilerException, InternalError
 
 class TestDbProfilerFormatter(unittest.TestCase):
     def setUp(self):
@@ -104,6 +104,19 @@ class TestDbProfilerFormatter(unittest.TestCase):
         html = 'foo PV bar'
         a = u'foo <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="PV" data-content="Page Views<br/><div align=right><a href=\'glossary.html#PV\' target=\'_glossary\'>Details...</a></div>" class="glossary-term">PV</a> bar'
         self.assertEqual(a, DbProfilerFormatter.filter_glossaryterms(html, terms))
+
+    def test_format_number_001(self):
+        self.assertEqual('1', DbProfilerFormatter.format_number('001'))
+        self.assertEqual('100', DbProfilerFormatter.format_number('100'))
+        self.assertEqual('1,000', DbProfilerFormatter.format_number('1000'))
+        self.assertEqual('1,000,000', DbProfilerFormatter.format_number('1000000'))
+
+        self.assertEqual('N/A', DbProfilerFormatter.format_number(''))
+        self.assertEqual('N/A', DbProfilerFormatter.format_number(None))
+
+        with self.assertRaises(InternalError) as cm:
+            DbProfilerFormatter.format_number('a')
+        self.assertEqual("Could not convert `a' to long.", cm.exception.value)
 
     def test_to_table_html_001(self):
         data = """
