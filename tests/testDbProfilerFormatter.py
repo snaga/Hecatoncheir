@@ -153,6 +153,58 @@ class TestDbProfilerFormatter(unittest.TestCase):
                           'value': 'bbb'}],
                          DbProfilerFormatter.format_freq_values([{'value': 'aaa', 'freq': 10}, {'value': 'bbb', 'freq': 9}], 20, 0))
 
+    def test_format_validation_item_001(self):
+        self.assertEqual(None, DbProfilerFormatter.format_validation_item(None))
+
+        v = {u'statistics': [1, 0],
+             u'description': u'\u975eNULL\u3067\u3042\u308b',
+             u'rule': [u'c_custkey', u'{nulls} == 0'],
+             u'label': 3,
+             u'column_names': [u'c_custkey'],
+             u'invalid_count': 0}
+
+        self.assertEqual({'desc': u'\u975eNULL\u3067\u3042\u308b',
+                          'label': 3,
+                          'invalid': 0,
+                          'rule': u'{nulls} == 0',
+                          'column_name': u'c_custkey'},
+                         DbProfilerFormatter.format_validation_item(v))
+
+    def test_format_validation_items_001(self):
+        self.assertEqual(([], 0),
+                         DbProfilerFormatter.format_validation_items(None))
+
+        v = [{u'statistics': [1, 0],
+              u'description': u'\u975eNULL\u3067\u3042\u308b',
+              u'rule': [u'c_custkey', u'{nulls} == 0'],
+              u'label': 3,
+              u'column_names': [u'c_custkey'],
+              u'invalid_count': 0},
+             {u'statistics': [1, 0],
+              u'description': u'\u975eNULL\u3067\u3042\u308b',
+              u'rule': [u'c_custkey', u'{nulls} == 0'],
+              u'label': 3,
+              u'column_names': [u'c_custkey'],
+              u'invalid_count': 0},
+             {u'statistics': [1, 1],
+              u'description': u'\u975eNULL\u3067\u3042\u308b',
+              u'rule': [u'c_custkey', u'{nulls} == 1'],
+              u'label': 4,
+              u'column_names': [u'c_custkey'],
+              u'invalid_count': 1}]
+
+        self.assertEqual(([{'desc': u'\u975eNULL\u3067\u3042\u308b',
+                            'label': 3,
+                            'invalid': 0,
+                            'rule': u'{nulls} == 0',
+                            'column_name': u'c_custkey'},
+                           {'column_name': u'c_custkey',
+                            'desc': u'\u975eNULL\u3067\u3042\u308b',
+                            'invalid': 1,
+                            'label': 4,
+                            'rule': u'{nulls} == 1'}], 1),
+                         DbProfilerFormatter.format_validation_items(v))
+
     def test_to_table_html_001(self):
         data = """
   {

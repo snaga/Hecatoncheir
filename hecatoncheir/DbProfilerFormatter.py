@@ -235,6 +235,38 @@ def format_freq_values(freq_vals, row_count, nulls):
         freq_vals_out.append(fv)
     return freq_vals_out
 
+def format_validation_item(val):
+    if not val:
+        return None
+    assert isinstance(val, dict)
+
+    tmp = {}
+    tmp['column_name'] = ', '.join(val['column_names'])
+    tmp['rule'] = '; '.join(val['rule'][1:])
+    tmp['label'] = val['label']
+    tmp['invalid'] = val['invalid_count']
+    if val['description']:
+        tmp['desc'] = val['description']
+    else:
+        tmp['desc'] = tmp['rule']
+    return tmp
+
+def format_validation_items(vals):
+    if not vals:
+        return [], 0
+
+    results = []
+    num_invalid = 0
+    appended = []
+    for v in vals:
+        if v['label'] in appended:
+            continue
+        results.append(format_validation_item(v))
+        appended.append(v['label'])
+        if v['invalid_count'] > 0:
+            num_invalid += 1
+    return (results, num_invalid)
+
 def to_table_html(profile_data, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
@@ -300,28 +332,11 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                                                     c.get('nulls'))
 
         # validation results
-        if 'validation' in c:
-            data_validation = []
-            col_num_invalid = 0
-            for v in c['validation']:
-                tmp = {}
-                tmp['column_name'] = ', '.join(v['column_names'])
-                tmp['rule'] = '; '.join(v['rule'][1:])
-                tmp['label'] = v['label']
-                tmp['invalid'] = v['invalid_count']
-                if v['description']:
-                    tmp['desc'] = v['description']
-                else:
-                    tmp['desc'] = tmp['rule']
-                data_validation.append(tmp)
-
-                if v['invalid_count'] > 0:
-                    col_num_invalid += 1
+        if c.get('validation'):
+            data_validation, col_num_invalid = format_validation_items(c['validation'])
             if data_validation:
                 col['validations'] = data_validation
                 col['invalid'] = col_num_invalid
-            else:
-                assert 'validations' not in col
 
         # comment
         col['comment'] = filter_markdown2html(c.get('comment'))
@@ -412,31 +427,14 @@ def to_index_html(data, reponame, schemas=None, tags=None,
         tab['timestamp'] = format_timestamp(t['timestamp'])
         tab['num_columns'] = len(t['columns'])
 
-        # Have one or more validation results?
-        data_validation = []
-        data_val_labels = []
         # check every column to look for validation results
+        data_validation = []
         for c in t['columns']:
-            assert 'validation' in c
-            if c['validation'] is None:
+            if not c.get('validation'):
                 continue
             # look every rule on the single column
-            for v in c['validation']:
-                tmp = {}
-                tmp['column_name'] = ', '.join(v['column_names'])
-                tmp['rule'] = '; '.join(v['rule'][1:])
-                tmp['label'] = v['label']
-                tmp['invalid'] = v['invalid_count']
-                if v['description']:
-                    tmp['desc'] = v['description']
-                else:
-                    tmp['desc'] = tmp['rule']
-                if tmp['label'] not in data_val_labels:
-                    data_validation.append(tmp)
-                    data_val_labels.append(tmp['label'])
-
-            v, i = DbProfilerVerify.verify_column(c)
-            log.debug("to_index_html: %s %d %d" % (c['column_name'], v, i))
+            results, invalid = format_validation_items(c['validation'])
+            data_validation.extend(results)
 
         if data_validation:
             v, i = DbProfilerVerify.verify_table(t)
