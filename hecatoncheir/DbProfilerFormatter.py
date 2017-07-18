@@ -138,6 +138,8 @@ def create_popover_content(term):
 
 
 def filter_glossaryterms(html, glossary_terms):
+    if not html:
+        return ''
     if glossary_terms is None:
         return html
 
@@ -217,6 +219,22 @@ def format_fks(dbname, fks):
                         tmp[2], guess])
     return fk_list
 
+def format_freq_values(freq_vals, row_count, nulls):
+    assert row_count is not None and nulls is not None
+    if not freq_vals:
+        return []
+
+    freq_vals_out = []
+    for i, val in enumerate(freq_vals):
+        fv = {}
+        fv['i'] = i
+        fv['value'] = val['value']
+        fv['freq'] = format_number(val['freq'])
+        fv['ratio'] = format_value_freq_ratio(row_count, nulls,
+                                              val['freq'])
+        freq_vals_out.append(fv)
+    return freq_vals_out
+
 def to_table_html(profile_data, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
@@ -272,41 +290,14 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
         col['notnull'] = True if c.get('nulls') == 0 else False
 
         # most freq values
-        profile_most_freq_values_enabled = (len(c['most_freq_vals']) if
-                                            'most_freq_vals' in c else 0)
-        profile_least_freq_values_enabled = (len(c['least_freq_vals']) if
-                                             'least_freq_vals' in c else 0)
-
-        if 'most_freq_vals' in c:
-            most_freq_vals = []
-            for i, val in enumerate(c['most_freq_vals']):
-                mfv = {}
-                mfv['i'] = i
-                mfv['value'] = val['value']
-                mfv['freq'] = format_number(val['freq'])
-                mfv['ratio'] = format_value_freq_ratio(p['row_count'], c['nulls'],
-                                                       val['freq'])
-                most_freq_vals.append(mfv)
-
-            col['profile_most_freq_values_enabled'] = (
-                profile_most_freq_values_enabled)
-            col['most_freq_vals'] = most_freq_vals
+        col['most_freq_vals'] = format_freq_values(c.get('most_freq_vals'),
+                                                   p.get('row_count'),
+                                                   c.get('nulls'))
 
         # least freq values
-        if 'least_freq_vals' in c:
-            least_freq_vals = []
-            for i, val in enumerate(c['least_freq_vals']):
-                lfv = {}
-                lfv['i'] = i
-                lfv['value'] = val['value']
-                lfv['freq'] = format_number(val['freq'])
-                lfv['ratio'] = format_value_freq_ratio(p['row_count'], c['nulls'],
-                                                       val['freq'])
-                least_freq_vals.append(lfv)
-
-            col['profile_least_freq_values_enabled'] = (
-                profile_least_freq_values_enabled)
-            col['least_freq_vals'] = least_freq_vals
+        col['least_freq_vals'] = format_freq_values(c.get('least_freq_vals'),
+                                                    p.get('row_count'),
+                                                    c.get('nulls'))
 
         # validation results
         if 'validation' in c:

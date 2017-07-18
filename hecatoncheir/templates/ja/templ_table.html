@@ -132,7 +132,7 @@
                       <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
                       </button>
-                      <h4 class="modal-title">{{ c.column_name }} 頻度順ランク{{ c.profile_most_freq_values_enabled }}</h4>
+                      <h4 class="modal-title">{{ c.column_name }} 頻度順ランク{{ c.most_freq_vals|length }}</h4>
                     </div><!-- /modal-header -->
                     <div class="modal-body">
 
@@ -164,7 +164,7 @@
                       <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&#215;</span><span class="sr-only">閉じる</span>
                       </button>
-                      <h4 class="modal-title">{{ c.column_name }} 頻度順ランク{{ c.profile_least_freq_values_enabled }}</h4>
+                      <h4 class="modal-title">{{ c.column_name }} 頻度順ランク{{ c.least_freq_vals|length }}</h4>
                     </div><!-- /modal-header -->
                     <div class="modal-body">
 

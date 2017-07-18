@@ -139,6 +139,20 @@ class TestDbProfilerFormatter(unittest.TestCase):
                          DbProfilerFormatter.format_fks('db',
                                                        None))
 
+    def test_format_freq_values_001(self):
+        self.assertEqual([], DbProfilerFormatter.format_freq_values(None, 10, 0))
+        self.assertEqual([], DbProfilerFormatter.format_freq_values([], 10, 0))
+
+        self.assertEqual([{'i': 0,
+                          'freq': '10',
+                          'ratio': '50.00 %',
+                          'value': 'aaa'},
+                          {'i': 1,
+                          'freq': '9',
+                          'ratio': '45.00 %',
+                          'value': 'bbb'}],
+                         DbProfilerFormatter.format_freq_values([{'value': 'aaa', 'freq': 10}, {'value': 'bbb', 'freq': 9}], 20, 0))
+
     def test_to_table_html_001(self):
         data = """
   {
