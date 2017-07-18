@@ -126,6 +126,14 @@ class TestDbProfilerFormatter(unittest.TestCase):
 
         self.assertEqual('N/A', DbProfilerFormatter.format_minmax(None, None))
 
+    def test_is_column_unique_001(self):
+        self.assertEqual(False, DbProfilerFormatter.is_column_unique(None))
+
+        self.assertEqual(True, DbProfilerFormatter.is_column_unique([{'freq': 1}]))
+        self.assertEqual(False, DbProfilerFormatter.is_column_unique([{'freq': 2}]))
+        self.assertEqual(True, DbProfilerFormatter.is_column_unique([{'freq': 1}, {'freq': 1}]))
+        self.assertEqual(False, DbProfilerFormatter.is_column_unique([{'freq': 2}, {'freq': 1}]))
+
     def test_to_table_html_001(self):
         data = """
   {

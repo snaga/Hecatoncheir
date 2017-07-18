@@ -197,6 +197,14 @@ def format_minmax(minval, maxval):
     return 'N/A'
 
 
+def is_column_unique(most_freq_vals):
+    if not most_freq_vals:
+        return False
+    if most_freq_vals and most_freq_vals[0]['freq'] == 1:
+        return True
+    return False
+
+
 def to_table_html(profile_data, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
@@ -263,10 +271,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                                                 c.get('nulls'))
 
         # null/dist attributes
-        col['uniq'] = False
-        if ('most_freq_vals' in c and len(c['most_freq_vals']) > 0 and
-                c['most_freq_vals'][0]["freq"] == 1):
-            col['uniq'] = True
+        col['uniq'] = is_column_unique(c.get('most_freq_vals'))
         col['notnull'] = True if c.get('nulls') == 0 else False
 
         # most freq values
