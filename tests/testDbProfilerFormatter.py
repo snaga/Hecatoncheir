@@ -15,13 +15,6 @@ class TestDbProfilerFormatter(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
 
-    def test_coalesce2_001(self):
-        c = {}
-        c['foo'] = 'bar'
-        self.assertEqual('bar', DbProfilerFormatter.coalesce2(c,'foo','baz'))
-        self.assertEqual('baz', DbProfilerFormatter.coalesce2(c,'bar','baz'))
-        self.assertEqual('baz', DbProfilerFormatter.coalesce2(c,None,'baz'))
-
     def test_format_non_null_ratio_001(self):
         self.assertEqual('75.00 %', DbProfilerFormatter.format_non_null_ratio(100,25))
         self.assertEqual('100.00 %', DbProfilerFormatter.format_non_null_ratio(100,0))

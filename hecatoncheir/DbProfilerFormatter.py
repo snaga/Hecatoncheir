@@ -17,12 +17,6 @@ from msgutil import DbProfilerJSONEncoder
 from msgutil import gettext as _
 
 
-def coalesce2(d, s, r):
-    if s in d and d[s] is not None:
-        return d[s]
-    return r
-
-
 def jsonize(data):
     return json.dumps(data, cls=DbProfilerJSONEncoder, sort_keys=True,
                       indent=2)
@@ -233,7 +227,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
     for c in p['columns']:
         col = {}
         col['column_name'] = c['column_name']
-        col['column_name_nls'] = coalesce2(c, 'column_name_nls', "")
+        col['column_name_nls'] = c.get('column_name_nls', '')
         col['column_name_nls'] = filter_glossaryterms(col['column_name_nls'],
                                                       glossary_terms)
         col['data_type'] = format_data_type(c['data_type'][0],
@@ -417,7 +411,7 @@ def to_index_html(data, reponame, schemas=None, tags=None,
         tab['database_name'] = t['database_name']
         tab['schema_name'] = t['schema_name']
         tab['table_name'] = t['table_name']
-        tab['table_name_nls'] = coalesce2(t, 'table_name_nls', '')
+        tab['table_name_nls'] = t.get('table_name_nls', '')
         tab['table_name_nls'] = filter_glossaryterms(tab['table_name_nls'],
                                                      glossary_terms)
         tab['row_count'] = format_number(t.get('row_count'))
