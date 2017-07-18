@@ -28,7 +28,7 @@ def jsonize(data):
                       indent=2)
 
 
-def get_non_null_ratio(rows, nulls):
+def format_non_null_ratio(rows, nulls):
     """Format percentage of non-null value of the column
 
     Args:
@@ -46,7 +46,7 @@ def get_non_null_ratio(rows, nulls):
     return "%.2f %%" % (float(rows - nulls) / rows * 100.0)
 
 
-def get_cardinality(rows, cardinality, nulls):
+def format_cardinality(rows, cardinality, nulls):
     """Format cardinality of the column
 
     Args:
@@ -72,7 +72,7 @@ def format_data_type(d1, d2):
         return "%s" % (d1)
 
 
-def get_value_freq_ratio(rows, nulls, freq):
+def format_value_freq_ratio(rows, nulls, freq):
     """Format a ratio of the value in the table
 
     Calculate ratio of the value in the table, excluding nulls.
@@ -242,11 +242,11 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
         # non-null ratio
         nulls = int(c['nulls']) if c['nulls'] is not None else None
         col['nulls'] = nulls
-        col['non_null_ratio'] = get_non_null_ratio(row_count, nulls)
+        col['non_null_ratio'] = format_non_null_ratio(row_count, nulls)
 
         # cardinality
-        col['cardinality'] = get_cardinality(row_count, c['cardinality'],
-                                             nulls)
+        col['cardinality'] = format_cardinality(row_count, c['cardinality'],
+                                                nulls)
 
         # null/dist attributes
         col['uniq'] = False
@@ -268,8 +268,8 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                 mfv['i'] = i
                 mfv['value'] = val['value']
                 mfv['freq'] = "{:,d}".format(int(val['freq']))
-                mfv['ratio'] = get_value_freq_ratio(p['row_count'], c['nulls'],
-                                                    val['freq'])
+                mfv['ratio'] = format_value_freq_ratio(p['row_count'], c['nulls'],
+                                                       val['freq'])
                 most_freq_vals.append(mfv)
 
             col['profile_most_freq_values_enabled'] = (
@@ -284,8 +284,8 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                 lfv['i'] = i
                 lfv['value'] = val['value']
                 lfv['freq'] = "{:,d}".format(int(val['freq']))
-                lfv['ratio'] = get_value_freq_ratio(p['row_count'], c['nulls'],
-                                                    val['freq'])
+                lfv['ratio'] = format_value_freq_ratio(p['row_count'], c['nulls'],
+                                                       val['freq'])
                 least_freq_vals.append(lfv)
 
             col['profile_least_freq_values_enabled'] = (

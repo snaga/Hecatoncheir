@@ -22,36 +22,36 @@ class TestDbProfilerFormatter(unittest.TestCase):
         self.assertEqual('baz', DbProfilerFormatter.coalesce2(c,'bar','baz'))
         self.assertEqual('baz', DbProfilerFormatter.coalesce2(c,None,'baz'))
 
-    def test_get_non_null_ratio_001(self):
-        self.assertEqual('75.00 %', DbProfilerFormatter.get_non_null_ratio(100,25))
-        self.assertEqual('100.00 %', DbProfilerFormatter.get_non_null_ratio(100,0))
+    def test_format_non_null_ratio_001(self):
+        self.assertEqual('75.00 %', DbProfilerFormatter.format_non_null_ratio(100,25))
+        self.assertEqual('100.00 %', DbProfilerFormatter.format_non_null_ratio(100,0))
 
         # N/A
-        self.assertEqual('N/A', DbProfilerFormatter.get_non_null_ratio(100,None))
-        self.assertEqual('N/A', DbProfilerFormatter.get_non_null_ratio(None,20))
+        self.assertEqual('N/A', DbProfilerFormatter.format_non_null_ratio(100,None))
+        self.assertEqual('N/A', DbProfilerFormatter.format_non_null_ratio(None,20))
 
-    def test_get_cardinality_001(self):
-        self.assertEqual('25.00 %', DbProfilerFormatter.get_cardinality(100,25,0))
-        self.assertEqual('50.00 %', DbProfilerFormatter.get_cardinality(100,25,50))
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(100,0,100))
+    def test_format_cardinality_001(self):
+        self.assertEqual('25.00 %', DbProfilerFormatter.format_cardinality(100,25,0))
+        self.assertEqual('50.00 %', DbProfilerFormatter.format_cardinality(100,25,50))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(100,0,100))
 
         # N/A
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(None,25,50))
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(100,None,50))
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(100,25,None))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(None,25,50))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(100,None,50))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(100,25,None))
 
-    def test_get_value_freq_ratio_001(self):
-        self.assertEqual('0.00 %', DbProfilerFormatter.get_value_freq_ratio(100,0,0))
-        self.assertEqual('50.00 %', DbProfilerFormatter.get_value_freq_ratio(100,0,50))
-        self.assertEqual('100.00 %', DbProfilerFormatter.get_value_freq_ratio(100,50,50))
+    def test_format_value_freq_ratio_001(self):
+        self.assertEqual('0.00 %', DbProfilerFormatter.format_value_freq_ratio(100,0,0))
+        self.assertEqual('50.00 %', DbProfilerFormatter.format_value_freq_ratio(100,0,50))
+        self.assertEqual('100.00 %', DbProfilerFormatter.format_value_freq_ratio(100,50,50))
 
         # empty table
-        self.assertEqual('0.00 %', DbProfilerFormatter.get_value_freq_ratio(0,0,0))
+        self.assertEqual('0.00 %', DbProfilerFormatter.format_value_freq_ratio(0,0,0))
 
         # N/A
-        self.assertEqual('N/A', DbProfilerFormatter.get_value_freq_ratio(None,0,0))
-        self.assertEqual('N/A', DbProfilerFormatter.get_value_freq_ratio(0,None,0))
-        self.assertEqual('N/A', DbProfilerFormatter.get_value_freq_ratio(0,0,None))
+        self.assertEqual('N/A', DbProfilerFormatter.format_value_freq_ratio(None,0,0))
+        self.assertEqual('N/A', DbProfilerFormatter.format_value_freq_ratio(0,None,0))
+        self.assertEqual('N/A', DbProfilerFormatter.format_value_freq_ratio(0,0,None))
 
     def test_filter_markdown2html_001(self):
         md = ''
