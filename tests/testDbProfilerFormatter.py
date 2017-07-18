@@ -127,6 +127,18 @@ class TestDbProfilerFormatter(unittest.TestCase):
         self.assertEqual(True, DbProfilerFormatter.is_column_unique([{'freq': 1}, {'freq': 1}]))
         self.assertEqual(False, DbProfilerFormatter.is_column_unique([{'freq': 2}, {'freq': 1}]))
 
+    def test_format_fks_001(self):
+        self.assertEqual([['db', 'public.customer', 'c_custkey', False]],
+                         DbProfilerFormatter.format_fks('db',
+                                                       ['public.customer.c_custkey']))
+
+        self.assertEqual([['db', 'public.customer', 'c_custkey', True]],
+                         DbProfilerFormatter.format_fks('db',
+                                                       ['?public.customer.c_custkey']))
+        self.assertEqual([],
+                         DbProfilerFormatter.format_fks('db',
+                                                       None))
+
     def test_to_table_html_001(self):
         data = """
   {

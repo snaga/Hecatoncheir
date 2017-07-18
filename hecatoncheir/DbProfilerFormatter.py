@@ -199,6 +199,24 @@ def is_column_unique(most_freq_vals):
     return False
 
 
+def format_fks(dbname, fks):
+    assert dbname
+    assert isinstance(fks, list) or fks is None
+
+    if fks is None:
+        return []
+
+    fk_list = []
+    for fk in fks:
+        guess = True if fk[0] == '?' else False
+        tmp = fk[1:].split('.') if guess else fk.split('.')
+        assert len(tmp) >= 3
+        # db, table, column, guess
+        fk_list.append([dbname,
+                        tmp[0] + '.' + tmp[1],
+                        tmp[2], guess])
+    return fk_list
+
 def to_table_html(profile_data, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
@@ -232,25 +250,10 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
                                                       glossary_terms)
         col['data_type'] = format_data_type(c['data_type'][0],
                                             c['data_type'][1])
-        if 'fk' in c and c['fk']:
-            col['fk'] = []
-            for fk in c['fk']:
-                guess = True if fk[0] == '?' else False
-                tmp = fk[1:].split('.') if guess else fk.split('.')
-                # db, table, column, guess
-                col['fk'].append([tab['database_name'],
-                                  tmp[0] + '.' + tmp[1],
-                                  tmp[2], guess])
 
-        if 'fk_ref' in c and c['fk_ref']:
-            col['fk_ref'] = []
-            for fk in c['fk_ref']:
-                guess = True if fk[0] == '?' else False
-                tmp = fk[1:].split('.') if guess else fk.split('.')
-                # db, table, column, guess
-                col['fk_ref'].append([tab['database_name'],
-                                      tmp[0] + '.' + tmp[1],
-                                      tmp[2], guess])
+        # foreign keys
+        col['fk'] = format_fks(tab['database_name'], c.get('fk'))
+        col['fk_ref'] = format_fks(tab['database_name'], c.get('fk_ref'))
 
         col['minmax'] = format_minmax(c.get('min'), c.get('max'))
 
