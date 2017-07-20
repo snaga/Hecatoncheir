@@ -205,6 +205,47 @@ class TestDbProfilerFormatter(unittest.TestCase):
                             'rule': u'{nulls} == 1'}], 1),
                          DbProfilerFormatter.format_validation_items(v))
 
+    def test_filter_plain2html_001(self):
+        self.assertEqual('', DbProfilerFormatter.filter_plain2html(None))
+        self.assertEqual('a<br/>&nbsp;b<br/>&nbsp;&nbsp;c', DbProfilerFormatter.filter_plain2html('a\n b\n  c'))
+
+    def test_format_table_datamapping_001(self):
+        self.assertEqual([], DbProfilerFormatter.format_table_datamapping(None))
+
+        dm = []
+        self.assertEqual([], DbProfilerFormatter.format_table_datamapping(dm))
+
+        # data mapping for tables
+        dm = [{'source_table_name': 'SRCTBL1, SRCTBL2'},
+              {'column_name': 'c2',
+               'transformation_role': 'direct',
+               'source_table_name': 'SRCTBL1, SRCTBL3'}]
+        self.assertEqual(['SRCTBL1<br/>&nbsp;SRCTBL2'],
+                         DbProfilerFormatter.format_table_datamapping(dm))
+
+    def test_format_column_datamapping_001(self):
+        self.assertEqual([], DbProfilerFormatter.format_column_datamapping(None, 'c1'))
+
+        dm = []
+        self.assertEqual([], DbProfilerFormatter.format_column_datamapping(dm, 'c1'))
+
+        # data mapping for tables
+        dm = [{'source_table_name': 'SRCTBL1, SRCTBL2'},
+              {'column_name': 'c1',
+               'transformation_role': 'direct',
+               'source_table_name': 'SRCTBL2, SRCTBL3'},
+              {'column_name': 'c2',
+               'transformation_role': 'direct',
+               'source_table_name': 'SRCTBL1, SRCTBL3'}]
+        self.assertEqual([{'column_name': 'c1',
+                           'source_table_name': 'SRCTBL2<br/>&nbsp;SRCTBL3',
+                           'transformation_role': 'direct'}],
+                         DbProfilerFormatter.format_column_datamapping(dm, 'c1'))
+        self.assertEqual([{'column_name': 'c2',
+                           'source_table_name': 'SRCTBL1<br/>&nbsp;SRCTBL3',
+                           'transformation_role': 'direct'}],
+                         DbProfilerFormatter.format_column_datamapping(dm, 'c2'))
+
     def test_to_table_html_001(self):
         data = """
   {

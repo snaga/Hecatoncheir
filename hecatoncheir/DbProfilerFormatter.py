@@ -267,6 +267,46 @@ def format_validation_items(vals):
             num_invalid += 1
     return (results, num_invalid)
 
+def filter_plain2html(s):
+    if not s:
+        return ''
+    return s.replace('\n', '<br/>').replace(' ', '&nbsp;')
+
+def format_table_datamapping(datamapping):
+    if not datamapping:
+        return []
+    assert isinstance(datamapping, list)
+    mapping = []
+    for dm in datamapping:
+        assert dm['source_table_name']
+        if dm.get('column_name'):
+            continue
+        # data mapping for tables
+        dm['source_table_name'] = (dm['source_table_name']
+                                   .replace(',', '\n'))
+        dm['source_table_name'] = filter_plain2html(dm['source_table_name'])
+        mapping.append(dm['source_table_name'])
+    return mapping
+
+def format_column_datamapping(datamapping, column_name):
+    if not datamapping:
+        return []
+    assert isinstance(datamapping, list)
+    assert column_name
+    mapping = []
+    for dm in datamapping:
+        if not dm.get('column_name'):
+            continue
+        if dm['column_name'] == column_name:
+            # data mapping for columns
+            dm['source_table_name'] = (dm['source_table_name']
+                                       .replace(',', '\n'))
+            dm['source_table_name'] = filter_plain2html(dm['source_table_name'])
+            dm['transformation_role'] = filter_plain2html(dm.get('transformation_role'))
+            mapping.append(dm)
+    return mapping
+
+
 def to_table_html(profile_data, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
@@ -290,6 +330,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
     # Have any comment to show?
     tab['comment'] = filter_markdown2html(p.get('comment'))
     tab['comment'] = filter_glossaryterms(tab['comment'], glossary_terms)
+    tab['datamapping'] = format_table_datamapping(datamapping)
 
     tab['columns'] = []
     for c in p['columns']:
@@ -345,28 +386,7 @@ def to_table_html(profile_data, validation_rules=None, datamapping=None,
         col['comment_tooltip'] = format_comment_tooltip(c.get('comment'), 140)
 
         # data mapping
-        tab['datamapping'] = []
-        prev = None
-        if datamapping:
-            col['datamapping'] = []
-            for dm in datamapping:
-                if dm['column_name'] == col['column_name']:
-                    dm['transformation_role'] = (dm['transformation_role']
-                                                 .replace('\n', '<br/>'))
-                    dm['transformation_role'] = (dm['transformation_role']
-                                                 .replace(' ', '&nbsp;'))
-                    col['datamapping'].append(dm)
-                    prev = dm
-                elif dm['column_name'] is None or dm['column_name'] == '':
-                    dm['source_table_name'] = (dm['source_table_name']
-                                               .replace(',', '\n'))
-                    dm['source_table_name'] = (dm['source_table_name']
-                                               .replace('\n', '<br/>'))
-                    dm['source_table_name'] = (dm['source_table_name']
-                                               .replace(' ', '&nbsp;'))
-                    tab['datamapping'].append(dm['source_table_name'])
-            if len(col['datamapping']) == 0:
-                del col['datamapping']
+        col['datamapping'] = format_column_datamapping(datamapping, col['column_name'])
 
         # append column data
         tab['columns'].append(col)
