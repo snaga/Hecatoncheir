@@ -307,87 +307,100 @@ def format_column_datamapping(datamapping, column_name):
     return mapping
 
 
-def to_table_html(profile_data, validation_rules=None, datamapping=None,
+def format_column_metadata(colmeta, tabmeta, row_count, glossary_terms, datamapping):
+    col = {}
+    col['column_name'] = colmeta['column_name']
+    col['column_name_nls'] = colmeta.get('column_name_nls', '')
+    col['column_name_nls'] = filter_glossaryterms(col['column_name_nls'],
+                                                  glossary_terms)
+    col['data_type'] = format_data_type(colmeta['data_type'][0],
+                                        colmeta['data_type'][1])
+
+    # foreign keys
+    col['fk'] = format_fks(tabmeta['database_name'], colmeta.get('fk'))
+    col['fk_ref'] = format_fks(tabmeta['database_name'], colmeta.get('fk_ref'))
+
+    col['minmax'] = format_minmax(colmeta.get('min'), colmeta.get('max'))
+
+    # non-null ratio
+    col['nulls'] = format_number(colmeta.get('nulls'))
+    col['non_null_ratio'] = format_non_null_ratio(row_count,
+                                                  colmeta.get('nulls'))
+
+    # cardinality
+    col['cardinality'] = format_cardinality(row_count,
+                                            colmeta['cardinality'],
+                                            colmeta.get('nulls'))
+
+    # null/dist attributes
+    col['uniq'] = is_column_unique(colmeta.get('most_freq_vals'))
+    col['notnull'] = True if colmeta.get('nulls') == 0 else False
+
+    # most freq values
+    col['most_freq_vals'] = format_freq_values(colmeta.get('most_freq_vals'),
+                                               row_count,
+                                               colmeta.get('nulls'))
+
+    # least freq values
+    col['least_freq_vals'] = format_freq_values(colmeta.get('least_freq_vals'),
+                                                row_count,
+                                                colmeta.get('nulls'))
+
+    # validation results
+    if colmeta.get('validation'):
+        data_validation, col_num_invalid = format_validation_items(colmeta['validation'])
+        if data_validation:
+            col['validations'] = data_validation
+            col['invalid'] = col_num_invalid
+
+    # comment
+    col['comment'] = filter_markdown2html(colmeta.get('comment'))
+    col['comment'] = filter_glossaryterms(col['comment'], glossary_terms)
+    col['comment_raw'] = colmeta.get('comment', '')
+    col['comment_tooltip'] = format_comment_tooltip(colmeta.get('comment'), 140)
+
+    # data mapping
+    col['datamapping'] = format_column_datamapping(datamapping, col['column_name'])
+
+    return col
+
+
+def format_table_metadata(tabmeta, glossary_terms, datamapping=None):
+    tab = {}
+    tab['database_name'] = tabmeta['database_name']
+    tab['schema_name'] = tabmeta['schema_name']
+    tab['table_name'] = tabmeta['table_name']
+    tab['table_name_nls'] = filter_glossaryterms(tabmeta.get('table_name_nls'),
+                                                 glossary_terms)
+    tab['timestamp'] = format_timestamp(tabmeta['timestamp'])
+    tab['row_count'] = format_number(tabmeta.get('row_count'))
+    tab['num_columns'] = len(tabmeta['columns'])
+
+    tab['tags'] = ([x for x in tabmeta.get('tags') if len(x) > 0] if
+                   tabmeta.get('tags') else [])
+    tab['owner'] = tabmeta.get('owner')
+    tab['sample_rows'] = tabmeta.get('sample_rows')
+
+    # Have any comment to show?
+    tab['comment'] = filter_markdown2html(tabmeta.get('comment'))
+    tab['comment'] = filter_glossaryterms(tab['comment'], glossary_terms)
+    tab['comment_tooltip'] = format_comment_tooltip(tabmeta.get('comment'), 140)
+
+    tab['datamapping'] = format_table_datamapping(datamapping)
+
+    return tab
+
+def to_table_html(tabdata, validation_rules=None, datamapping=None,
                   files=None,
                   glossary_terms=None, template_file=None, editable=False):
     if not template_file:
         template_file = get_default_template_path() + "/templ_table.html"
 
-    p = profile_data
-
-    tab = {}
-    tab['database_name'] = p['database_name']
-    tab['schema_name'] = p['schema_name']
-    tab['table_name'] = p['table_name']
-    tab['timestamp'] = format_timestamp(p['timestamp'])
-    tab['row_count'] = format_number(p.get('row_count'))
-    tab['num_columns'] = len(p['columns'])
-    tab['tags'] = ([x for x in p.get('tags') if len(x) > 0] if
-                   p.get('tags') else [])
-    tab['owner'] = p.get('owner')
-    tab['sample_rows'] = p.get('sample_rows')
-
-    # Have any comment to show?
-    tab['comment'] = filter_markdown2html(p.get('comment'))
-    tab['comment'] = filter_glossaryterms(tab['comment'], glossary_terms)
-    tab['datamapping'] = format_table_datamapping(datamapping)
+    tab = format_table_metadata(tabdata, glossary_terms, datamapping)
 
     tab['columns'] = []
-    for c in p['columns']:
-        col = {}
-        col['column_name'] = c['column_name']
-        col['column_name_nls'] = c.get('column_name_nls', '')
-        col['column_name_nls'] = filter_glossaryterms(col['column_name_nls'],
-                                                      glossary_terms)
-        col['data_type'] = format_data_type(c['data_type'][0],
-                                            c['data_type'][1])
-
-        # foreign keys
-        col['fk'] = format_fks(tab['database_name'], c.get('fk'))
-        col['fk_ref'] = format_fks(tab['database_name'], c.get('fk_ref'))
-
-        col['minmax'] = format_minmax(c.get('min'), c.get('max'))
-
-        # non-null ratio
-        col['nulls'] = format_number(c.get('nulls'))
-        col['non_null_ratio'] = format_non_null_ratio(p.get('row_count'),
-                                                      c.get('nulls'))
-
-        # cardinality
-        col['cardinality'] = format_cardinality(p.get('row_count'),
-                                                c['cardinality'],
-                                                c.get('nulls'))
-
-        # null/dist attributes
-        col['uniq'] = is_column_unique(c.get('most_freq_vals'))
-        col['notnull'] = True if c.get('nulls') == 0 else False
-
-        # most freq values
-        col['most_freq_vals'] = format_freq_values(c.get('most_freq_vals'),
-                                                   p.get('row_count'),
-                                                   c.get('nulls'))
-
-        # least freq values
-        col['least_freq_vals'] = format_freq_values(c.get('least_freq_vals'),
-                                                    p.get('row_count'),
-                                                    c.get('nulls'))
-
-        # validation results
-        if c.get('validation'):
-            data_validation, col_num_invalid = format_validation_items(c['validation'])
-            if data_validation:
-                col['validations'] = data_validation
-                col['invalid'] = col_num_invalid
-
-        # comment
-        col['comment'] = filter_markdown2html(c.get('comment'))
-        col['comment'] = filter_glossaryterms(col['comment'], glossary_terms)
-        col['comment_raw'] = c.get('comment', '')
-        col['comment_tooltip'] = format_comment_tooltip(c.get('comment'), 140)
-
-        # data mapping
-        col['datamapping'] = format_column_datamapping(datamapping, col['column_name'])
-
+    for c in tabdata['columns']:
+        col = format_column_metadata(c, tab, tabdata.get('row_count'), glossary_terms, datamapping)
         # append column data
         tab['columns'].append(col)
 
@@ -436,16 +449,7 @@ def to_index_html(data, reponame, schemas=None, tags=None,
     valid_tables = 0
     invalid_tables = 0
     for t in data:
-        tab = {}
-        tab['database_name'] = t['database_name']
-        tab['schema_name'] = t['schema_name']
-        tab['table_name'] = t['table_name']
-        tab['table_name_nls'] = t.get('table_name_nls', '')
-        tab['table_name_nls'] = filter_glossaryterms(tab['table_name_nls'],
-                                                     glossary_terms)
-        tab['row_count'] = format_number(t.get('row_count'))
-        tab['timestamp'] = format_timestamp(t['timestamp'])
-        tab['num_columns'] = len(t['columns'])
+        tab = format_table_metadata(t, glossary_terms)
 
         # check every column to look for validation results
         data_validation = []
@@ -466,11 +470,6 @@ def to_index_html(data, reponame, schemas=None, tags=None,
                 valid_tables += 1
         else:
             assert 'validation' not in tab
-
-        # Have any comment to show?
-        tab['comment'] = filter_markdown2html(t.get('comment'))
-        tab['comment'] = filter_glossaryterms(tab['comment'], glossary_terms)
-        tab['comment_tooltip'] = format_comment_tooltip(t.get('comment'), 140)
 
         tables.append(tab)
 
