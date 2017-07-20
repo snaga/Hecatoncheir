@@ -9,49 +9,42 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir import DbProfilerFormatter
-from hecatoncheir.exception import DbProfilerException
+from hecatoncheir.exception import DbProfilerException, InternalError
 
 class TestDbProfilerFormatter(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
 
-    def test_coalesce2_001(self):
-        c = {}
-        c['foo'] = 'bar'
-        self.assertEqual('bar', DbProfilerFormatter.coalesce2(c,'foo','baz'))
-        self.assertEqual('baz', DbProfilerFormatter.coalesce2(c,'bar','baz'))
-        self.assertEqual('baz', DbProfilerFormatter.coalesce2(c,None,'baz'))
-
-    def test_get_non_null_ratio_001(self):
-        self.assertEqual('75.00 %', DbProfilerFormatter.get_non_null_ratio(100,25))
-        self.assertEqual('100.00 %', DbProfilerFormatter.get_non_null_ratio(100,0))
+    def test_format_non_null_ratio_001(self):
+        self.assertEqual('75.00 %', DbProfilerFormatter.format_non_null_ratio(100,25))
+        self.assertEqual('100.00 %', DbProfilerFormatter.format_non_null_ratio(100,0))
 
         # N/A
-        self.assertEqual('N/A', DbProfilerFormatter.get_non_null_ratio(100,None))
-        self.assertEqual('N/A', DbProfilerFormatter.get_non_null_ratio(None,20))
+        self.assertEqual('N/A', DbProfilerFormatter.format_non_null_ratio(100,None))
+        self.assertEqual('N/A', DbProfilerFormatter.format_non_null_ratio(None,20))
 
-    def test_get_cardinality_001(self):
-        self.assertEqual('25.00 %', DbProfilerFormatter.get_cardinality(100,25,0))
-        self.assertEqual('50.00 %', DbProfilerFormatter.get_cardinality(100,25,50))
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(100,0,100))
+    def test_format_cardinality_001(self):
+        self.assertEqual('25.00 %', DbProfilerFormatter.format_cardinality(100,25,0))
+        self.assertEqual('50.00 %', DbProfilerFormatter.format_cardinality(100,25,50))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(100,0,100))
 
         # N/A
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(None,25,50))
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(100,None,50))
-        self.assertEqual('N/A', DbProfilerFormatter.get_cardinality(100,25,None))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(None,25,50))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(100,None,50))
+        self.assertEqual('N/A', DbProfilerFormatter.format_cardinality(100,25,None))
 
-    def test_get_value_freq_ratio_001(self):
-        self.assertEqual('0.00 %', DbProfilerFormatter.get_value_freq_ratio(100,0,0))
-        self.assertEqual('50.00 %', DbProfilerFormatter.get_value_freq_ratio(100,0,50))
-        self.assertEqual('100.00 %', DbProfilerFormatter.get_value_freq_ratio(100,50,50))
+    def test_format_value_freq_ratio_001(self):
+        self.assertEqual('0.00 %', DbProfilerFormatter.format_value_freq_ratio(100,0,0))
+        self.assertEqual('50.00 %', DbProfilerFormatter.format_value_freq_ratio(100,0,50))
+        self.assertEqual('100.00 %', DbProfilerFormatter.format_value_freq_ratio(100,50,50))
 
         # empty table
-        self.assertEqual('0.00 %', DbProfilerFormatter.get_value_freq_ratio(0,0,0))
+        self.assertEqual('0.00 %', DbProfilerFormatter.format_value_freq_ratio(0,0,0))
 
         # N/A
-        self.assertEqual('N/A', DbProfilerFormatter.get_value_freq_ratio(None,0,0))
-        self.assertEqual('N/A', DbProfilerFormatter.get_value_freq_ratio(0,None,0))
-        self.assertEqual('N/A', DbProfilerFormatter.get_value_freq_ratio(0,0,None))
+        self.assertEqual('N/A', DbProfilerFormatter.format_value_freq_ratio(None,0,0))
+        self.assertEqual('N/A', DbProfilerFormatter.format_value_freq_ratio(0,None,0))
+        self.assertEqual('N/A', DbProfilerFormatter.format_value_freq_ratio(0,0,None))
 
     def test_filter_markdown2html_001(self):
         md = ''
@@ -104,6 +97,154 @@ class TestDbProfilerFormatter(unittest.TestCase):
         html = 'foo PV bar'
         a = u'foo <a tabindex="0" data-toggle="popover" data-trigger="focus" data-html="true" title="PV" data-content="Page Views<br/><div align=right><a href=\'glossary.html#PV\' target=\'_glossary\'>Details...</a></div>" class="glossary-term">PV</a> bar'
         self.assertEqual(a, DbProfilerFormatter.filter_glossaryterms(html, terms))
+
+    def test_format_number_001(self):
+        self.assertEqual('1', DbProfilerFormatter.format_number('001'))
+        self.assertEqual('100', DbProfilerFormatter.format_number('100'))
+        self.assertEqual('1,000', DbProfilerFormatter.format_number('1000'))
+        self.assertEqual('1,000,000', DbProfilerFormatter.format_number('1000000'))
+
+        self.assertEqual('N/A', DbProfilerFormatter.format_number(''))
+        self.assertEqual('N/A', DbProfilerFormatter.format_number(None))
+
+        with self.assertRaises(InternalError) as cm:
+            DbProfilerFormatter.format_number('a')
+        self.assertEqual("Could not convert `a' to long.", cm.exception.value)
+
+    def test_format_minmax_001(self):
+        self.assertEqual('[ 0, 1 ]', DbProfilerFormatter.format_minmax('0', '1'))
+        self.assertEqual('[ 01234567890123456789, 12345678901234567890 ]',
+                         DbProfilerFormatter.format_minmax('012345678901234567890123456789',
+                                                           '123456789012345678901234567890'))
+
+        self.assertEqual('N/A', DbProfilerFormatter.format_minmax(None, None))
+
+    def test_is_column_unique_001(self):
+        self.assertEqual(False, DbProfilerFormatter.is_column_unique(None))
+
+        self.assertEqual(True, DbProfilerFormatter.is_column_unique([{'freq': 1}]))
+        self.assertEqual(False, DbProfilerFormatter.is_column_unique([{'freq': 2}]))
+        self.assertEqual(True, DbProfilerFormatter.is_column_unique([{'freq': 1}, {'freq': 1}]))
+        self.assertEqual(False, DbProfilerFormatter.is_column_unique([{'freq': 2}, {'freq': 1}]))
+
+    def test_format_fks_001(self):
+        self.assertEqual([['db', 'public.customer', 'c_custkey', False]],
+                         DbProfilerFormatter.format_fks('db',
+                                                       ['public.customer.c_custkey']))
+
+        self.assertEqual([['db', 'public.customer', 'c_custkey', True]],
+                         DbProfilerFormatter.format_fks('db',
+                                                       ['?public.customer.c_custkey']))
+        self.assertEqual([],
+                         DbProfilerFormatter.format_fks('db',
+                                                       None))
+
+    def test_format_freq_values_001(self):
+        self.assertEqual([], DbProfilerFormatter.format_freq_values(None, 10, 0))
+        self.assertEqual([], DbProfilerFormatter.format_freq_values([], 10, 0))
+
+        self.assertEqual([{'i': 0,
+                          'freq': '10',
+                          'ratio': '50.00 %',
+                          'value': 'aaa'},
+                          {'i': 1,
+                          'freq': '9',
+                          'ratio': '45.00 %',
+                          'value': 'bbb'}],
+                         DbProfilerFormatter.format_freq_values([{'value': 'aaa', 'freq': 10}, {'value': 'bbb', 'freq': 9}], 20, 0))
+
+    def test_format_validation_item_001(self):
+        self.assertEqual(None, DbProfilerFormatter.format_validation_item(None))
+
+        v = {u'statistics': [1, 0],
+             u'description': u'\u975eNULL\u3067\u3042\u308b',
+             u'rule': [u'c_custkey', u'{nulls} == 0'],
+             u'label': 3,
+             u'column_names': [u'c_custkey'],
+             u'invalid_count': 0}
+
+        self.assertEqual({'desc': u'\u975eNULL\u3067\u3042\u308b',
+                          'label': 3,
+                          'invalid': 0,
+                          'rule': u'{nulls} == 0',
+                          'column_name': u'c_custkey'},
+                         DbProfilerFormatter.format_validation_item(v))
+
+    def test_format_validation_items_001(self):
+        self.assertEqual(([], 0),
+                         DbProfilerFormatter.format_validation_items(None))
+
+        v = [{u'statistics': [1, 0],
+              u'description': u'\u975eNULL\u3067\u3042\u308b',
+              u'rule': [u'c_custkey', u'{nulls} == 0'],
+              u'label': 3,
+              u'column_names': [u'c_custkey'],
+              u'invalid_count': 0},
+             {u'statistics': [1, 0],
+              u'description': u'\u975eNULL\u3067\u3042\u308b',
+              u'rule': [u'c_custkey', u'{nulls} == 0'],
+              u'label': 3,
+              u'column_names': [u'c_custkey'],
+              u'invalid_count': 0},
+             {u'statistics': [1, 1],
+              u'description': u'\u975eNULL\u3067\u3042\u308b',
+              u'rule': [u'c_custkey', u'{nulls} == 1'],
+              u'label': 4,
+              u'column_names': [u'c_custkey'],
+              u'invalid_count': 1}]
+
+        self.assertEqual(([{'desc': u'\u975eNULL\u3067\u3042\u308b',
+                            'label': 3,
+                            'invalid': 0,
+                            'rule': u'{nulls} == 0',
+                            'column_name': u'c_custkey'},
+                           {'column_name': u'c_custkey',
+                            'desc': u'\u975eNULL\u3067\u3042\u308b',
+                            'invalid': 1,
+                            'label': 4,
+                            'rule': u'{nulls} == 1'}], 1),
+                         DbProfilerFormatter.format_validation_items(v))
+
+    def test_filter_plain2html_001(self):
+        self.assertEqual('', DbProfilerFormatter.filter_plain2html(None))
+        self.assertEqual('a<br/>&nbsp;b<br/>&nbsp;&nbsp;c', DbProfilerFormatter.filter_plain2html('a\n b\n  c'))
+
+    def test_format_table_datamapping_001(self):
+        self.assertEqual([], DbProfilerFormatter.format_table_datamapping(None))
+
+        dm = []
+        self.assertEqual([], DbProfilerFormatter.format_table_datamapping(dm))
+
+        # data mapping for tables
+        dm = [{'source_table_name': 'SRCTBL1, SRCTBL2'},
+              {'column_name': 'c2',
+               'transformation_role': 'direct',
+               'source_table_name': 'SRCTBL1, SRCTBL3'}]
+        self.assertEqual(['SRCTBL1<br/>&nbsp;SRCTBL2'],
+                         DbProfilerFormatter.format_table_datamapping(dm))
+
+    def test_format_column_datamapping_001(self):
+        self.assertEqual([], DbProfilerFormatter.format_column_datamapping(None, 'c1'))
+
+        dm = []
+        self.assertEqual([], DbProfilerFormatter.format_column_datamapping(dm, 'c1'))
+
+        # data mapping for tables
+        dm = [{'source_table_name': 'SRCTBL1, SRCTBL2'},
+              {'column_name': 'c1',
+               'transformation_role': 'direct',
+               'source_table_name': 'SRCTBL2, SRCTBL3'},
+              {'column_name': 'c2',
+               'transformation_role': 'direct',
+               'source_table_name': 'SRCTBL1, SRCTBL3'}]
+        self.assertEqual([{'column_name': 'c1',
+                           'source_table_name': 'SRCTBL2<br/>&nbsp;SRCTBL3',
+                           'transformation_role': 'direct'}],
+                         DbProfilerFormatter.format_column_datamapping(dm, 'c1'))
+        self.assertEqual([{'column_name': 'c2',
+                           'source_table_name': 'SRCTBL1<br/>&nbsp;SRCTBL3',
+                           'transformation_role': 'direct'}],
+                         DbProfilerFormatter.format_column_datamapping(dm, 'c2'))
 
     def test_to_table_html_001(self):
         data = """

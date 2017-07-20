@@ -132,7 +132,7 @@
                       <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&#215;</span><span class="sr-only">Close</span>
                       </button>
-                      <h4 class="modal-title">{{ c.column_name }}: Top-{{ c.profile_most_freq_values_enabled }} most freq values</h4>
+                      <h4 class="modal-title">{{ c.column_name }}: Top-{{ c.most_freq_vals|length }} most freq values</h4>
                     </div><!-- /modal-header -->
                     <div class="modal-body">
 
@@ -164,7 +164,7 @@
                       <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&#215;</span><span class="sr-only">Close</span>
                       </button>
-                      <h4 class="modal-title">{{ c.column_name }}: Top-{{ c.profile_least_freq_values_enabled }} least freq values</h4>
+                      <h4 class="modal-title">{{ c.column_name }}: Top-{{ c.least_freq_vals|length }} least freq values</h4>
                     </div><!-- /modal-header -->
                     <div class="modal-body">
 
