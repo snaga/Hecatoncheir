@@ -185,7 +185,8 @@ def format_number(value):
 
 
 def format_minmax(minval, maxval):
-    assert (minval is None and maxval is None) or (minval is not None and maxval is not None)
+    assert ((minval is None and maxval is None) or
+            (minval is not None and maxval is not None))
 
     if minval and maxval:
         return '[ %s, %s ]' % (unicode(minval)[0:20],
@@ -219,6 +220,7 @@ def format_fks(dbname, fks):
                         tmp[2], guess])
     return fk_list
 
+
 def format_freq_values(freq_vals, row_count, nulls):
     assert row_count is not None and nulls is not None
     if not freq_vals:
@@ -234,6 +236,7 @@ def format_freq_values(freq_vals, row_count, nulls):
                                               val['freq'])
         freq_vals_out.append(fv)
     return freq_vals_out
+
 
 def format_validation_item(val):
     if not val:
@@ -251,6 +254,7 @@ def format_validation_item(val):
         tmp['desc'] = tmp['rule']
     return tmp
 
+
 def format_validation_items(vals):
     if not vals:
         return [], 0
@@ -267,10 +271,12 @@ def format_validation_items(vals):
             num_invalid += 1
     return (results, num_invalid)
 
+
 def filter_plain2html(s):
     if not s:
         return ''
     return s.replace('\n', '<br/>').replace(' ', '&nbsp;')
+
 
 def format_table_datamapping(datamapping):
     if not datamapping:
@@ -288,6 +294,7 @@ def format_table_datamapping(datamapping):
         mapping.append(dm['source_table_name'])
     return mapping
 
+
 def format_column_datamapping(datamapping, column_name):
     if not datamapping:
         return []
@@ -301,13 +308,16 @@ def format_column_datamapping(datamapping, column_name):
             # data mapping for columns
             dm['source_table_name'] = (dm['source_table_name']
                                        .replace(',', '\n'))
-            dm['source_table_name'] = filter_plain2html(dm['source_table_name'])
-            dm['transformation_role'] = filter_plain2html(dm.get('transformation_role'))
+            dm['source_table_name'] = (
+                filter_plain2html(dm['source_table_name']))
+            dm['transformation_role'] = (
+                filter_plain2html(dm.get('transformation_role')))
             mapping.append(dm)
     return mapping
 
 
-def format_column_metadata(colmeta, tabmeta, row_count, glossary_terms, datamapping):
+def format_column_metadata(colmeta, tabmeta, row_count, glossary_terms,
+                           datamapping):
     col = {}
     col['column_name'] = colmeta['column_name']
     col['column_name_nls'] = colmeta.get('column_name_nls', '')
@@ -348,7 +358,8 @@ def format_column_metadata(colmeta, tabmeta, row_count, glossary_terms, datamapp
 
     # validation results
     if colmeta.get('validation'):
-        data_validation, col_num_invalid = format_validation_items(colmeta['validation'])
+        data_validation, col_num_invalid = (
+            format_validation_items(colmeta['validation']))
         if data_validation:
             col['validations'] = data_validation
             col['invalid'] = col_num_invalid
@@ -357,10 +368,12 @@ def format_column_metadata(colmeta, tabmeta, row_count, glossary_terms, datamapp
     col['comment'] = filter_markdown2html(colmeta.get('comment'))
     col['comment'] = filter_glossaryterms(col['comment'], glossary_terms)
     col['comment_raw'] = colmeta.get('comment', '')
-    col['comment_tooltip'] = format_comment_tooltip(colmeta.get('comment'), 140)
+    col['comment_tooltip'] = (
+        format_comment_tooltip(colmeta.get('comment'), 140))
 
     # data mapping
-    col['datamapping'] = format_column_datamapping(datamapping, col['column_name'])
+    col['datamapping'] = (
+        format_column_datamapping(datamapping, col['column_name']))
 
     return col
 
@@ -384,11 +397,13 @@ def format_table_metadata(tabmeta, glossary_terms, datamapping=None):
     # Have any comment to show?
     tab['comment'] = filter_markdown2html(tabmeta.get('comment'))
     tab['comment'] = filter_glossaryterms(tab['comment'], glossary_terms)
-    tab['comment_tooltip'] = format_comment_tooltip(tabmeta.get('comment'), 140)
+    tab['comment_tooltip'] = (
+        format_comment_tooltip(tabmeta.get('comment'), 140))
 
     tab['datamapping'] = format_table_datamapping(datamapping)
 
     return tab
+
 
 def to_table_html(tabdata, validation_rules=None, datamapping=None,
                   files=None,
@@ -400,7 +415,8 @@ def to_table_html(tabdata, validation_rules=None, datamapping=None,
 
     tab['columns'] = []
     for c in tabdata['columns']:
-        col = format_column_metadata(c, tab, tabdata.get('row_count'), glossary_terms, datamapping)
+        col = format_column_metadata(c, tab, tabdata.get('row_count'),
+                                     glossary_terms, datamapping)
         # append column data
         tab['columns'].append(col)
 
