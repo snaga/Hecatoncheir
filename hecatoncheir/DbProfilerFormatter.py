@@ -175,7 +175,7 @@ def get_default_template_path():
 
 
 def format_number(value):
-    if not value:
+    if value is None:
         return 'N/A'
     try:
         n = long(value)
@@ -222,7 +222,6 @@ def format_fks(dbname, fks):
 
 
 def format_freq_values(freq_vals, row_count, nulls):
-    assert row_count is not None and nulls is not None
     if not freq_vals:
         return []
 
@@ -232,6 +231,7 @@ def format_freq_values(freq_vals, row_count, nulls):
         fv['i'] = i
         fv['value'] = val['value']
         fv['freq'] = format_number(val['freq'])
+        # row_count and nulls can be None here.
         fv['ratio'] = format_value_freq_ratio(row_count, nulls,
                                               val['freq'])
         freq_vals_out.append(fv)
