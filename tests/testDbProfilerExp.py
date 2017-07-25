@@ -27,6 +27,30 @@ class TestDbProfilerExp(unittest.TestCase):
         self.assertEqual((None, u'a', u'b'), DbProfilerExp.parse_table_name(u'a.b'))
         self.assertEqual((u'a', u'b', u'c'), DbProfilerExp.parse_table_name(u'a.b.c'))
 
+    def test_get_schema_ordered_list_001(self):
+        g = [['db', 's1', 1], ['db', 's2', 1], ['db', 's3', 1], ['db', 's4', 1], ['db', 's5', 1]]
+
+        self.assertEqual(g, DbProfilerExp.get_schema_ordered_list(None, g))
+        self.assertEqual(g, DbProfilerExp.get_schema_ordered_list([], g))
+
+        g2 = [['db', 's5', 1], ['db', 's1', 1], ['db', 's2', 1], ['db', 's3', 1], ['db', 's4', 1]]
+        self.assertEqual(g2, DbProfilerExp.get_schema_ordered_list([u's5'], g))
+
+        g2 = [['db', 's5', 1], ['db', 's3', 1], ['db', 's1', 1], ['db', 's2', 1], ['db', 's4', 1]]
+        self.assertEqual(g2, DbProfilerExp.get_schema_ordered_list([u's5', u's3'], g))
+
+    def test_get_tag_ordered_list_001(self):
+        g = [['s1', 1], ['s2', 1], ['s3', 1], ['s4', 1], ['s5', 1]]
+
+        self.assertEqual(g, DbProfilerExp.get_tag_ordered_list(None, g))
+        self.assertEqual(g, DbProfilerExp.get_tag_ordered_list([], g))
+
+        g2 = [['s5', 1], ['s1', 1], ['s2', 1], ['s3', 1], ['s4', 1]]
+        self.assertEqual(g2, DbProfilerExp.get_tag_ordered_list([u's5'], g))
+
+        g2 = [['s5', 1], ['s3', 1], ['s1', 1], ['s2', 1], ['s4', 1]]
+        self.assertEqual(g2, DbProfilerExp.get_tag_ordered_list([u's5', u's3'], g))
+
     def testExport_html_001(self):
         t = {}
         t['database_name'] = u'test_database'
@@ -109,7 +133,7 @@ class TestDbProfilerExp(unittest.TestCase):
         table_list = self.repo.get_table_list()
 
         # test for tag ordering on the global index page.
-        self.assertTrue(export_html(self.repo, tables=table_list, tags=['tag7','tag6','tag5','tag4','tag3','tag2'], schemas=None,
+        self.assertTrue(export_html(self.repo, tables=table_list, tags=[u'tag7',u'tag6',u'tag5',u'tag4',u'tag3',u'tag2'], schemas=None,
                                     template_path='../hecatoncheir/templates/en',
                                     output_title=self.repo.filename, output_path='./out/export_html_004'))
 
