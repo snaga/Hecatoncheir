@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
+import copy
 import getopt
 import json
 import os
@@ -58,6 +59,34 @@ def append_tag_desc(repo, tags):
         desc = repo.get_tag_description(s[0])
         tmp.append([s[0], s[1], desc.desc if desc else None])
     return tmp
+
+
+def get_schema_ordered_list(top_schemas, all_schemas):
+    schema_index = copy.copy(all_schemas)
+    if not top_schemas:
+        return schema_index
+    # move top-level shcmeas to beginning of the list.
+    for top in reversed(top_schemas):
+        assert isinstance(top, unicode)
+        for i, schema in enumerate(schema_index):
+            if schema[1] == top:
+                tmp = schema_index.pop(i)
+                schema_index.insert(0, tmp)
+    return schema_index
+
+
+def get_tag_ordered_list(top_tags, all_tags):
+    tag_index = copy.copy(all_tags)
+    if not top_tags:
+        return tag_index
+    # move top-level tags to beginning of the list.
+    for top in reversed(top_tags):
+        assert isinstance(top, unicode)
+        for i, tag in enumerate(tag_index):
+            if tag[0] == top:
+                tmp = tag_index.pop(i)
+                tag_index.insert(0, tmp)
+    return tag_index
 
 
 def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
@@ -204,28 +233,15 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     # create global index page
     filename = output_path + "/index.html"
 
-    schemas2 = []
-    if schemas is None:
-        schemas2 = repo.get_schemas()
-    else:
-        for s in repo.get_schemas():
-            if s[1] in schemas:
-                schemas2.append(s)
+    schemas2 = get_schema_ordered_list(schemas, repo.get_schemas())
     schemas2 = append_schema_desc(repo, schemas2)
 
-    if tags is None:
-        tags = []
     tags2 = []
-    tags3 = []
     for label in sorted(repo.get_tag_labels()):
-        if label in tags:
-            tags2.append([label, repo.get_table_count_by_tag(label)])
-        else:
-            tags3.append([label, repo.get_table_count_by_tag(label)])
-    # sort by tags
-    tags2 = [y for x in tags for y in tags2 if x == y[0]]
-    tags2.extend(tags3)
+        tags2.append([label, repo.get_table_count_by_tag(label)])
+    tags2 = get_tag_ordered_list(tags, tags2)
     tags2 = append_tag_desc(repo, tags2)
+
     export_file(filename, DbProfilerFormatter.to_index_html(
             tables_all, schemas=schemas2, tags=tags2,
             show_validation='both', reponame=output_title,
