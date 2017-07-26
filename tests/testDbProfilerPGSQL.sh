@@ -92,6 +92,6 @@ CMD="python ${_topdir}/dm-repo-cmd testDbProfilerPGSQL.db ls"
 echo $CMD
 $CMD
 
-CMD="python ${_topdir}/dm-verify-results testDbProfilerPGSQL.db"
+CMD="python ${_topdir}/dm-verify-results --verbose testDbProfilerPGSQL.db"
 echo $CMD
 $CMD

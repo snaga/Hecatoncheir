@@ -36,10 +36,18 @@ def verify_table(tab):
 class DbProfilerVerify():
     repofile = None
 
-    def __init__(self, repofile, debug=False):
+    def __init__(self, repofile, debug=False, verbose=False):
         self.repofile = repofile
+        self.verbose = verbose
 
         log.debug_enabled = debug
+
+    def verify_msg(self, t, v, i):
+        if i > 0:
+            return _("%s.%s: %d invalid (%d/%d)") % (t[1], t[2], i, i, v+i)
+        if v > 0:
+            return _("%s.%s: All valid (%d/%d)") % (t[1], t[2], v, v+i)
+        return _("%s.%s: No validation") % (t[1], t[2])
 
     def verify(self):
         repo = DbProfilerRepository.DbProfilerRepository(self.repofile)
@@ -53,6 +61,8 @@ class DbProfilerVerify():
         for t in table_list:
             table = repo.get_table(t[0], t[1], t[2])
             v, i = verify_table(table)
+            if self.verbose:
+                log.info(self.verify_msg(t, v, i))
             valid += v
             invalid += i
 

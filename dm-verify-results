@@ -22,18 +22,21 @@ Options:
 if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:], "",
-                                   ["help", "debug"])
+                                   ["verbose", "help", "debug"])
     except getopt.GetoptError as err:
         log.error(unicode(err))
         usage()
         sys.exit(1)
 
     debug = False
+    verbose = False
 
     for o, a in opts:
         if o in ("--help"):
             usage()
             sys.exit(0)
+        elif o in ("--verbose"):
+            verbose = True
         elif o in ("--debug"):
             debug = True
         else:
@@ -46,7 +49,8 @@ if __name__ == "__main__":
 
     repofile = args[0]
 
-    v = DbProfilerVerify.DbProfilerVerify(repofile, debug=debug)
+    v = DbProfilerVerify.DbProfilerVerify(repofile, verbose=verbose,
+                                          debug=debug)
     if v.verify():
         sys.exit(2)
 
