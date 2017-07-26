@@ -49,17 +49,21 @@ class DbProfilerVerify():
             return _("%s.%s: All valid (%d/%d)") % (t[1], t[2], v, v+i)
         return _("%s.%s: No validation") % (t[1], t[2])
 
-    def verify(self):
+    def verify(self, table_list=None):
         repo = DbProfilerRepository.DbProfilerRepository(self.repofile)
         repo.open()
 
         log.info(_("Verifying the validation results."))
 
-        table_list = repo.get_table_list()
+        if not table_list:
+            table_list = repo.get_table_list()
         valid = 0
         invalid = 0
         for t in table_list:
             table = repo.get_table(t[0], t[1], t[2])
+            if not table:
+                log.error(_("%s.%s not found.") % (t[1], t[2]))
+                continue
             v, i = verify_table(table)
             if self.verbose:
                 log.info(self.verify_msg(t, v, i))

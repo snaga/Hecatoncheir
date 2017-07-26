@@ -49,9 +49,14 @@ if __name__ == "__main__":
 
     repofile = args[0]
 
+    table_list = []
+    for a in args[1:]:
+        if len(a.split('.')) == 3:
+            table_list.append(a.split('.'))
+
     v = DbProfilerVerify.DbProfilerVerify(repofile, verbose=verbose,
                                           debug=debug)
-    if v.verify():
+    if v.verify(table_list):
         sys.exit(2)
 
     sys.exit(0)
