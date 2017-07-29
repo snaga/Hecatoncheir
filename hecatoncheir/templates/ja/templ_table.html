@@ -110,7 +110,7 @@
             <a href="#comment_edit" data-toggle="modal"><span class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="コメントを編集します" onclick="set_edit_column_name('{{table.database_name}}', '{{table.schema_name}}', '{{table.table_name}}', '{{c.column_name}}')"></span></a>
 {% endif %}
             </td><td class="nowrap">
-{% if c.datamapping is defined %}
+{% if c.datamapping is defined and c.datamapping|length > 0 %}
             <a href="#{{ c.column_name }}_datamap" data-toggle="modal"><img src="http://icons.iconarchive.com/icons/icons8/ios7/16/Data-Mind-Map-icon.png" height="16" width="16" data-toggle="tooltip" data-placement="top" title="データマッピング情報を表示します"></span></a>
 {% endif %}
             </td></tr>
