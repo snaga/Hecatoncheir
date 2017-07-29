@@ -581,11 +581,6 @@ class DbProfilerBase(object):
             self._profile_row_count(tablemeta)
         except ProfilingError as ex:
             log.warning(_("Could not get number of rows."))
-            return tablemeta.makedic()
-
-        # continue to profile columns?
-        if self.skip_column_profiling:
-            log.info(_("Skipping column profiling."))
             log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
             return tablemeta.makedic()
 
@@ -594,21 +589,27 @@ class DbProfilerBase(object):
             log.info((_("Skipping column profiling because "
                         "the table has more than %s rows") %
                       ("{:,d}".format(self.column_profiling_threshold))))
-            log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
-            return tablemeta.makedic()
+            self.skip_column_profiling = True
 
-        # column profiling and validation
-        try:
-            self.run_column_profiling(tablemeta)
-        except ProfilingError as ex:
-            log.warning(_("Could not profile one or more columns."))
-            return tablemeta.makedic()
+        # column profiling needed?
+        if self.skip_column_profiling:
+            log.info(_("Skipping column profiling."))
+        else:
+            # column profiling
+            try:
+                self.run_column_profiling(tablemeta)
+            except ProfilingError as ex:
+                log.warning(_("Could not profile one or more columns."))
+                log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
+                return tablemeta.makedic()
 
+        # record validation (c.f. regexp)
         self._run_record_validation(tablemeta, validation_rules,
                                     skip_record_validation)
+
+        # column statistics validation and SQL validation
         table_data = tablemeta.makedic()
         table_data = self.run_postscan_validation(table_data,
                                                   validation_rules)
         log.info(_("Profiling %s.%s: end") % (schema_name, table_name))
-
         return table_data

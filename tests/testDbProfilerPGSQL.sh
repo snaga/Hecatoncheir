@@ -22,6 +22,11 @@ CMD="python ${_topdir}/dm-run-profiler --dbtype pgsql --host 127.0.0.1 --port 54
 echo $CMD
 $CMD
 
+# with validation without column profiling
+CMD="python ${_topdir}/dm-run-profiler --dbtype pgsql --host 127.0.0.1 --port 5432 --dbname ${DBNAME} --user ${DBUSER} --pass ${DBPASS} -o testDbProfilerPGSQL.db --enable-validation --skip-column-profiling public.customer"
+echo $CMD
+$CMD
+
 CMD="python ${_topdir}/dm-import-csv testDbProfilerPGSQL.db test_glossary.txt"
 echo $CMD
 $CMD

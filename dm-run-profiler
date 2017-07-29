@@ -290,7 +290,7 @@ if __name__ == "__main__":
     log.info(_("Skipping table profiling: %s") % profiler.skip_table_profiling)
     log.info(_("Row count profiling: %s") % profiler.profile_row_count_enabled)
     log.info(_("Skippig column profiling: %s") %
-             profiler.skip_column_profiling)
+             skip_column_profiling)
     tmp = "{:,d}".format(profiler.column_profiling_threshold)
     log.info(_("Maximum row count to enable column profiling: %s rows") % tmp)
     log.info(_("Min/Max values: %s") % profiler.profile_min_max_enabled)
