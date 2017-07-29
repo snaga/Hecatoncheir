@@ -6,3 +6,4 @@ change_date,dqwbtest,public,customer,,date_type,pk,nullable,source_database_name
 change_date,dqwbtest,public,customer,c_acctbal,date_type,pk,nullable,source_database_name,record_id,source_schema_name,source_table_name,source_column_name2,transformation_category,"transformation_role
   with
     br and whitespace",@snaga3
+change_date,dqwbtest,public,customer,c_acctbal,date_type,pk,nullable,source_database_name,record_001,source_schema_name,,source_column_name2,transformation_category,transform_role,@snaga3

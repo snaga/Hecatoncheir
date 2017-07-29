@@ -284,7 +284,7 @@ def format_table_datamapping(datamapping):
     assert isinstance(datamapping, list)
     mapping = []
     for dm in datamapping:
-        assert dm['source_table_name']
+        assert 'source_table_name' in dm
         if dm.get('column_name'):
             continue
         # data mapping for tables
