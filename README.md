@@ -50,6 +50,7 @@ The latest version supports following databases:
 * SQL Server
 * PostgreSQL
 * MySQL
+* Amazon Redshift
 
 Following databases are coming in the future releases:
 
@@ -59,7 +60,6 @@ Following databases are coming in the future releases:
 * Apache Spark
 * Vertica
 * Google BigQuery
-* Amazon Redshift
 
 ### Operating Systems
 
@@ -78,7 +78,7 @@ you want to connect to:
 
 * cx-Oracle: Oracle Database / Oracle Exadata
 * MySQL-python: MySQL
-* psycopg2: PostgreSQL
+* psycopg2: PostgreSQL, Amazon Redshift
 * pymssql: SQL Server
 
 

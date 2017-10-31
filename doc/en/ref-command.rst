@@ -204,7 +204,7 @@ dm-run-profiler
       --help                     Print this help.
 
 
-``--dbtype`` specifies the database type. It should be ``oracle``, ``mssql``, ``pgsql`` or ``mysql``.
+``--dbtype`` specifies the database type. It should be ``oracle``, ``mssql``, ``pgsql`` or ``mysql``. Use ``pgsql`` with specifying the port number for Amazon Redshift.
 
 ``--host`` specifies a host name to connect to the database.
 
