@@ -203,7 +203,7 @@ dm-run-profilerコマンド
       --help                     Print this help.
 
 
-``--dbtype`` はデータベース種別の指定です。 ``oracle``, ``mssql``, ``pgsql``, ``mysql`` のいずれかを指定できます。
+``--dbtype`` はデータベース種別の指定です。 ``oracle``, ``mssql``, ``pgsql``, ``mysql`` のいずれかを指定できます。Amazon Redshiftは ``pgsql`` を指定した上で、ポート番号も併せて指定する必要があります。
 
 ``--host`` はデータベースに接続するホスト名です。
 

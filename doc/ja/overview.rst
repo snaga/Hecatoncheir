@@ -37,6 +37,7 @@ Hecatoncheirでは、以下の機能を提供しています。
 * SQL Server
 * PostgreSQL
 * MySQL
+* Amazon Redshift
 
 以下のRDBMS製品は、今後、順次対応する予定です。
 
@@ -46,7 +47,6 @@ Hecatoncheirでは、以下の機能を提供しています。
 * Apache Spark
 * Vertica
 * Google BigQuery
-* Amazon Redshift
 
 対応オペレーティングシステム
 ----------------------------
@@ -70,6 +70,6 @@ Pythonのモジュールとして以下を使用します。
 
 * cx-Oracle: Oracle Database / Oracle Exadata
 * MySQL-python: MySQL
-* psycopg2: PostgreSQL
+* psycopg2: PostgreSQL, Amazon Redshift
 * pymssql: SQL Server
 
