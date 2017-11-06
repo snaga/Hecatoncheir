@@ -3,8 +3,9 @@
 
 import json
 import os
-import sqlite3
 from datetime import datetime
+
+import sqlalchemy as sa
 
 import DbProfilerFormatter
 import logger as log
@@ -26,7 +27,7 @@ def are_same_tables(d1, d2):
 
 class DbProfilerRepository():
     filename = None
-    _conn = None
+    engine = None
 
     def __init__(self, filename='repo.db'):
         if filename is None:
@@ -47,8 +48,11 @@ class DbProfilerRepository():
         return True
 
     def __init_sqlite3(self, filename):
-        conn = sqlite3.connect(filename)
-        cursor = conn.cursor()
+        try:
+            self.engine = sa.create_engine('sqlite:///' + filename)
+        except Exception as e:
+            raise DbProfilerException(
+                _("Could not create a repository file `%s'.") % filename)
 
         query = """
 create table repo (
@@ -59,19 +63,19 @@ create table repo (
   data text not null
 );
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create index database_schema_table_idx
   ON repo(database_name, schema_name, table_name);
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create index database_schema_table_created_idx
   ON repo(database_name, schema_name, table_name, created_at);
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create table datamapping (
@@ -89,19 +93,19 @@ create table datamapping (
   data text not null
 );
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create index dm_dst_idx
   ON datamapping(database_name, schema_name, table_name);
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create index dm_dstc_idx
   ON datamapping(database_name, schema_name, table_name, column_name);
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create table tags (
@@ -109,17 +113,17 @@ create table tags (
   tag_label text not null
 );
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create index tags_id_idx ON tags(tag_id);
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create index tags_label_idx ON tags(tag_label);
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create table business_glossary (
@@ -136,7 +140,7 @@ create table business_glossary (
   assigned_assets text
 );
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create table validation_rule (
@@ -151,13 +155,13 @@ create table validation_rule (
   param2 text
 );
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create unique index validation_rule_idx on
   validation_rule(database_name,schema_name,table_name,column_name,rule,param,param2);
 """
-        cursor.execute(query)
+        self.engine.execute(query)
 
         query = """
 create table textelement (
@@ -165,9 +169,7 @@ create table textelement (
   text_ text not null
 );
 """
-        cursor.execute(query)
-
-        conn.close()
+        self.engine.execute(query)
 
     def destroy(self):
         try:
@@ -182,7 +184,7 @@ create table textelement (
 
     def set(self, data):
         try:
-            self.execute_update(self._conn, "DELETE FROM repo")
+            self.engine.execute("DELETE FROM repo")
         except Exception as e:
             log.error(_("Could not initialize the repository."),
                       detail=unicode(e))
@@ -198,8 +200,7 @@ create table textelement (
         try:
             data_all = []
 
-            cursor = self._conn.cursor()
-            for r in cursor.execute("SELECT * FROM repo"):
+            for r in self.engine.execute("SELECT * FROM repo"):
                 data_all.append(json.loads(unicode(r[4])))
 
             log.info(_("Retrieved all data from the repository `%s'.") %
@@ -233,10 +234,8 @@ SELECT database_name,
 
         schemas = []
         try:
-            cursor = self._conn.cursor()
             log.debug("get_schemas: query = %s" % query)
-            cursor.execute(query)
-            for r in cursor.fetchall():
+            for r in self.engine.execute(query):
                 r2 = [_s2u(x) for x in r]
                 schemas.append(r2)
         except Exception as e:
@@ -266,9 +265,8 @@ SELECT COUNT(*)
  WHERE tag_label = '{0}'
 """.format(tag_label)
         try:
-            cur = self._conn.cursor()
-            cur.execute(query)
-            r = cur.fetchone()
+            rows = self.engine.execute(query)
+            r = rows.fetchone()
             n = r[0]
         except Exception as e:
             raise InternalError(_("Could not get table count: "),
@@ -302,10 +300,9 @@ SELECT COUNT(*)
 """.format(**tab)
 
         try:
-            cursor = self._conn.cursor()
             log.debug("has_table_record: query = %s" % query)
-            cursor.execute(query)
-            r = cursor.fetchone()
+            rows = self.engine.execute(query)
+            r = rows.fetchone()
             log.debug("has_table_record: r = %s" % unicode(r))
             if r[0] > 0:
                 return True
@@ -345,7 +342,6 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
         rowcount = None
         while retry < max_retry:
             try:
-                cursor = conn.cursor()
                 cursor.execute(query)
                 rowcount = cursor.rowcount
                 cursor.close()
@@ -387,9 +383,8 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
         try:
             query = self._build_append_table_query(tab)
             log.debug("append_table: query = %s" % query)
-
-            assert self._conn
-            self.execute_update(self._conn, query)
+            assert self.engine
+            self.engine.execute(query)
         except InternalError as e:
             raise InternalError(_("Could not register table data: "),
                                 query=query, source=e)
@@ -437,9 +432,8 @@ SELECT data
         log.debug("get_table: query = %s" % query)
 
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            r = cursor.fetchone()
+            rows = self.engine.execute(query)
+            r = rows.fetchone()
             if r:
                 table = json.loads(unicode(r[0]))
         except Exception as e:
@@ -471,7 +465,7 @@ DELETE FROM repo
 """.format(database_name, schema_name, table_name)
 
         try:
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
         except Exception as e:
             raise InternalError(_("Could not remove table data: "),
                                 query=query, source=e)
@@ -506,8 +500,7 @@ SELECT data
         log.trace("get_table_history: query = %s" % query)
 
         try:
-            cursor = self._conn.cursor()
-            for r in cursor.execute(query):
+            for r in self.engine.execute(query):
                 table_history.append(json.loads(unicode(r[0])))
         except Exception as e:
             raise InternalError(
@@ -526,8 +519,7 @@ SELECT data
         labels = []
         try:
             query = u"SELECT DISTINCT tag_label FROM tags"
-            cur = self._conn.cursor()
-            for r in cur.execute(query):
+            for r in self.engine.execute(query):
                 assert isinstance(r[0], unicode)
                 labels.append(r[0])
         except Exception as e:
@@ -541,7 +533,6 @@ SELECT data
 
         tags = []
         try:
-            cursor = self._conn.cursor()
             where = u''
             if label:
                 where = u"WHERE tag_label = '%s'" % label
@@ -549,7 +540,7 @@ SELECT data
                 where = u"WHERE tag_id = '%s'" % target
 
             query = u"SELECT tag_label,tag_id FROM tags %s" % where
-            for r in cursor.execute(query):
+            for r in self.engine.execute(query):
                 tags.append(Tag(r[0], r[1]))
         except Exception as e:
             raise InternalError(_("Could not get tags: "),
@@ -561,7 +552,6 @@ SELECT data
         assert isinstance(target, unicode) or target is None
 
         try:
-            cursor = self._conn.cursor()
             where = u''
             if label:
                 where = u"WHERE tag_label = '%s'" % label
@@ -569,7 +559,7 @@ SELECT data
                 where = u"WHERE tag_id = '%s'" % target
 
             query = u"DELETE FROM tags %s" % where
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
         except Exception as e:
             raise InternalError(_("Could not delete tags: "),
                                 query=query, source=e)
@@ -580,14 +570,13 @@ SELECT data
 
         log.trace('put_tag: start %s %s' % (tag.target, tag.label))
         try:
-            cursor = self._conn.cursor()
             query = (u"DELETE FROM tags WHERE tag_id = '%s' "
                      u"AND tag_label = '%s'" %
                      (tag.target, tag.label))
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
             query = (u"INSERT INTO tags VALUES ('%s', '%s')" %
                      (tag.target, tag.label))
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
         except Exception as e:
             raise InternalError(_("Could not register tag: "),
                                 query=query, source=e)
@@ -690,7 +679,7 @@ SELECT data
         try:
             query = (u"INSERT INTO textelement VALUES ('%s', '%s')" %
                      (id_, text if text else ''))
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
         except Exception as e:
             raise InternalError(_("Could not register text element: "),
                                 query=query, source=e)
@@ -701,9 +690,8 @@ SELECT data
         log.trace('get_textelements: start')
         texts = []
         try:
-            cursor = self._conn.cursor()
             query = u"SELECT text_ FROM textelement WHERE id_= '%s'" % id_
-            for r in cursor.execute(query):
+            for r in self.engine.execute(query):
                 assert isinstance(r[0], unicode)
                 texts.append(r[0])
         except Exception as e:
@@ -716,7 +704,7 @@ SELECT data
         log.trace('delete_textelement: start')
         try:
             query = u"DELETE FROM textelement WHERE id_= '%s'" % id_
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
         except Exception as e:
             raise InternalError(_("Could not delete text element: "),
                                 query=query, source=e)
@@ -746,8 +734,7 @@ SELECT DISTINCT database_name, schema_name, table_name
         log.trace("get_table_list: query = %s" % query)
 
         try:
-            cursor = self._conn.cursor()
-            for r in cursor.execute(query):
+            for r in self.engine.execute(query):
                 table_list.append([r[0], r[1], r[2]])
         except Exception as e:
             log.error(_("Could not get data."), detail=unicode(e))
@@ -796,8 +783,7 @@ WHERE database_name = '%s' AND schema_name = '%s' AND table_name = '%s'
 
         datamap = []
         try:
-            cursor = self._conn.cursor()
-            for r in cursor.execute(query):
+            for r in self.engine.execute(query):
                 datamap.append(json.loads(r[0]))
         except Exception as e:
             raise InternalError(_("Could not get data."), query=query)
@@ -832,7 +818,7 @@ DELETE FROM datamapping
             datamap.get('record_id', ''))
 
         try:
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
             log.trace(u'Successfully removed the previous datamap entry: %s' %
                       datamap)
         except Exception as e:
@@ -864,7 +850,7 @@ INSERT INTO datamapping (
             json.dumps(datamap))
 
         try:
-            self.execute_update(self._conn, query)
+            self.engine.execute(query)
             log.trace(u'Successfully stored the datamap entry: %s' % datamap)
         except Exception as e:
             raise InternalError(_("Could not register data mapping."),
@@ -1052,18 +1038,18 @@ AND
   is_latest = 1
 """ % term
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            r = cursor.fetchone()
+            rows = self.engine.execute(query)
+            r = rows.fetchone()
             if r:
                 data = {}
                 for i, c in enumerate(r):
-                    if cursor.description[i][0] in ['categories', 'synonyms',
-                                                    'related_terms',
-                                                    'assigned_assets']:
-                        data[cursor.description[i][0]] = json.loads(c)
+                    colname = rows.keys()[i]
+                    if colname in ['categories', 'synonyms',
+                                   'related_terms',
+                                   'assigned_assets']:
+                        data[colname] = json.loads(c)
                     else:
-                        data[cursor.description[i][0]] = c
+                        data[colname] = c
         except Exception as e:
             raise InternalError(_("Could not get a business term: "),
                                 query=query, source=e)
@@ -1123,10 +1109,10 @@ INSERT INTO business_glossary (
         query = None
         try:
             query = query1
-            self.execute_update(self._conn, query1)
+            self.engine.execute(query1)
 
             query = query2
-            self.execute_update(self._conn, query2)
+            self.engine.execute(query2)
         except Exception as e:
             raise InternalError(_("Could not register a business term: "),
                                 query=query, source=e)
@@ -1142,10 +1128,8 @@ INSERT INTO business_glossary (
         query = (u"SELECT term FROM business_glossary WHERE is_latest = 1 "
                  u"ORDER BY length(term) desc,term")
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
             data = []
-            for r in cursor.fetchall():
+            for r in self.engine.execute(query):
                 data.append(r[0])
         except Exception as e:
             raise InternalError(_("Could not get a list of business terms: "),
@@ -1181,9 +1165,7 @@ INSERT INTO business_glossary (
 
         ids = []
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            for r in cursor.fetchall():
+            for r in self.engine.execute(query):
                 ids.append(r[0])
         except Exception as e:
             raise InternalError(_("Could not get validation rules: "),
@@ -1238,10 +1220,9 @@ INSERT INTO validation_rule (id,database_name,schema_name,table_name,
         log.trace("create_validation_rule: %s" % query.replace('\n', ''))
         id = None
         try:
-            self.execute_update(self._conn, query)
-            cursor = self._conn.cursor()
-            cursor.execute("SELECT max(id) FROM validation_rule")
-            id = cursor.fetchone()[0]
+            self.engine.execute(query)
+            rows = self.engine.execute("SELECT max(id) FROM validation_rule")
+            id = rows.fetchone()[0]
         except Exception as e:
             raise InternalError(_("Could not register validation rule: "),
                                 query=query, source=e)
@@ -1263,9 +1244,8 @@ INSERT INTO validation_rule (id,database_name,schema_name,table_name,
         log.trace("get_validation_rule: %s" % query.replace('\n', ''))
         tup = None
         try:
-            cursor = self._conn.cursor()
-            cursor.execute(query)
-            r = cursor.fetchone()
+            rows = self.engine.execute(query)
+            r = rows.fetchone()
             if r:
                 tup = tuple(r)
         except Exception as e:
@@ -1311,7 +1291,8 @@ UPDATE validation_rule
         log.trace("update_validation_rule: %s" % query.replace('\n', ''))
         rowcount = 0
         try:
-            rowcount, retry = self.execute_update(self._conn, query)
+            rows = self.engine.execute(query)
+            rowcount = rows.rowcount
         except Exception as e:
             raise InternalError(_("Could not update validation rule: "),
                                 query=query, source=e)
@@ -1333,7 +1314,8 @@ UPDATE validation_rule
         log.trace("delete_validation_rule: %s" % query.replace('\n', ''))
         rowcount = 0
         try:
-            rowcount, retry = self.execute_update(self._conn, query)
+            rows = self.engine.execute(query)
+            rowcount = rows.rowcount
         except Exception as e:
             raise InternalError(_("Could not delete validation rule: "),
                                 query=query, source=e)
@@ -1342,7 +1324,7 @@ UPDATE validation_rule
         return True
 
     def open(self):
-        if self._conn:
+        if self.engine:
             log.info(_("The repository file `%s' has already been opened.") %
                      self.filename)
             return
@@ -1360,17 +1342,15 @@ UPDATE validation_rule
                                 self.filename)
 
         try:
-            self._conn = sqlite3.connect(self.filename)
+            self.engine = sa.create_engine('sqlite:///' + self.filename)
         except Exception as e:
             raise DbProfilerException(
                 _("Could not read the repository file `%s'.") % self.filename)
 
-        assert self._conn
+        assert self.engine
         log.info(_("The repository file `%s' has been opened.") %
                  self.filename)
         return
 
     def close(self):
-        if self._conn:
-            self._conn.close()
-            self._conn = None
+        self.engine = None
