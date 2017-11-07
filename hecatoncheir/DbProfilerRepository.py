@@ -36,10 +36,11 @@ class DbProfilerRepository():
         self.filename = filename
 
     def init(self):
+        if self.exists():
+            log.info(_("The repository already exists."))
+            return True
+
         try:
-            if os.path.exists(self.filename):
-                log.info(_("The repository already exists."))
-                return True
             self.__init_sqlite3(self.filename)
         except Exception as e:
             log.error(_("Could not create the repository."), detail=unicode(e))
@@ -171,13 +172,21 @@ create table textelement (
 """
         self.engine.execute(query)
 
-    def destroy(self):
+    def exists(self):
         try:
-            if os.path.exists(self.filename):
-                os.unlink(self.filename)
-        except Exception as e:
-            log.error(_("Could not destroy the repository."),
-                      detail=unicode(e))
+            found = os.path.exists(self.filename)
+        except Exception as ex:
+            raise InternalError("os.path.exists() failed:" + str(ex))
+        return found
+
+    def destroy(self):
+        if not self.exists():
+            return False
+
+        try:
+            os.unlink(self.filename)
+        except Exception as ex:
+            log.error(_(u"The repository could not be destroyed: ") + str(ex))
             return False
         log.info(_("The repository has been destroyed."))
         return True
@@ -1329,15 +1338,7 @@ UPDATE validation_rule
                      self.filename)
             return
 
-        repo_found = False
-        try:
-            repo_found = os.path.exists(self.filename)
-        except Exception as e:
-            raise DbProfilerException(
-                _("Could not access to the repository file `%s'.") %
-                self.filename)
-
-        if repo_found is False:
+        if not self.exists():
             raise InternalError(_("The repository file `%s' not found.") %
                                 self.filename)
 
