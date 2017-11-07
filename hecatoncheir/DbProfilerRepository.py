@@ -28,32 +28,51 @@ def are_same_tables(d1, d2):
 class DbProfilerRepository():
     filename = None
     engine = None
+    use_pgsql = None
+    host = None
+    port = None
+    user = None
+    password = None
 
-    def __init__(self, filename='repo.db'):
-        if filename is None:
-            self.filename = 'repo.db'
-            return
-        self.filename = filename
+    def __init__(self, filename=None, host=None, port=None, user=None, password=None):
+        self.filename = filename if filename else 'repo.db'
+        self.host = host
+        self.port = port if port else 5432
+        self.user = user if user else 'postgres'
+        self.password = password if password else 'postgres'
+        self.use_pgsql = True if self.host else False
 
     def init(self):
+        if not self.use_pgsql and self.exists():
+            log.info(_("The repository already exists."))
+            return True
+
         try:
-            if os.path.exists(self.filename):
-                log.info(_("The repository already exists."))
-                return True
-            self.__init_sqlite3(self.filename)
+            self.create_engine()
+            self.create_tables()
         except Exception as e:
             log.error(_("Could not create the repository."), detail=unicode(e))
             return False
         log.info(_("The repository has been initialized."))
         return True
 
-    def __init_sqlite3(self, filename):
-        try:
-            self.engine = sa.create_engine('sqlite:///' + filename)
-        except Exception as e:
-            raise DbProfilerException(
-                _("Could not create a repository file `%s'.") % filename)
+    def create_engine(self):
+        if self.use_pgsql:
+            connstr = 'postgresql://{3}:{4}@{0}:{1}/{2}'.format(self.host, self.port, self.filename, self.user, self.password)
+        else:
+            connstr = 'sqlite:///' + self.filename
 
+        try:
+            self.engine = sa.create_engine(connstr)
+        except Exception as ex:
+            raise InternalError("sqlalchemy.create_engine() failed: " + str(ex))
+
+    def drop_table(self, table_name):
+        query = 'drop table if exists {0}'.format(table_name)
+        self.engine.execute(query)
+
+    def create_tables(self):
+        self.drop_table('repo')
         query = """
 create table repo (
   database_name text not null,
@@ -77,6 +96,7 @@ create index database_schema_table_created_idx
 """
         self.engine.execute(query)
 
+        self.drop_table('datamapping')
         query = """
 create table datamapping (
   lineno integer not null,
@@ -107,6 +127,7 @@ create index dm_dstc_idx
 """
         self.engine.execute(query)
 
+        self.drop_table('tags')
         query = """
 create table tags (
   tag_id text not null,
@@ -125,6 +146,7 @@ create index tags_label_idx ON tags(tag_label);
 """
         self.engine.execute(query)
 
+        self.drop_table('business_glossary')
         query = """
 create table business_glossary (
   id text not null,
@@ -142,6 +164,7 @@ create table business_glossary (
 """
         self.engine.execute(query)
 
+        self.drop_table('validation_rule')
         query = """
 create table validation_rule (
   id integer primary key,
@@ -163,6 +186,7 @@ create unique index validation_rule_idx on
 """
         self.engine.execute(query)
 
+        self.drop_table('textelement')
         query = """
 create table textelement (
   id_ text not null,
@@ -171,13 +195,29 @@ create table textelement (
 """
         self.engine.execute(query)
 
-    def destroy(self):
+    def exists(self):
         try:
-            if os.path.exists(self.filename):
+            found = os.path.exists(self.filename)
+        except Exception as ex:
+            raise InternalError("os.path.exists() failed:" + str(ex))
+        return found
+
+    def destroy(self):
+        if not self.use_pgsql and not self.exists():
+            return False
+
+        try:
+            if self.use_pgsql:
+                self.drop_table('repo')
+                self.drop_table('datamapping')
+                self.drop_table('tags')
+                self.drop_table('business_glossary')
+                self.drop_table('validation_rule')
+                self.drop_table('textelement')
+            else:
                 os.unlink(self.filename)
-        except Exception as e:
-            log.error(_("Could not destroy the repository."),
-                      detail=unicode(e))
+        except Exception as ex:
+            log.error(_(u"The repository could not be destroyed: ") + str(ex))
             return False
         log.info(_("The repository has been destroyed."))
         return True
@@ -273,6 +313,12 @@ SELECT COUNT(*)
                                 query=query, source=e)
         return n
 
+    def fmt_datetime(self, ts):
+        if self.use_pgsql:
+            return "'%s'" % ts
+        return "datetime('%s')" % ts
+
+
     def has_table_record(self, tab):
         """
         Check if the table record exist in the repository.
@@ -296,8 +342,11 @@ SELECT COUNT(*)
  WHERE database_name = '{database_name}'
    AND schema_name = '{schema_name}'
    AND table_name = '{table_name}'
-   AND created_at = datetime('{timestamp}')
 """.format(**tab)
+        if self.use_pgsql:
+            query = query + "   AND created_at = '{timestamp}'".format(**tab)
+        else:
+            query = query + "   AND created_at = datetime('{timestamp}')".format(**tab)
 
         try:
             log.debug("has_table_record: query = %s" % query)
@@ -308,7 +357,7 @@ SELECT COUNT(*)
                 return True
         except Exception as e:
             log.trace("has_table_record: " + unicode(e))
-            raise InternalError(_("Could not get table info: "),
+            raise InternalError("Could not get table info: " + str(e),
                                 query=query, source=e)
 
         log.trace("has_table_record: end")
@@ -323,16 +372,16 @@ UPDATE repo
  WHERE database_name = '{0}'
    AND schema_name = '{1}'
    AND table_name = '{2}'
-   AND created_at = datetime('{3}')
+   AND created_at = {3}
 """.format(tab['database_name'], tab['schema_name'],
-                tab['table_name'], tab['timestamp'],
+                tab['table_name'], self.fmt_datetime(tab['timestamp']),
                 DbProfilerFormatter.jsonize(tab).replace("'", "''"))
         else:
             query = u"""
 INSERT INTO repo VALUES ('{0}','{1}','{2}',
-                         datetime('{3}'), '{4}')
+                         {3}, '{4}')
 """.format(tab['database_name'], tab['schema_name'],
-                tab['table_name'], tab['timestamp'],
+                tab['table_name'], self.fmt_datetime(tab['timestamp']),
                 DbProfilerFormatter.jsonize(tab).replace("'", "''"))
         return query
 
@@ -386,7 +435,7 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
             assert self.engine
             self.engine.execute(query)
         except InternalError as e:
-            raise InternalError(_("Could not register table data: "),
+            raise InternalError("append_table() failed: " + str(e),
                                 query=query, source=e)
 
         # Remove all tag id/label pairs to replace with new ones.
@@ -785,8 +834,8 @@ WHERE database_name = '%s' AND schema_name = '%s' AND table_name = '%s'
         try:
             for r in self.engine.execute(query):
                 datamap.append(json.loads(r[0]))
-        except Exception as e:
-            raise InternalError(_("Could not get data."), query=query)
+        except Exception as ex:
+            raise InternalError("Could not get data:" + str(ex), query=query)
 
         return datamap
 
@@ -821,8 +870,8 @@ DELETE FROM datamapping
             self.engine.execute(query)
             log.trace(u'Successfully removed the previous datamap entry: %s' %
                       datamap)
-        except Exception as e:
-            raise InternalError(_("Could not register data mapping."),
+        except Exception as ex:
+            raise InternalError("Could not register data mapping: " + str(ex),
                                 query=query)
 
         query = u"""
@@ -838,7 +887,7 @@ INSERT INTO datamapping (
   '%s', '%s', '%s', '%s',
   '%s',
   '%s', '%s', '%s', '%s',
-  datetime('%s'), '%s')
+  %s, '%s')
 """ % (datamap['lineno'], datamap['database_name'], datamap['schema_name'],
             datamap['table_name'], datamap.get('column_name', ''),
             datamap.get('record_id', ''),
@@ -846,14 +895,14 @@ INSERT INTO datamapping (
             datamap.get('source_schema_name', ''),
             datamap.get('source_table_name', ''),
             datamap.get('source_column_name', ''),
-            datetime.now().isoformat(),
+            self.fmt_datetime(datetime.now().isoformat()),
             json.dumps(datamap))
 
         try:
             self.engine.execute(query)
             log.trace(u'Successfully stored the datamap entry: %s' % datamap)
-        except Exception as e:
-            raise InternalError(_("Could not register data mapping."),
+        except Exception as ex:
+            raise InternalError("Could not register data mapping: " + str(ex),
                                 query=query)
 
         return True
@@ -1089,7 +1138,7 @@ INSERT INTO business_glossary (
   '{1}',
   '{2}',
   '{3}',
-  datetime(),
+  {9},
   '{4}',
   '{5}',
   '{6}',
@@ -1101,7 +1150,8 @@ INSERT INTO business_glossary (
            json.dumps(categories),
            json.dumps(synonyms),
            json.dumps(related_terms),
-           json.dumps(assigned_assets))
+           json.dumps(assigned_assets),
+           'now()' if self.use_pgsql else 'datetime()')
 
         log.trace(query1)
         log.trace(query2)
@@ -1113,9 +1163,9 @@ INSERT INTO business_glossary (
 
             query = query2
             self.engine.execute(query2)
-        except Exception as e:
-            raise InternalError(_("Could not register a business term: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not register a business term: " + str(ex),
+                                query=query, source=ex)
 
         log.trace("put_bg_term: end")
         return True
@@ -1323,34 +1373,33 @@ UPDATE validation_rule
             return False
         return True
 
+    def exists(self):
+        found = None
+        try:
+            found = os.path.exists(self.filename)
+        except Exception as ex:
+            raise DbProfilerException(
+                _("Could not access to the repository file `%s'.") %
+                self.filename)
+        return found
+
+
     def open(self):
         if self.engine:
             log.info(_("The repository file `%s' has already been opened.") %
                      self.filename)
             return
 
-        repo_found = False
-        try:
-            repo_found = os.path.exists(self.filename)
-        except Exception as e:
-            raise DbProfilerException(
-                _("Could not access to the repository file `%s'.") %
-                self.filename)
-
-        if repo_found is False:
+        if not self.use_pgsql and not self.exists():
             raise InternalError(_("The repository file `%s' not found.") %
                                 self.filename)
 
-        try:
-            self.engine = sa.create_engine('sqlite:///' + self.filename)
-        except Exception as e:
-            raise DbProfilerException(
-                _("Could not read the repository file `%s'.") % self.filename)
-
+        self.create_engine()
         assert self.engine
+
         log.info(_("The repository file `%s' has been opened.") %
                  self.filename)
         return
 
     def close(self):
-        self.engine = None
+        pass

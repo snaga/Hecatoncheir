@@ -17,6 +17,8 @@ class TestDbProfilerRepository(unittest.TestCase):
     def setUp(self):
         fname = "foo.db"
         self.repo = DbProfilerRepository.DbProfilerRepository(filename=fname)
+#        fname = "datacatalog"
+#        self.repo = DbProfilerRepository.DbProfilerRepository(filename=fname, host='localhost', user='snaga')
         self.repo.init()
         self.repo.open()
         self.maxDiff = None
@@ -43,15 +45,21 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         repo = DbProfilerRepository.DbProfilerRepository(fname)
         self.assertTrue(repo.init())
-        self.assertTrue(os.path.exists(fname))
+        if not repo.use_pgsql:
+            self.assertTrue(os.path.exists(fname))
         # already exists
         self.assertTrue(repo.init())
-        self.assertTrue(os.path.exists(fname))
+        if not repo.use_pgsql:
+            self.assertTrue(os.path.exists(fname))
 
         fname = "/foo.db"
         repo = DbProfilerRepository.DbProfilerRepository(fname)
-        self.assertFalse(repo.init())
-        self.assertFalse(os.path.exists(fname))
+        if repo.use_pgsql:
+            self.assertTrue(repo.init())
+        else:
+            self.assertFalse(repo.init())
+        if not repo.use_pgsql:
+            self.assertFalse(os.path.exists(fname))
 
     def testDestroy_001(self):
         fname = "foo.db"
@@ -61,15 +69,18 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         repo = DbProfilerRepository.DbProfilerRepository(fname)
         self.assertTrue(repo.init())
-        self.assertTrue(os.path.exists(fname))
+        if not repo.use_pgsql:
+            self.assertTrue(os.path.exists(fname))
 
         self.assertTrue(repo.destroy())
-        self.assertFalse(os.path.exists(fname))
+        if not repo.use_pgsql:
+            self.assertFalse(os.path.exists(fname))
 
         # permission denied
         repo = DbProfilerRepository.DbProfilerRepository("/etc/passwd")
         self.assertFalse(repo.destroy())
-        self.assertTrue(os.path.exists("/etc/passwd"))
+        if not repo.use_pgsql:
+            self.assertTrue(os.path.exists("/etc/passwd"))
 
     def testAppend_table_001(self):
         t = {}
@@ -90,7 +101,7 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         with self.assertRaises(InternalError) as cm:
             self.repo.append_table(t)
-        self.assertEqual("Could not register table data: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith('append_table() failed: '))
 
     def testAppend_table_002(self):
         # different timestamp must go to the different records.
@@ -490,6 +501,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         dm['source_column_name'] = 'test_source_column'
         res = self.repo.put_datamap_item(dm)
 
+        dm['lineno'] = 2
         dm['record_id'] = 'REC002'
         self.repo.put_datamap_item(dm)
 
@@ -769,6 +781,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         d['source_column_name'] = 'src_col_name'
         self.repo.put_datamap_item(d)
 
+        d['lineno'] = 2
         d['record_id'] = 'rec_id2'
         d['source_table_name'] = 'src_tab_name2'
         self.repo.put_datamap_item(d)
