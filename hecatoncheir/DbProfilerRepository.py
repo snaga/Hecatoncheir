@@ -283,10 +283,10 @@ SELECT database_name,
             for r in self.engine.execute(query):
                 r2 = [_s2u(x) for x in r]
                 schemas.append(r2)
-        except Exception as e:
-            log.trace("get_schemas: " + unicode(e))
-            raise InternalError(_("Could not get schema names: "),
-                                query=query, source=e)
+        except Exception as ex:
+            log.trace("get_schemas: " + unicode(ex))
+            raise InternalError("Could not get schema names: " + str(ex),
+                                query=query, source=ex)
 
         log.trace("get_schemas: end")
         return schemas
@@ -313,9 +313,9 @@ SELECT COUNT(*)
             rows = self.engine.execute(query)
             r = rows.fetchone()
             n = r[0]
-        except Exception as e:
-            raise InternalError(_("Could not get table count: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get table count: " + str(ex),
+                                query=query, source=ex)
         return n
 
     def fmt_datetime(self, ts):
@@ -360,10 +360,10 @@ SELECT COUNT(*)
             log.debug("has_table_record: r = %s" % unicode(r))
             if r[0] > 0:
                 return True
-        except Exception as e:
-            log.trace("has_table_record: " + unicode(e))
-            raise InternalError("Could not get table info: " + str(e),
-                                query=query, source=e)
+        except Exception as ex:
+            log.trace("has_table_record: " + unicode(ex))
+            raise InternalError("Could not get table info: " + str(ex),
+                                query=query, source=ex)
 
         log.trace("has_table_record: end")
         return False
@@ -439,9 +439,9 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
             log.debug("append_table: query = %s" % query)
             assert self.engine
             self.engine.execute(query)
-        except InternalError as e:
-            raise InternalError("append_table() failed: " + str(e),
-                                query=query, source=e)
+        except InternalError as ex:
+            raise InternalError("append_table() failed: " + str(ex),
+                                query=query, source=ex)
 
         # Remove all tag id/label pairs to replace with new ones.
         tagid = "%s.%s.%s" % (tab['database_name'], tab['schema_name'],
@@ -490,9 +490,9 @@ SELECT data
             r = rows.fetchone()
             if r:
                 table = json.loads(unicode(r[0]))
-        except Exception as e:
-            raise InternalError(_("Could not get table data: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get table data: " + str(ex),
+                                query=query, source=ex)
 
         log.trace('get_table: end')
         return table
@@ -520,9 +520,9 @@ DELETE FROM repo
 
         try:
             self.engine.execute(query)
-        except Exception as e:
-            raise InternalError(_("Could not remove table data: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not remove table data: " + str(ex),
+                                query=query, source=ex)
         return True
 
     def get_table_history(self, database_name, schema_name, table_name):
@@ -556,10 +556,10 @@ SELECT data
         try:
             for r in self.engine.execute(query):
                 table_history.append(json.loads(unicode(r[0])))
-        except Exception as e:
+        except Exception as ex:
             raise InternalError(
-                _("Could not get table data with its history: "),
-                query=query, source=e)
+                "Could not get table data with its history: " + str(ex),
+                query=query, source=ex)
 
         return table_history
 
@@ -576,9 +576,9 @@ SELECT data
             for r in self.engine.execute(query):
                 assert isinstance(r[0], unicode)
                 labels.append(r[0])
-        except Exception as e:
-            raise InternalError(_("Could not get tag labels: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get tag labels: " + str(ex),
+                                query=query, source=ex)
         return labels
 
     def get_tags(self, label=None, target=None):
@@ -596,9 +596,9 @@ SELECT data
             query = u"SELECT tag_label,tag_id FROM tags %s" % where
             for r in self.engine.execute(query):
                 tags.append(Tag(r[0], r[1]))
-        except Exception as e:
-            raise InternalError(_("Could not get tags: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get tags: " + str(ex),
+                                query=query, source=ex)
         return tags
 
     def delete_tags(self, label=None, target=None):
@@ -614,9 +614,9 @@ SELECT data
 
             query = u"DELETE FROM tags %s" % where
             self.engine.execute(query)
-        except Exception as e:
-            raise InternalError(_("Could not delete tags: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not delete tags: " + str(ex),
+                                query=query, source=ex)
         return True
 
     def put_tag(self, tag):
@@ -631,9 +631,9 @@ SELECT data
             query = (u"INSERT INTO tags VALUES ('%s', '%s')" %
                      (tag.target, tag.label))
             self.engine.execute(query)
-        except Exception as e:
-            raise InternalError(_("Could not register tag: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not register tag: " + str(ex),
+                                query=query, source=ex)
         log.trace('put_tag: end')
         return True
 
@@ -689,7 +689,7 @@ SELECT data
             bool: True if succeeded or the file already exists.
         """
         if objtype not in ['tag', 'schema', 'table']:
-            raise InternalError(_('invalid object type: %s') % objtype)
+            raise InternalError('invalid object type: %s' % objtype)
 
         if filename in self.get_files(objtype, objid):
             return True
@@ -707,7 +707,7 @@ SELECT data
             list: a list of file names.
         """
         if objtype not in ['tag', 'schema', 'table']:
-            raise InternalError(_('invalid object type: %s') % objtype)
+            raise InternalError('invalid object type: %s' % objtype)
 
         id_ = u'%s:%s' % (objtype, objid)
         return self.get_textelements(id_)
@@ -723,7 +723,7 @@ SELECT data
             bool: True if succeeded.
         """
         if objtype not in ['tag', 'schema', 'table']:
-            raise InternalError(_('invalid object type: %s') % objtype)
+            raise InternalError('invalid object type: %s' % objtype)
 
         id_ = u'%s:%s' % (objtype, objid)
         return self.delete_textelement(id_)
@@ -734,9 +734,9 @@ SELECT data
             query = (u"INSERT INTO textelement VALUES ('%s', '%s')" %
                      (id_, text if text else ''))
             self.engine.execute(query)
-        except Exception as e:
-            raise InternalError(_("Could not register text element: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not register text element: " + str(ex),
+                                query=query, source=ex)
         log.trace('put_textelement: end')
         return True
 
@@ -748,9 +748,9 @@ SELECT data
             for r in self.engine.execute(query):
                 assert isinstance(r[0], unicode)
                 texts.append(r[0])
-        except Exception as e:
-            raise InternalError(_("Could not get text element: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get text element: " + ex,
+                                query=query, source=ex)
         log.trace('get_textelements: end')
         return texts
 
@@ -759,9 +759,9 @@ SELECT data
         try:
             query = u"DELETE FROM textelement WHERE id_= '%s'" % id_
             self.engine.execute(query)
-        except Exception as e:
-            raise InternalError(_("Could not delete text element: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not delete text element: " + str(ex),
+                                query=query, source=ex)
         log.trace('delete_textelement: end')
         return True
 
@@ -1104,9 +1104,9 @@ AND
                         data[colname] = json.loads(c)
                     else:
                         data[colname] = c
-        except Exception as e:
-            raise InternalError(_("Could not get a business term: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get a business term: " + str(ex),
+                                query=query, source=ex)
         return data
 
     def put_bg_term(self, term, desc_short, desc_long, owner, categories,
@@ -1186,9 +1186,9 @@ INSERT INTO business_glossary (
             data = []
             for r in self.engine.execute(query):
                 data.append(r[0])
-        except Exception as e:
-            raise InternalError(_("Could not get a list of business terms: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get a list of business terms: " + str(ex),
+                                query=query, source=ex)
         return data
 
     def get_validation_rules(self, database_name=None, schema_name=None,
@@ -1222,9 +1222,9 @@ INSERT INTO business_glossary (
         try:
             for r in self.engine.execute(query):
                 ids.append(r[0])
-        except Exception as e:
-            raise InternalError(_("Could not get validation rules: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get validation rules: " + str(ex),
+                                query=query, source=ex)
 
         rules = []
         for i in ids:
@@ -1278,9 +1278,9 @@ INSERT INTO validation_rule (id,database_name,schema_name,table_name,
             self.engine.execute(query)
             rows = self.engine.execute("SELECT max(id) FROM validation_rule")
             id = rows.fetchone()[0]
-        except Exception as e:
-            raise InternalError(_("Could not register validation rule: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not register validation rule: " + str(ex),
+                                query=query, source=ex)
         return id
 
     def get_validation_rule(self, id):
@@ -1303,9 +1303,9 @@ INSERT INTO validation_rule (id,database_name,schema_name,table_name,
             r = rows.fetchone()
             if r:
                 tup = tuple(r)
-        except Exception as e:
-            raise InternalError(_("Could not get validation rule: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not get validation rule: " + str(ex),
+                                query=query, source=ex)
         return tup
 
     def update_validation_rule(self, id, database_name, schema_name,
@@ -1348,9 +1348,9 @@ UPDATE validation_rule
         try:
             rows = self.engine.execute(query)
             rowcount = rows.rowcount
-        except Exception as e:
-            raise InternalError(_("Could not update validation rule: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not update validation rule: " + str(ex),
+                                query=query, source=ex)
         if rowcount == 0:
             return False
         return True
@@ -1371,9 +1371,9 @@ UPDATE validation_rule
         try:
             rows = self.engine.execute(query)
             rowcount = rows.rowcount
-        except Exception as e:
-            raise InternalError(_("Could not delete validation rule: "),
-                                query=query, source=e)
+        except Exception as ex:
+            raise InternalError("Could not delete validation rule: " + str(ex),
+                                query=query, source=ex)
         if rowcount == 0:
             return False
         return True
@@ -1396,7 +1396,7 @@ UPDATE validation_rule
             return
 
         if not self.use_pgsql and not self.exists():
-            raise InternalError(_("The repository file `%s' not found.") %
+            raise InternalError("The repository file `%s' not found." %
                                 self.filename)
 
         self.create_engine()
