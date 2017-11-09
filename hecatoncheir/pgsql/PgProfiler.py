@@ -131,10 +131,11 @@ SELECT s.attname,
     def has_minmax(data_type):
         assert isinstance(data_type, list)
         log.trace("has_minmax: " + unicode(data_type))
-        if data_type[0].upper() in ['BYTEA', 'OID', 'BOOLEAN', 'XID', 'ARRAY',
-                                    'JSON', 'JSONB']:
-            return False
-        return True
+        if data_type[0].upper() in ['INTEGER', 'CHARACTER VARYING', 'CHARACTER',
+                                    'REAL', 'DATE', 'TEXT', 'NUMERIC',
+                                    'TIMESTAMP WITHOUT TIME ZONE']:
+            return True
+        return False
 
     def get_column_min_max(self, schema_name, table_name):
         if (schema_name, table_name) not in self.column_cache:
@@ -158,8 +159,8 @@ SELECT s.attname,
                 select_list.append(u'MIN("%s")' % c)
                 select_list.append(u'MAX("%s")' % c)
             else:
-                select_list.append('NULL')
-                select_list.append('NULL')
+                select_list.append(u'MIN("%s"::text)' % c)
+                select_list.append(u'MAX("%s"::text)' % c)
         q = u'SELECT %s FROM "%s"."%s"' % (','.join(select_list),
                                            schema_name, table_name)
         log.trace(q)
@@ -219,7 +220,7 @@ LIMIT {4}
             q = u'''
 WITH TEMP AS (
 SELECT
-  DISTINCT "{2}"
+  DISTINCT "{2}"::TEXT
 FROM
   "{0}"."{1}"
 WHERE
