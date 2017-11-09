@@ -543,6 +543,26 @@ class TestDbProfilerRepository(unittest.TestCase):
             repo.get_schemas()
         self.assertEqual("Could not get schema names: ", cm.exception.value)
 
+    def test_get_schemas_002(self):
+        t = {}
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
+        t['timestamp'] = '2016-04-27T10:06:41.653836'
+        self.assertTrue(self.repo.append_table(t))
+
+        t['database_name'] = u'test_database2'
+        t['schema_name'] = u'test_schema2'
+        t['table_name'] = u'test_table2'
+        t['timestamp'] = '2016-04-27T10:06:41.653836'
+        self.assertTrue(self.repo.append_table(t))
+
+        self.assertEqual([[u'test_database', u'test_schema', 1]],
+                         self.repo.get_schemas('test_database'))
+
+        self.assertEqual([[u'test_database2', u'test_schema2', 1]],
+                         self.repo.get_schemas('test_database2'))
+
     def test_get_table_count_001(self):
         t = {}
         t['database_name'] = u'test_database'

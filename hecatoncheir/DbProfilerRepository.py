@@ -251,7 +251,7 @@ create table textelement (
             return None
         return data_all
 
-    def get_schemas(self):
+    def get_schemas(self, database_name=None):
         """Get a list of database name and number of tables in each schema.
 
         Returns:
@@ -259,18 +259,23 @@ create table textelement (
         """
         log.trace("get_schemas: start")
 
+        cond = ['1=1']
+        if database_name:
+            cond.append("database_name = '%s'" % database_name)
+
         query = """
 SELECT database_name,
        schema_name,
        COUNT(DISTINCT table_name)
   FROM repo
+ WHERE (%s)
  GROUP BY
        database_name,
        schema_name
  ORDER BY
        database_name,
        schema_name
-"""
+""" % ' AND '.join(cond)
 
         schemas = []
         try:
