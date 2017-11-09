@@ -185,7 +185,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail with query error
         with self.assertRaises(InternalError) as cm:
             self.repo.get_table('test\'_database', 'test_schema', 'test_table')
-        self.assertEqual("Could not get table data: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not get table data: "))
 
     def test_remove_table_001(self):
         t = {}
@@ -212,7 +212,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail with query error
         with self.assertRaises(InternalError) as cm:
             self.repo.remove_table('test\'_database', 'test_schema', 'test_table')
-        self.assertEqual("Could not remove table data: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not remove table data: "))
 
     def testSet_001(self):
         t = {}
@@ -458,7 +458,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(InternalError) as cm:
             self.repo.get_table_history('test\'_database', 'test_schema', 'test_table')
-        self.assertEqual("Could not get table data with its history: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not get table data with its history: "))
 
     def test_put_datamap_item_001(self):
         dm = {}
@@ -541,7 +541,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         repo = DbProfilerRepository.DbProfilerRepository("/dev/null")
         with self.assertRaises(InternalError) as cm:
             repo.get_schemas()
-        self.assertEqual("Could not get schema names: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not get schema names: "))
 
     def test_get_schemas_002(self):
         t = {}
@@ -609,7 +609,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(InternalError) as cm:
             self.repo.put_tag(Tag(u'tag3', u'd.s.t2\''))
-        self.assertEqual("Could not register tag: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not register tag: "))
 
     def test_get_tag_labels_001(self):
         self.assertEqual([], self.repo.get_tag_labels())
@@ -635,7 +635,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(InternalError) as cm:
             self.repo.get_tags(label=u'd.s.t2\'')
-        self.assertEqual("Could not get tags: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not get tags: "))
 
     def test_set_tag_description_001(self):
         self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1')))
@@ -754,7 +754,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(InternalError) as cm:
             self.repo.get_tags(target=u'tag2\'')
-        self.assertEqual("Could not get tags: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not get tags: "))
 
     def test_delete_tags_001(self):
         self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
@@ -769,7 +769,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         # fail
         with self.assertRaises(InternalError) as cm:
             self.repo.delete_tags(target=u'tag2\'')
-        self.assertEqual("Could not delete tags: ", cm.exception.value)
+        self.assertTrue(cm.exception.value.startswith("Could not delete tags: "))
 
     def test_put_textelement_001(self):
         self.assertTrue(self.repo.put_textelement('id1', 'elem1'))
