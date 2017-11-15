@@ -140,7 +140,7 @@ def index_schema(db, schema):
     html = DbProfilerFormatter.to_index_html(
         tables,
         comment=desc.comment if desc else None,
-        schemas=[[db, schema, len(tables)]],
+        schemas=[[db, schema, len(tables), desc.comment if desc else None]],
         reponame=schema, glossary_terms=terms,
         editable=True).encode('utf-8')
 
@@ -153,17 +153,17 @@ def index_tag(tag):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_tag_ids(tag)
+    table_list = repo.get_table_list(tag=tag)
 
     tables = []
-    for t1 in table_list:
-        t = t1.split('.')
+    for t in table_list:
         tab = repo.get_table(t[0], t[1], t[2])
         tables.append(tab)
     comment = (repo.get_tag_description(tag)).comment
+    desc = repo.get_tag_description(tag)
     html = DbProfilerFormatter.to_index_html(tables,
                                              comment=comment,
-                                             tags=[[tag, len(tables)]],
+                                             tags=[[tag, len(tables), desc]],
                                              reponame=tag,
                                              glossary_terms=terms,
                                              editable=True).encode('utf-8')
