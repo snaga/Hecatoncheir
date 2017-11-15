@@ -792,7 +792,7 @@ SELECT database_name, schema_name, table_name, data
                 found = False
                 data = json.loads(r[3])
                 if tag:
-                    if tag in data.get('tags', []):
+                    if data.get('tags') and tag in data.get('tags'):
                         found = True
                 else:
                     found = True
