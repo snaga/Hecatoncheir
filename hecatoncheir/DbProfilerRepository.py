@@ -653,7 +653,7 @@ SELECT data
         desc = self.get_textelements(u'tag_desc:%s' % label)
         comment = self.get_textelements(u'tag_comment:%s' % label)
         if not desc and not comment:
-            return None
+            return TagDesc(label, None, None)
         return TagDesc(label, desc[0] if desc else None,
                        comment[0] if comment else None)
 
@@ -766,7 +766,7 @@ SELECT data
         return True
 
     def get_table_list(self, database_name=None, schema_name=None,
-                       table_name=None):
+                       table_name=None, tag=None):
         table_list = []
 
         cond = []
@@ -779,19 +779,27 @@ SELECT data
         where = "WHERE (%s)" % " AND ".join(cond) if cond else ''
 
         query = """
-SELECT DISTINCT database_name, schema_name, table_name
+SELECT database_name, schema_name, table_name, data
   FROM repo
 {0}
- ORDER BY database_name, schema_name, table_name
+ ORDER BY database_name, schema_name, table_name, created_at DESC
 """.format(where)
 
         log.trace("get_table_list: query = %s" % query)
 
         try:
             for r in self.engine.execute(query):
-                table_list.append([r[0], r[1], r[2]])
-        except Exception as e:
-            log.error(_("Could not get data."), detail=unicode(e))
+                found = False
+                data = json.loads(r[3])
+                if tag:
+                    if tag in data.get('tags', []):
+                        found = True
+                else:
+                    found = True
+                if found and [r[0], r[1], r[2]] not in table_list:
+                    table_list.append([r[0], r[1], r[2]])
+        except Exception as ex:
+            log.error(_("Could not get data."), detail=unicode(ex))
             return None
 
         return table_list

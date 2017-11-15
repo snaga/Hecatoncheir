@@ -427,6 +427,43 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual(['test_database', 'test_schema', 'test_table'], tlist[0])
 
 
+    def testGet_table_list_005(self):
+        t = {}
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table'
+        t['timestamp'] = '2016-04-27T10:06:41.653836'
+        t['tags'] = [u'tag1', u'tag2']
+
+        self.assertTrue(self.repo.append_table(t))
+
+        t = {}
+        t['database_name'] = u'test_database'
+        t['schema_name'] = u'test_schema'
+        t['table_name'] = u'test_table2'
+        t['timestamp'] = '2016-04-27T10:06:41.653836'
+        t['tags'] = [u'tag1', u'tag3']
+        self.assertTrue(self.repo.append_table(t))
+
+        # by tag
+        tlist = self.repo.get_table_list(tag='tag1')
+        self.assertEqual(2, len(tlist))
+        self.assertEqual([u'test_database', u'test_schema', u'test_table'],
+                         tlist[0])
+        self.assertEqual([u'test_database', u'test_schema', u'test_table2'],
+                         tlist[1])
+
+        tlist = self.repo.get_table_list(tag='tag2')
+        self.assertEqual(1, len(tlist))
+        self.assertEqual([u'test_database', u'test_schema', u'test_table'],
+                         tlist[0])
+
+        tlist = self.repo.get_table_list(tag='tag3')
+        self.assertEqual(1, len(tlist))
+        self.assertEqual([u'test_database', u'test_schema', u'test_table2'],
+                         tlist[0])
+
+
     def testGet_table_history_001(self):
         t = {}
         t['database_name'] = u'test_database'
@@ -644,7 +681,8 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def test_get_tag_description_001(self):
         self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1')))
-        self.assertIsNone(self.repo.get_tag_description(u'tag1'))
+        self.assertEqual({'comment': None, 'label': u'tag1', 'desc': None},
+                         self.repo.get_tag_description(u'tag1').__dict__)
 
         self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc')))
         self.assertEqual({'comment': None, 'label': u'tag1', 'desc': u'short desc'},
@@ -654,7 +692,8 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual({'comment': u'comment2', 'label': u'tag1', 'desc': u'short desc2'},
                          self.repo.get_tag_description(u'tag1').__dict__)
 
-        self.assertIsNone(self.repo.get_tag_description(u'nosuchtag1'))
+        self.assertEqual({'comment': None, 'label': u'nosuchtag1', 'desc': None},
+                         self.repo.get_tag_description(u'nosuchtag1').__dict__)
 
     def test_set_schema_description_001(self):
         self.assertTrue(self.repo.set_schema_description(SchemaDesc(u'schema1', u'desc', u'comment')))
