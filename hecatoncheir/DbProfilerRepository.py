@@ -7,12 +7,11 @@ from datetime import datetime
 
 import sqlalchemy as sa
 
-import DbProfilerFormatter
 import logger as log
 from exception import DbProfilerException, InternalError
 from metadata import Tag, TagDesc, SchemaDesc
 from logger import str2unicode as _s2u
-from msgutil import gettext as _
+from msgutil import gettext as _, jsonize
 
 
 def are_same_tables(d1, d2):
@@ -380,14 +379,14 @@ UPDATE repo
    AND created_at = {3}
 """.format(tab['database_name'], tab['schema_name'],
                 tab['table_name'], self.fmt_datetime(tab['timestamp']),
-                DbProfilerFormatter.jsonize(tab).replace("'", "''"))
+                jsonize(tab).replace("'", "''"))
         else:
             query = u"""
 INSERT INTO repo VALUES ('{0}','{1}','{2}',
                          {3}, '{4}')
 """.format(tab['database_name'], tab['schema_name'],
                 tab['table_name'], self.fmt_datetime(tab['timestamp']),
-                DbProfilerFormatter.jsonize(tab).replace("'", "''"))
+                jsonize(tab).replace("'", "''"))
         return query
 
     def execute_update(self, conn, query, with_commit=True, max_retry=3):

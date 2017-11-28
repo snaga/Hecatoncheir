@@ -17,11 +17,6 @@ from msgutil import DbProfilerJSONEncoder
 from msgutil import gettext as _
 
 
-def jsonize(data):
-    return json.dumps(data, cls=DbProfilerJSONEncoder, sort_keys=True,
-                      indent=2)
-
-
 def format_non_null_ratio(rows, nulls):
     """Format percentage of non-null value of the column
 
