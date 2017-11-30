@@ -132,7 +132,7 @@ SELECT s.attname,
         assert isinstance(data_type, list)
         log.trace("has_minmax: " + unicode(data_type))
         if data_type[0].upper() in ['BYTEA', 'OID', 'BOOLEAN', 'XID', 'ARRAY',
-                                    'JSON', 'JSONB']:
+                                    'JSON', 'JSONB', 'UUID']:
             return False
         return True
 
