@@ -167,6 +167,7 @@ class TestTable2(unittest.TestCase):
         t = Table2.find('d', 's', 't')
         self.assertEquals({'timestamp': now}, t[0].data)
 
+
     def test_update_002(self):
         t = Table2.create('d', 's', 't', {'timestamp': '2016-04-27T10:06:41.653836'})
         t = Table2.find('d', 's', 't')
