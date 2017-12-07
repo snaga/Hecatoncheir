@@ -13,12 +13,11 @@ from hecatoncheir.pgsql import PgProfiler
 
 class TestPgProfiler(unittest.TestCase):
     def setUp(self):
-        self.host = '127.0.0.1'
-        self.port = 5432
-        self.dbname = 'dqwbtest'
-        self.user = 'dqwbuser'
-        self.passwd = 'dqwbuser'
-        pass
+        self.host = os.environ.get('PGHOST', '127.0.0.1')
+        self.port = os.environ.get('PGPORT', 5432)
+        self.dbname = os.environ.get('PGDATABASE', 'dqwbtest')
+        self.user = os.environ.get('PGUSER', 'dqwbuser')
+        self.passwd = os.environ.get('PGPASSWORD', 'dqwbuser')
 
     def test_PgProfiler_001(self):
         p = PgProfiler.PgProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
@@ -105,20 +104,20 @@ class TestPgProfiler(unittest.TestCase):
                           u's_acctbal',
                           u's_comment'],
                          c[0])
-        self.assertEqual([2,
-                          'Supplier#000000002       ',
+        self.assertEqual(['2',
+                          'Supplier#000000002',
                           '89eJ5ksX3ImxJQBvxObC,',
-                          5,
+                          '5',
                           '15-679-861-2259',
-                          4032.68,
+                          '4032.68',
                           'furiously stealthy frays thrash alongside of the slyly express deposits. blithely regular req'],
                          c[1])
-        self.assertEqual([11,
-                          'Supplier#000000011       ',
+        self.assertEqual(['11',
+                          'Supplier#000000011',
                           'JfwTs,LZrV, M,9C',
-                          18,
+                          '18',
                           None,
-                          3393.08,
+                          '3393.08',
                           'quickly bold asymptotes mold carefully unusual pearls. requests boost at the blith'],
                          c[10])
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import unittest
 sys.path.append('..')
@@ -15,9 +16,9 @@ class TestPgDriver(unittest.TestCase):
     dbpass = None
 
     def setUp(self):
-        self.dbname = "dqwbtest"
-        self.dbuser = "dqwbuser"
-        self.dbpass = "dqwbuser"
+        self.dbname = os.environ.get('PGDATABASE', 'dqwbtest')
+        self.dbuser = os.environ.get('PGUSER', 'dqwbuser')
+        self.dbpass = os.environ.get('PGPASSWORD', 'dqwbuser')
 
     def test_PgDriver_001(self):
         pg = PgDriver.PgDriver('a', 'b', 'c')
