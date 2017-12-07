@@ -58,7 +58,7 @@ SELECT column_name
     def get_sample_rows(self, schema_name, table_name, rows_limit=10):
         column_name = self.get_column_names(schema_name, table_name)
 
-        select_list = '"' + '","'.join(column_name) + '"'
+        select_list = '"' + '"::text,"'.join(column_name) + '"::text'
         q = u'SELECT {0} FROM "{1}"."{2}" LIMIT {3}'.format(
             select_list, schema_name, table_name, rows_limit)
         return self._query_sample_rows(q)
