@@ -38,7 +38,15 @@ class Tag2:
         r = rs.fetchone()
         if not r:
             return None
-        return Tag2(label, r[0], r[1])
+        description = r[0]
+        comment = r[1]
+
+        # Getting a number of tables with the tag label
+        q = "SELECT count(*) FROM tags WHERE tag_label = '{0}'".format(label)
+        rs = db.conn.execute(q)
+        r = rs.fetchone()
+
+        return Tag2(label, description, comment, r[0])
 
     @staticmethod
     def findall():
@@ -75,7 +83,9 @@ class TestTag2(unittest.TestCase):
         db.creds['password'] = 'postgres'
         db.creds['dbname'] = 'datacatalog'
         db.connect()
+        db.conn.execute('truncate tags cascade')
         db.conn.execute('truncate tags2 cascade')
+        db.conn.execute('truncate repo cascade')
 
     def tearDown(self):
         db.conn.close()
@@ -111,7 +121,24 @@ class TestTag2(unittest.TestCase):
 
         t = Tag2.find('l2')
         self.assertIsNone(t)
+
+    def test_find_003(self):
+        Tag2.create('l', 'd', 'c')
+
+        # Get a number of tables of the tag 'l'
+        t = Tag2.find('l')
+        self.assertEquals(0, t.num_of_tables)
+
+        # Create a new table record with a tag 'l'
+        from table import Table2
+        t = Table2.create('d', 's', 't', {'timestamp': '2016-04-27T10:06:41.653836'})
+        t.data['tags'] = ['l']
+        t.update()
         
+        # Get a number of tables of the tag 'l' again
+        t = Tag2.find('l')
+        self.assertEquals(1, t.num_of_tables)
+
     def test_findall_001(self):
         Tag2.create('l', 'd', 'c')
 
