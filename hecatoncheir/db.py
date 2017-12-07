@@ -16,8 +16,13 @@ def connect():
     dbname = creds.get('dbname', 'postgres')
     user = creds.get('username', 'postgres')
     password = creds.get('password', '')
+    use_sqlite = creds.get('use_sqlite')
 
-    connstr = 'postgresql://{3}:{4}@{0}:{1}/{2}'.format(host, port, dbname, user, password)
+    if use_sqlite:
+        connstr = 'sqlite:///' + dbname + '.db'
+    else:
+        connstr = 'postgresql://{3}:{4}@{0}:{1}/{2}'.format(host, port, dbname, user, password)
+    print(connstr)
 
     engine = sa.create_engine(connstr)
     conn = engine.connect()
@@ -40,6 +45,10 @@ class TestTag2(unittest.TestCase):
         creds['dbname'] = 'datacatalog'
 
     def test_connect_001(self):
+        self.assertIsNotNone(connect())
+
+    def test_connect_002(self):
+        creds['use_sqlite'] = True
         self.assertIsNotNone(connect())
 
     def test_version_001(self):

@@ -23,6 +23,7 @@ class Repository():
         db.creds['username'] = self.user
         db.creds['password'] = self.password
         db.creds['dbname'] = self.dbname
+#        db.creds['use_sqlite'] = True
         db.connect()
 
     def create(self):
