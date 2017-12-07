@@ -3,10 +3,12 @@
 
 import json
 import os
+import unittest
 from datetime import datetime
 
 import sqlalchemy as sa
 
+import db
 import logger as log
 from exception import DbProfilerException, InternalError
 from metadata import Tag, TagDesc, SchemaDesc
@@ -40,6 +42,15 @@ class DbProfilerRepository():
         self.user = user if user else 'postgres'
         self.password = password if password else 'postgres'
         self.use_pgsql = True if self.host else False
+
+        if self.host:
+            db.creds = {}
+            db.creds['host'] = self.host
+            db.creds['port'] = self.port
+            db.creds['username'] = self.user
+            db.creds['password'] = self.password
+            db.creds['dbname'] = self.filename
+            db.connect()
 
     def init(self):
         if not self.use_pgsql and self.exists():
@@ -1415,3 +1426,30 @@ UPDATE validation_rule
 
     def close(self):
         pass
+
+class TestDbProfilerRepository(unittest.TestCase):
+    repo = None
+
+    def setUp(self):
+        host = os.environ.get('PGHOST', 'localhost')
+        dbname = os.environ.get('PGDATABASE', 'datacatalog')
+        user = os.environ.get('PGUSER', 'postgres')
+        password = os.environ.get('PGPASSWORD', 'postgres')
+
+        self.repo = DbProfilerRepository(filename=dbname,
+                                         host=host,
+                                         user=user,
+                                         password=password)
+        self.repo.init()
+        self.repo.open()
+        self.maxDiff = None
+
+    def tearDown(self):
+        self.repo.close()
+        self.repo.destroy()
+
+    def test_get_schemas_001(self):
+        pass
+
+if __name__ == '__main__':
+    unittest.main()

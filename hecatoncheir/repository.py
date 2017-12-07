@@ -10,20 +10,7 @@ import db
 
 
 class Repository():
-    def __init__(self, host, port, dbname, user, password):
-        self.host = host
-        self.port = port
-        self.dbname = dbname
-        self.user = user
-        self.password = password
-
-        db.creds = {}
-        db.creds['host'] = self.host
-        db.creds['port'] = self.port
-        db.creds['username'] = self.user
-        db.creds['password'] = self.password
-        db.creds['dbname'] = self.dbname
-#        db.creds['use_sqlite'] = True
+    def __init__(self):
         db.connect()
 
     def create(self):
@@ -148,17 +135,14 @@ class TestRepository(unittest.TestCase):
     repo = None
 
     def setUp(self):
-        host = os.environ.get('PGHOST', 'localhost')
-        port = os.environ.get('PGPORT', 5432)
-        dbname = os.environ.get('PGDATABASE', 'datacatalog')
-        user = os.environ.get('PGUSER', 'postgres')
-        password = os.environ.get('PGPASSWORD', 'postgres')
+        db.creds = {}
+        db.creds['host'] = os.environ.get('PGHOST', 'localhost')
+        db.creds['port'] = os.environ.get('PGPORT', 5432)
+        db.creds['dbname'] = os.environ.get('PGDATABASE', 'datacatalog')
+        db.creds['username'] = os.environ.get('PGUSER', 'postgres')
+        db.creds['password'] = os.environ.get('PGPASSWORD', 'postgres')
 
-        self.repo = Repository(host=host,
-                               port=port,
-                               dbname=dbname,
-                               user=user,
-                               password=password)
+        self.repo = Repository()
         self.maxDiff = None
 
     def tearDown(self):
