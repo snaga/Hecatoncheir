@@ -118,6 +118,24 @@ create table textelement (
 );
 """)
 
+        db.conn.execute("""
+CREATE TABLE tags2 (
+  label TEXT PRIMARY KEY,
+  description TEXT NOT NULL,
+  comment TEXT NOT NULL
+);
+""")
+
+        db.conn.execute("""
+CREATE TABLE schemas2 (
+  database_name TEXT,
+  schema_name TEXT,
+  description TEXT NOT NULL,
+  comment TEXT NOT NULL,
+  PRIMARY KEY (database_name, schema_name)
+);
+""")
+
     def destroy(self):
         self.drop_table('repo')
         self.drop_table('datamapping')
@@ -125,6 +143,8 @@ create table textelement (
         self.drop_table('business_glossary')
         self.drop_table('validation_rule')
         self.drop_table('textelement')
+        self.drop_table('tags2')
+        self.drop_table('schemas2')
 
     def drop_table(self, table_name):
         query = 'drop table if exists {0}'.format(table_name)

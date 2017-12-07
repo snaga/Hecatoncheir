@@ -16,6 +16,8 @@ import DbProfilerVerify
 import logger as log
 from CSVUtils import list2csv
 from msgutil import gettext as _
+from schema import Schema2
+from tag import Tag2
 
 
 def export_file(filename, body):
@@ -45,24 +47,18 @@ def parse_table_name(s):
     return (db, schema, table)
 
 
-def append_schema_desc(repo, schemas):
-    tmp = []
-    for s in schemas:
-        desc = repo.get_schema_description(u'%s.%s' % (s[0], s[1]))
-        tmp.append([s[0], s[1], s[2], desc.desc if desc else None])
-    return tmp
-
-
-def append_tag_desc(repo, tags):
-    tmp = []
-    for s in tags:
-        desc = repo.get_tag_description(s[0])
-        tmp.append([s[0], s[1], desc.desc if desc else None])
-    return tmp
-
-
+# top_schemas: list of schema name string: [u's5']
+# all_schemas: list of Schema2 objects: [Schema2, Schema2, Schema2, ...]
+# schema_index: list of lists (dbname, schemaname, num_of_tables, desc)
+#        [['db', 's5', 1, 'desc'], ['db', 's1', 1, 'desc'], ['db', 's2', 1, 'desc'], ...]
 def get_schema_ordered_list(top_schemas, all_schemas):
-    schema_index = copy.copy(all_schemas)
+    assert isinstance(top_schemas, list) or top_schemas is None
+    assert isinstance(all_schemas, list)
+
+    schema_index = []
+    for schema in all_schemas:
+        schema_index.append([schema.database_name, schema.schema_name,
+                             schema.num_of_tables, schema.description])
     if not top_schemas:
         return schema_index
     # move top-level shcmeas to beginning of the list.
@@ -75,8 +71,18 @@ def get_schema_ordered_list(top_schemas, all_schemas):
     return schema_index
 
 
+# top_tags: list of label string: [u's5', u's3']
+# all_tags: list of Tag2 objects: [Tag2, Tag2, Tag2, ...]
+# tag_index: list of the lists (schema, num_of_tables, desc):
+#     [['s5', 1, 'desc'], ['s3', 1, 'desc'], ['s1', 1, 'desc'], ...]
 def get_tag_ordered_list(top_tags, all_tags):
-    tag_index = copy.copy(all_tags)
+    assert isinstance(top_tags, list) or top_tags is None
+    assert isinstance(all_tags, list)
+
+    tag_index = []
+    for tag in all_tags:
+        tag_index.append([tag.label, tag.num_of_tables, tag.description])
+
     if not top_tags:
         return tag_index
     # move top-level tags to beginning of the list.
@@ -233,14 +239,9 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     # create global index page
     filename = output_path + "/index.html"
 
-    schemas2 = get_schema_ordered_list(schemas, repo.get_schemas())
-    schemas2 = append_schema_desc(repo, schemas2)
+    schemas2 = get_schema_ordered_list(schemas, Schema2.findall())
 
-    tags2 = []
-    for label in sorted(repo.get_tag_labels()):
-        tags2.append([label, repo.get_table_count_by_tag(label)])
-    tags2 = get_tag_ordered_list(tags, tags2)
-    tags2 = append_tag_desc(repo, tags2)
+    tags2 = get_tag_ordered_list(tags, Tag2.findall())
 
     export_file(filename, DbProfilerFormatter.to_index_html(
             tables_all, schemas=schemas2, tags=tags2,

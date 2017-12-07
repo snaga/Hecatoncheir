@@ -1,7 +1,9 @@
+import os
 import unittest
 
 import sqlalchemy as sa
 
+from repository import Repository
 import db
 
 class Tag2:
@@ -79,10 +81,18 @@ UPDATE tags2
 class TestTag2(unittest.TestCase):
     def setUp(self):
         db.creds = {}
-        db.creds['username'] = 'postgres'
-        db.creds['password'] = 'postgres'
-        db.creds['dbname'] = 'datacatalog'
+
+        db.creds['host'] = os.environ.get('PGHOST', 'localhost')
+        db.creds['port'] = os.environ.get('PGPORT', '5432')
+        db.creds['dbname'] = os.environ.get('PGDATABASE', 'datacatalog')
+        db.creds['username'] = os.environ.get('PGUSER', 'postgres')
+        db.creds['password'] = os.environ.get('PGPASSWORD', 'postgres')
         db.connect()
+
+        r = Repository()
+        r.destroy()
+        r.create()
+
         db.conn.execute('truncate tags cascade')
         db.conn.execute('truncate tags2 cascade')
         db.conn.execute('truncate repo cascade')
