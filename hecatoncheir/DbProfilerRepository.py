@@ -14,6 +14,8 @@ from exception import DbProfilerException, InternalError
 from metadata import Tag, TagDesc, SchemaDesc
 from logger import str2unicode as _s2u
 from msgutil import gettext as _, jsonize
+from repository import Repository
+from table import Table2
 
 
 def are_same_tables(d1, d2):
@@ -51,17 +53,21 @@ class DbProfilerRepository():
             db.creds['password'] = self.password
             db.creds['dbname'] = self.filename
             db.connect()
+        else:
+            db.creds = {}
+            db.creds['dbname'] = self.filename
+            db.creds['use_sqlite'] = True
+            db.connect()
 
     def init(self):
-        if not self.use_pgsql and self.exists():
-            log.info(_("The repository already exists."))
-            return True
-
+        repo = Repository()
         try:
-            self.create_engine()
-            self.create_tables()
-        except Exception as e:
-            log.error(_("Could not create the repository."), detail=unicode(e))
+            repo.create()
+        except sa.exc.OperationalError as ex:
+            if str(ex).startswith('(sqlite3.OperationalError) table repo already exists'):
+                log.info(_("The repository has already been initialized."))
+                return True
+            log.error(_("Could not initialize the repository."))
             return False
         log.info(_("The repository has been initialized."))
         return True
@@ -235,22 +241,10 @@ CREATE TABLE schemas2 (
         return found
 
     def destroy(self):
-        if not self.use_pgsql and not self.exists():
-            return False
-
-        try:
-            if self.use_pgsql:
-                self.drop_table('repo')
-                self.drop_table('datamapping')
-                self.drop_table('tags')
-                self.drop_table('business_glossary')
-                self.drop_table('validation_rule')
-                self.drop_table('textelement')
-            else:
-                os.unlink(self.filename)
-        except Exception as ex:
-            log.error(_(u"The repository could not be destroyed: ") + str(ex))
-            return False
+        repo = Repository()
+        repo.destroy()
+        if not self.use_pgsql:
+            os.unlink(self.filename)
         log.info(_("The repository has been destroyed."))
         return True
 

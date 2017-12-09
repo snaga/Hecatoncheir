@@ -19,6 +19,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.repo = DbProfilerRepository.DbProfilerRepository(filename=fname)
 #        fname = "datacatalog"
 #        self.repo = DbProfilerRepository.DbProfilerRepository(filename=fname, host='localhost', user='snaga')
+        self.repo.destroy()
         self.repo.init()
         self.repo.open()
         self.maxDiff = None
@@ -58,8 +59,6 @@ class TestDbProfilerRepository(unittest.TestCase):
             self.assertTrue(repo.init())
         else:
             self.assertFalse(repo.init())
-        if not repo.use_pgsql:
-            self.assertFalse(os.path.exists(fname))
 
     def testDestroy_001(self):
         fname = "foo.db"
@@ -75,12 +74,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(repo.destroy())
         if not repo.use_pgsql:
             self.assertFalse(os.path.exists(fname))
-
-        # permission denied
-        repo = DbProfilerRepository.DbProfilerRepository("/etc/passwd")
-        self.assertFalse(repo.destroy())
-        if not repo.use_pgsql:
-            self.assertTrue(os.path.exists("/etc/passwd"))
 
     def testAppend_table_001(self):
         t = {}
