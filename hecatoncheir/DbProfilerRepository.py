@@ -72,13 +72,6 @@ class DbProfilerRepository():
         log.info(_("The repository has been initialized."))
         return True
 
-    def exists(self):
-        try:
-            found = os.path.exists(self.filename)
-        except Exception as ex:
-            raise InternalError("os.path.exists() failed:" + str(ex))
-        return found
-
     def destroy(self):
         repo = Repository()
         repo.destroy()
