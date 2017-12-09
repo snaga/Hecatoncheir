@@ -142,7 +142,7 @@ SELECT COUNT(*)
         if self.use_pgsql:
             query = query + "   AND created_at = '{timestamp}'".format(**tab)
         else:
-            query = query + "   AND created_at = datetime('{timestamp}')".format(**tab)
+            query = query + "   AND created_at = '{timestamp}'".format(**tab)
 
         try:
             log.debug("has_table_record: query = %s" % query)
@@ -219,29 +219,18 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
         assert (tab['database_name'] and tab['schema_name'] and
                 tab['table_name'] and tab['timestamp'])
 
-        query = None
-
-        log.trace("append_table: start %s.%s.%s" %
-                  (tab['database_name'], tab['schema_name'],
-                   tab['table_name']))
-
-        try:
-            query = self._build_append_table_query(tab)
-            log.debug("append_table: query = %s" % query)
-            assert db.engine
-            db.engine.execute(query)
-        except InternalError as ex:
-            raise InternalError("append_table() failed: " + str(ex),
-                                query=query, source=ex)
-
-        # Remove all tag id/label pairs to replace with new ones.
-        tagid = "%s.%s.%s" % (tab['database_name'], tab['schema_name'],
-                              tab['table_name'])
-        q = "DELETE FROM tags WHERE tag_id = '%s'" % tagid
-        db.engine.execute(q)
-        for tag in tab.get('tags', []):
-            q = "INSERT INTO tags (tag_id, tag_label) VALUES ('%s', '%s')" % (tagid, tag)
-            db.engine.execute(q)
+        try:        
+            t = Table2.find(tab['database_name'], tab['schema_name'],
+                            tab['table_name'])
+            if t:
+                assert len(t) == 1
+                t[0].data = tab
+                t[0].update()
+            else:
+                Table2.create(tab['database_name'], tab['schema_name'],
+                              tab['table_name'], tab)
+        except sa.exc.OperationalError as ex:
+            raise InternalError('Could not append table data: ' + str(ex))
 
         log.trace("append_table: end")
         return True
@@ -260,33 +249,15 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
         """
         assert database_name and schema_name and table_name
 
-        table = None
-        log.trace('get_table: start %s.%s.%s' %
-                  (database_name, schema_name, table_name))
-
-        query = """
-SELECT data
-  FROM repo
- WHERE database_name = '{0}'
-   AND schema_name = '{1}'
-   AND table_name = '{2}'
- ORDER BY created_at DESC
- LIMIT 1
-""".format(database_name, schema_name, table_name)
-
-        log.debug("get_table: query = %s" % query)
-
         try:
-            rows = db.engine.execute(query)
-            r = rows.fetchone()
-            if r:
-                table = json.loads(unicode(r[0]))
-        except Exception as ex:
-            raise InternalError("Could not get table data: " + str(ex),
-                                query=query, source=ex)
+            t = Table2.find(database_name, schema_name, table_name)
+        except sa.exc.OperationalError as ex:
+            raise InternalError('Could not get table data: ' + str(ex))
+        if not t:
+            return None
+        assert t and len(t) == 1
 
-        log.trace('get_table: end')
-        return table
+        return t[0].data
 
     def get_table_history(self, database_name, schema_name, table_name):
         """

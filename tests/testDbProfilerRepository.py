@@ -94,7 +94,7 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         with self.assertRaises(InternalError) as cm:
             self.repo.append_table(t)
-        self.assertTrue(cm.exception.value.startswith('append_table() failed: '))
+        self.assertTrue(cm.exception.value.startswith('Could not append table data: '))
 
     def testAppend_table_002(self):
         # different timestamp must go to the different records.

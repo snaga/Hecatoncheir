@@ -59,15 +59,7 @@ SELECT database_name,
             found.append((r[0], r[1], r[2]))
         return tables
 
-    def update(self):
-        # Insert the latest record of the table
-        q = """
-INSERT INTO repo VALUES ('{0}','{1}','{2}','{3}','{4}')
-""".format(self.database_name, self.schema_name, self.table_name,
-           datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f"),
-           jsonize(self.data).replace("'", "''"))
-        db.conn.execute(q)
-
+    def _update_tags(self):
         # Update the table-tag mappings
         tagid = '%s.%s.%s' % (self.database_name, self.schema_name, self.table_name)
         q = "DELETE FROM tags WHERE tag_id = '%s'" % tagid
@@ -76,6 +68,17 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}','{3}','{4}')
         for tag in self.data.get('tags', []):
             q = "INSERT INTO tags (tag_id, tag_label) VALUES ('%s', '%s')" % (tagid, tag)
             db.conn.execute(q)
+
+    def update(self):
+        # Insert the latest record of the table
+        q = """
+INSERT INTO repo VALUES ('{0}','{1}','{2}','{3}','{4}')
+""".format(self.database_name, self.schema_name, self.table_name,
+           self.data['timestamp'],
+           jsonize(self.data).replace("'", "''"))
+        db.conn.execute(q)
+
+        self._update_tags()
 
         return True
 
