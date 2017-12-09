@@ -8,9 +8,12 @@ import sys
 
 from hecatoncheir import CSVUtils
 from hecatoncheir import DbProfilerRepository
+from hecatoncheir import db
 from hecatoncheir import logger as log
 from hecatoncheir.metadata import TagDesc, SchemaDesc
 from hecatoncheir.msgutil import gettext as _
+from hecatoncheir.repository import Repository
+from hecatoncheir.schema import Schema2
 
 table_csv_keys = [
     'DATABASE_NAME',
@@ -219,9 +222,22 @@ def process_validation_csv(repo, r):
 
 
 def process_schemacomment_csv(repo, r):
-    s = u"%s.%s" % (r['database_name'], r['schema_name'])
-    desc = SchemaDesc(s, r['schema_description'], r['schema_comment'])
-    repo.set_schema_description(desc)
+    # Creating first, and if an integrity error occures, update next.
+    try:
+        Schema2.create(r['database_name'], r['schema_name'],
+                       r['schema_description'], r['schema_comment'])
+    except Exception as ex:
+        if not unicode(ex).startswith('(sqlite3.IntegrityError) columns database_name, schema_name are not unique'):
+            raise ex
+
+    s = Schema2.find(r['database_name'], r['schema_name'])
+    if s:
+        s.description = r['schema_description']
+        s.comment = r['schema_comment']
+        s.update()
+    else:
+        log.warning("Schema `%s.%s' not found." % (r['database_name'], r['schema_name']))
+        return 0
     return 1
 
 
@@ -282,6 +298,11 @@ if __name__ == "__main__":
     repo = DbProfilerRepository.DbProfilerRepository(input_file)
     repo.init()
     repo.open()
+
+    db.creds = {}
+    db.creds['use_sqlite'] = True
+    db.creds['dbname'] = input_file
+    repo2 = Repository()
 
     lines = 0
     merged = 0

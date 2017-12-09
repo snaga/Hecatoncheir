@@ -9,9 +9,11 @@ import shutil
 import sys
 
 from hecatoncheir import DbProfilerExp, DbProfilerRepository
+from hecatoncheir import db
 from hecatoncheir import logger as log
 from hecatoncheir.DbProfilerExp import export_csv, export_html
 from hecatoncheir.msgutil import gettext as _
+from hecatoncheir.repository import Repository
 
 
 def usage():
@@ -101,6 +103,12 @@ if __name__ == "__main__":
 
     repo = DbProfilerRepository.DbProfilerRepository(input_file)
     repo.open()
+
+    db.creds = {}
+    db.creds['use_sqlite'] = True
+    db.creds['dbname'] = input_file
+    repo2 = Repository()
+
     table_list = repo.get_table_list()
 
     if format == 'html':

@@ -198,7 +198,8 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         filename = output_path + "/%s.html" % schema
         files = (repo.get_files('schema', schema) if
                  repo.get_files('schema', schema) else [])
-        desc = repo.get_schema_description(schema)
+        ss = Schema2.find(d, s)
+        desc = ss.description
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_schema[schema],
                 comment=desc.comment if desc else None,

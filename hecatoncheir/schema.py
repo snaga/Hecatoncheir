@@ -35,7 +35,7 @@ class Schema2:
         if not comment:
             comment = ''
 
-        q = """
+        q = u"""
 INSERT INTO schemas2 (database_name, schema_name, description, comment)
 VALUES ('{0}', '{1}', '{2}', '{3}')
 """.format(database_name, schema_name, description, comment)
@@ -46,7 +46,7 @@ VALUES ('{0}', '{1}', '{2}', '{3}')
 
     @staticmethod
     def find(database_name, schema_name):
-        q = """
+        q = u"""
 SELECT database_name,
        schema_name,
        COUNT(*)
@@ -68,7 +68,7 @@ GROUP BY
         description = None
         comment = None
 
-        q = """
+        q = u"""
 SELECT description,
        comment
   FROM schemas2
@@ -85,7 +85,7 @@ SELECT description,
 
     @staticmethod
     def findall():
-        q = """
+        q = u"""
 SELECT DISTINCT
        database_name,
        schema_name
@@ -101,7 +101,7 @@ SELECT DISTINCT
         return a
 
     def update(self):
-        q = """
+        q = u"""
 UPDATE schemas2
    SET description = '{2}',
        comment = '{3}'
@@ -113,7 +113,7 @@ UPDATE schemas2
         return True
 
     def destroy(self):
-        q = """
+        q = u"""
 DELETE FROM schemas2
  WHERE database_name = '{0}'
    AND schema_name = '{1}'

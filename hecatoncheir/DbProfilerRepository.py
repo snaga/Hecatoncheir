@@ -667,26 +667,6 @@ SELECT data
         return TagDesc(label, desc[0] if desc else None,
                        comment[0] if comment else None)
 
-    def set_schema_description(self, sdesc):
-        assert isinstance(sdesc, SchemaDesc)
-
-        self.delete_textelement(u'schema_desc:%s' % sdesc.name)
-        self.delete_textelement(u'schema_comment:%s' % sdesc.name)
-        if sdesc.desc is not None:
-            self.put_textelement(u'schema_desc:%s' % sdesc.name, sdesc.desc)
-        if sdesc.comment is not None:
-            self.put_textelement(u'schema_comment:%s' % sdesc.name,
-                                 sdesc.comment)
-        return True
-
-    def get_schema_description(self, name):
-        desc = self.get_textelements(u'schema_desc:%s' % name)
-        comment = self.get_textelements(u'schema_comment:%s' % name)
-        if not desc and not comment:
-            return None
-        return SchemaDesc(name, desc[0] if desc else None,
-                          comment[0] if comment else None)
-
     def add_file(self, objtype, objid, filename):
         """Assign a file name to the object.
 

@@ -695,28 +695,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual({'comment': None, 'label': u'nosuchtag1', 'desc': None},
                          self.repo.get_tag_description(u'nosuchtag1').__dict__)
 
-    def test_set_schema_description_001(self):
-        self.assertTrue(self.repo.set_schema_description(SchemaDesc(u'schema1', u'desc', u'comment')))
-        self.assertTrue(self.repo.set_schema_description(SchemaDesc(u'schema1', u'', u'')))
-        self.assertTrue(self.repo.set_schema_description(SchemaDesc(u'スキーマ2', u'短い説明', u'コメント')))
-
-    def test_get_schema_description_001(self):
-        self.repo.set_schema_description(SchemaDesc(u'schema1', u'desc', u'comment'))
-        self.assertEqual({'comment': u'comment', 'name': u'schema1', 'desc': u'desc'},
-                         self.repo.get_schema_description(u'schema1').__dict__)
-        self.repo.set_schema_description(SchemaDesc(u'schema1', u'', u''))
-        self.assertEqual({'comment': u'', 'name': u'schema1', 'desc': u''},
-                         self.repo.get_schema_description(u'schema1').__dict__)
-
-        self.repo.set_schema_description(SchemaDesc(u'スキーマ2', u'短い説明', u'コメント'))
-        self.assertEqual({'comment': u'コメント', 'name': u'スキーマ2', 'desc': u'短い説明'},
-                         self.repo.get_schema_description(u'スキーマ2').__dict__)
-
-        self.assertEqual({'comment': u'', 'name': u'schema1', 'desc': u''},
-                         self.repo.get_schema_description(u'schema1').__dict__)
-
-        self.assertEqual(None, self.repo.get_schema_description(u'nosuchschema1'))
-
     def test_add_file_001(self):
         # tag1: 1st item
         self.assertTrue(self.repo.add_file('tag', 'tag1', 'file1.xls'))
