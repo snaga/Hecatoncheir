@@ -4,11 +4,13 @@ import sqlalchemy as sa
 
 conn = None
 creds = None
+engine = None
 
 
 def connect():
     global creds
     global conn
+    global engine
     assert isinstance(creds, dict)
 
     host = creds.get('host', 'localhost')
@@ -19,7 +21,7 @@ def connect():
     use_sqlite = creds.get('use_sqlite')
 
     if use_sqlite:
-        connstr = 'sqlite:///' + dbname + '.db'
+        connstr = 'sqlite:///' + dbname
     else:
         connstr = 'postgresql://{3}:{4}@{0}:{1}/{2}'.format(host, port, dbname, user, password)
     print(connstr)

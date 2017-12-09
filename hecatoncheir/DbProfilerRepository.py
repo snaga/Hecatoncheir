@@ -72,167 +72,6 @@ class DbProfilerRepository():
         log.info(_("The repository has been initialized."))
         return True
 
-    def create_engine(self):
-        if self.use_pgsql:
-            connstr = 'postgresql://{3}:{4}@{0}:{1}/{2}'.format(self.host, self.port, self.filename, self.user, self.password)
-        else:
-            connstr = 'sqlite:///' + self.filename
-
-        try:
-            self.engine = sa.create_engine(connstr)
-        except Exception as ex:
-            raise InternalError("sqlalchemy.create_engine() failed: " + str(ex))
-
-    def drop_table(self, table_name):
-        query = 'drop table if exists {0}'.format(table_name)
-        self.engine.execute(query)
-
-    def create_tables(self):
-        self.drop_table('repo')
-        query = """
-create table repo (
-  database_name text not null,
-  schema_name text not null,
-  table_name text not null,
-  created_at text not null,
-  data text not null
-);
-"""
-        self.engine.execute(query)
-
-        query = """
-create index database_schema_table_idx
-  ON repo(database_name, schema_name, table_name);
-"""
-        self.engine.execute(query)
-
-        query = """
-create index database_schema_table_created_idx
-  ON repo(database_name, schema_name, table_name, created_at);
-"""
-        self.engine.execute(query)
-
-        self.drop_table('datamapping')
-        query = """
-create table datamapping (
-  lineno integer not null,
-  database_name text not null,
-  schema_name text not null,
-  table_name text not null,
-  column_name text,
-  record_id text,
-  source_database_name text not null,
-  source_schema_name text not null,
-  source_table_name text not null,
-  source_column_name text,
-  created_at text not null,
-  data text not null
-);
-"""
-        self.engine.execute(query)
-
-        query = """
-create index dm_dst_idx
-  ON datamapping(database_name, schema_name, table_name);
-"""
-        self.engine.execute(query)
-
-        query = """
-create index dm_dstc_idx
-  ON datamapping(database_name, schema_name, table_name, column_name);
-"""
-        self.engine.execute(query)
-
-        self.drop_table('tags')
-        query = """
-create table tags (
-  tag_id text not null,
-  tag_label text not null
-);
-"""
-        self.engine.execute(query)
-
-        query = """
-create index tags_id_idx ON tags(tag_id);
-"""
-        self.engine.execute(query)
-
-        query = """
-create index tags_label_idx ON tags(tag_label);
-"""
-        self.engine.execute(query)
-
-        self.drop_table('business_glossary')
-        query = """
-create table business_glossary (
-  id text not null,
-  term text not null,
-  description_short text not null,
-  description_long text not null,
-  created_at text not null,
-  owned_by text not null,
-  is_latest integer not null,
-  categories text,
-  synonyms text,
-  related_terms text,
-  assigned_assets text
-);
-"""
-        self.engine.execute(query)
-
-        self.drop_table('validation_rule')
-        query = """
-create table validation_rule (
-  id integer primary key,
-  database_name text not null,
-  schema_name text not null,
-  table_name text not null,
-  column_name text not null,
-  description text not null,
-  rule text not null,
-  param text,
-  param2 text
-);
-"""
-        self.engine.execute(query)
-
-        query = """
-create unique index validation_rule_idx on
-  validation_rule(database_name,schema_name,table_name,column_name,rule,param,param2);
-"""
-        self.engine.execute(query)
-
-        self.drop_table('textelement')
-        query = """
-create table textelement (
-  id_ text not null,
-  text_ text not null
-);
-"""
-        self.engine.execute(query)
-
-        self.drop_table('tags2')
-        query = """
-CREATE TABLE tags2 (
-  label TEXT PRIMARY KEY,
-  description TEXT NOT NULL,
-  comment TEXT NOT NULL
-);
-"""
-        self.engine.execute(query)
-
-        self.drop_table('schemas2')
-        query = """
-CREATE TABLE schemas2 (
-  database_name TEXT,
-  schema_name TEXT,
-  description TEXT NOT NULL,
-  comment TEXT NOT NULL,
-  PRIMARY KEY (database_name, schema_name)
-);
-"""
-        self.engine.execute(query)
-
     def exists(self):
         try:
             found = os.path.exists(self.filename)
@@ -250,7 +89,7 @@ CREATE TABLE schemas2 (
 
     def set(self, data):
         try:
-            self.engine.execute("DELETE FROM repo")
+            db.engine.execute("DELETE FROM repo")
         except Exception as e:
             log.error(_("Could not initialize the repository."),
                       detail=unicode(e))
@@ -266,7 +105,7 @@ CREATE TABLE schemas2 (
         try:
             data_all = []
 
-            for r in self.engine.execute("SELECT * FROM repo"):
+            for r in db.engine.execute("SELECT * FROM repo"):
                 data_all.append(json.loads(unicode(r[4])))
 
             log.info(_("Retrieved all data from the repository `%s'.") %
@@ -314,7 +153,7 @@ SELECT COUNT(*)
 
         try:
             log.debug("has_table_record: query = %s" % query)
-            rows = self.engine.execute(query)
+            rows = db.engine.execute(query)
             r = rows.fetchone()
             log.debug("has_table_record: r = %s" % unicode(r))
             if r[0] > 0:
@@ -396,8 +235,8 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
         try:
             query = self._build_append_table_query(tab)
             log.debug("append_table: query = %s" % query)
-            assert self.engine
-            self.engine.execute(query)
+            assert db.engine
+            db.engine.execute(query)
         except InternalError as ex:
             raise InternalError("append_table() failed: " + str(ex),
                                 query=query, source=ex)
@@ -406,10 +245,10 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
         tagid = "%s.%s.%s" % (tab['database_name'], tab['schema_name'],
                               tab['table_name'])
         q = "DELETE FROM tags WHERE tag_id = '%s'" % tagid
-        self.engine.execute(q)
+        db.engine.execute(q)
         for tag in tab.get('tags', []):
             q = "INSERT INTO tags (tag_id, tag_label) VALUES ('%s', '%s')" % (tagid, tag)
-            self.engine.execute(q)
+            db.engine.execute(q)
 
         log.trace("append_table: end")
         return True
@@ -445,7 +284,7 @@ SELECT data
         log.debug("get_table: query = %s" % query)
 
         try:
-            rows = self.engine.execute(query)
+            rows = db.engine.execute(query)
             r = rows.fetchone()
             if r:
                 table = json.loads(unicode(r[0]))
@@ -485,7 +324,7 @@ SELECT data
         log.trace("get_table_history: query = %s" % query)
 
         try:
-            for r in self.engine.execute(query):
+            for r in db.engine.execute(query):
                 table_history.append(json.loads(unicode(r[0])))
         except Exception as ex:
             raise InternalError(
@@ -550,7 +389,7 @@ SELECT data
         try:
             query = (u"INSERT INTO textelement VALUES ('%s', '%s')" %
                      (id_, text if text else ''))
-            self.engine.execute(query)
+            db.engine.execute(query)
         except Exception as ex:
             raise InternalError("Could not register text element: " + str(ex),
                                 query=query, source=ex)
@@ -562,7 +401,7 @@ SELECT data
         texts = []
         try:
             query = u"SELECT text_ FROM textelement WHERE id_= '%s'" % id_
-            for r in self.engine.execute(query):
+            for r in db.engine.execute(query):
                 assert isinstance(r[0], unicode)
                 texts.append(r[0])
         except Exception as ex:
@@ -575,7 +414,7 @@ SELECT data
         log.trace('delete_textelement: start')
         try:
             query = u"DELETE FROM textelement WHERE id_= '%s'" % id_
-            self.engine.execute(query)
+            db.engine.execute(query)
         except Exception as ex:
             raise InternalError("Could not delete text element: " + str(ex),
                                 query=query, source=ex)
@@ -605,7 +444,7 @@ SELECT database_name, schema_name, table_name, data
         log.trace("get_table_list: query = %s" % query)
 
         try:
-            for r in self.engine.execute(query):
+            for r in db.engine.execute(query):
                 found = False
                 data = json.loads(r[3])
                 if tag:
@@ -662,7 +501,7 @@ WHERE database_name = '%s' AND schema_name = '%s' AND table_name = '%s'
 
         datamap = []
         try:
-            for r in self.engine.execute(query):
+            for r in db.engine.execute(query):
                 datamap.append(json.loads(r[0]))
         except Exception as ex:
             raise InternalError("Could not get data:" + str(ex), query=query)
@@ -697,7 +536,7 @@ DELETE FROM datamapping
             datamap.get('record_id', ''))
 
         try:
-            self.engine.execute(query)
+            db.engine.execute(query)
             log.trace(u'Successfully removed the previous datamap entry: %s' %
                       datamap)
         except Exception as ex:
@@ -729,7 +568,7 @@ INSERT INTO datamapping (
             json.dumps(datamap))
 
         try:
-            self.engine.execute(query)
+            db.engine.execute(query)
             log.trace(u'Successfully stored the datamap entry: %s' % datamap)
         except Exception as ex:
             raise InternalError("Could not register data mapping: " + str(ex),
@@ -917,7 +756,7 @@ AND
   is_latest = 1
 """ % term
         try:
-            rows = self.engine.execute(query)
+            rows = db.engine.execute(query)
             r = rows.fetchone()
             if r:
                 data = {}
@@ -989,10 +828,10 @@ INSERT INTO business_glossary (
         query = None
         try:
             query = query1
-            self.engine.execute(query1)
+            db.engine.execute(query1)
 
             query = query2
-            self.engine.execute(query2)
+            db.engine.execute(query2)
         except Exception as ex:
             raise InternalError("Could not register a business term: " + str(ex),
                                 query=query, source=ex)
@@ -1009,7 +848,7 @@ INSERT INTO business_glossary (
                  u"ORDER BY length(term) desc,term")
         try:
             data = []
-            for r in self.engine.execute(query):
+            for r in db.engine.execute(query):
                 data.append(r[0])
         except Exception as ex:
             raise InternalError("Could not get a list of business terms: " + str(ex),
@@ -1045,7 +884,7 @@ INSERT INTO business_glossary (
 
         ids = []
         try:
-            for r in self.engine.execute(query):
+            for r in db.engine.execute(query):
                 ids.append(r[0])
         except Exception as ex:
             raise InternalError("Could not get validation rules: " + str(ex),
@@ -1100,8 +939,8 @@ INSERT INTO validation_rule (id,database_name,schema_name,table_name,
         log.trace("create_validation_rule: %s" % query.replace('\n', ''))
         id = None
         try:
-            self.engine.execute(query)
-            rows = self.engine.execute("SELECT max(id) FROM validation_rule")
+            db.engine.execute(query)
+            rows = db.engine.execute("SELECT max(id) FROM validation_rule")
             id = rows.fetchone()[0]
         except Exception as ex:
             raise InternalError("Could not register validation rule: " + str(ex),
@@ -1124,7 +963,7 @@ INSERT INTO validation_rule (id,database_name,schema_name,table_name,
         log.trace("get_validation_rule: %s" % query.replace('\n', ''))
         tup = None
         try:
-            rows = self.engine.execute(query)
+            rows = db.engine.execute(query)
             r = rows.fetchone()
             if r:
                 tup = tuple(r)
@@ -1171,7 +1010,7 @@ UPDATE validation_rule
         log.trace("update_validation_rule: %s" % query.replace('\n', ''))
         rowcount = 0
         try:
-            rows = self.engine.execute(query)
+            rows = db.engine.execute(query)
             rowcount = rows.rowcount
         except Exception as ex:
             raise InternalError("Could not update validation rule: " + str(ex),
@@ -1194,7 +1033,7 @@ UPDATE validation_rule
         log.trace("delete_validation_rule: %s" % query.replace('\n', ''))
         rowcount = 0
         try:
-            rows = self.engine.execute(query)
+            rows = db.engine.execute(query)
             rowcount = rows.rowcount
         except Exception as ex:
             raise InternalError("Could not delete validation rule: " + str(ex),
@@ -1215,20 +1054,7 @@ UPDATE validation_rule
 
 
     def open(self):
-        if self.engine:
-            log.info(_("The repository file `%s' has already been opened.") %
-                     self.filename)
-            return
-
-        if not self.use_pgsql and not self.exists():
-            raise InternalError("The repository file `%s' not found." %
-                                self.filename)
-
-        self.create_engine()
-        assert self.engine
-
-        log.info(_("The repository file `%s' has been opened.") %
-                 self.filename)
+        assert db.engine
         return
 
     def close(self):
