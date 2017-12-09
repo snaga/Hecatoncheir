@@ -205,6 +205,28 @@ create table textelement (
 """
         self.engine.execute(query)
 
+        self.drop_table('tags2')
+        query = """
+CREATE TABLE tags2 (
+  label TEXT PRIMARY KEY,
+  description TEXT NOT NULL,
+  comment TEXT NOT NULL
+);
+"""
+        self.engine.execute(query)
+
+        self.drop_table('schemas2')
+        query = """
+CREATE TABLE schemas2 (
+  database_name TEXT,
+  schema_name TEXT,
+  description TEXT NOT NULL,
+  comment TEXT NOT NULL,
+  PRIMARY KEY (database_name, schema_name)
+);
+"""
+        self.engine.execute(query)
+
     def exists(self):
         try:
             found = os.path.exists(self.filename)
