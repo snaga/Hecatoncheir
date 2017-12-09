@@ -567,24 +567,6 @@ SELECT data
 
         return table_history
 
-    def get_tag_labels(self):
-        """
-        Get all tag labels in the repository.
-
-        Returns:
-            a list of tag labels.
-        """
-        labels = []
-        try:
-            query = u"SELECT DISTINCT tag_label FROM tags"
-            for r in self.engine.execute(query):
-                assert isinstance(r[0], unicode)
-                labels.append(r[0])
-        except Exception as ex:
-            raise InternalError("Could not get tag labels: " + str(ex),
-                                query=query, source=ex)
-        return labels
-
     def get_tags(self, label=None, target=None):
         assert isinstance(label, unicode) or label is None
         assert isinstance(target, unicode) or target is None

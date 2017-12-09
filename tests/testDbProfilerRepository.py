@@ -648,15 +648,6 @@ class TestDbProfilerRepository(unittest.TestCase):
             self.repo.put_tag(Tag(u'tag3', u'd.s.t2\''))
         self.assertTrue(cm.exception.value.startswith("Could not register tag: "))
 
-    def test_get_tag_labels_001(self):
-        self.assertEqual([], self.repo.get_tag_labels())
-
-        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
-        self.assertEqual([u'tag1'], self.repo.get_tag_labels())
-
-        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
-        self.assertEqual([u'tag1', u'tag2'], self.repo.get_tag_labels())
-
     def test_get_tags_001(self):
         self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
         self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
