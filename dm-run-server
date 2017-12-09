@@ -121,7 +121,12 @@ def index_schemas():
     for t in table_list:
         tab = repo.get_table(t[0], t[1], t[2])
         tables_all.append(tab)
-    schemas = repo.get_schemas()
+
+    # [[dbname, schema, num_of_tables, desc], [dbname, schema, num_of_tables, desc], ...]
+    schemas = []
+    for s in Schema2.findall():
+        schemas.append([s.database_name, s.schema_name,
+                        s.num_of_tables, s.description])
 
     reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
     reponame = re.sub('\..*$', '', reponame)

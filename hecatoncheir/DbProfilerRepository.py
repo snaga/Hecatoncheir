@@ -283,46 +283,6 @@ CREATE TABLE schemas2 (
             return None
         return data_all
 
-    def get_schemas(self, database_name=None):
-        """Get a list of database name and number of tables in each schema.
-
-        Returns:
-            list: a list of lists: [[dbname,schemaname,num of tables], ...]
-        """
-        log.trace("get_schemas: start")
-
-        cond = ['1=1']
-        if database_name:
-            cond.append("database_name = '%s'" % database_name)
-
-        query = """
-SELECT database_name,
-       schema_name,
-       COUNT(DISTINCT table_name)
-  FROM repo
- WHERE (%s)
- GROUP BY
-       database_name,
-       schema_name
- ORDER BY
-       database_name,
-       schema_name
-""" % ' AND '.join(cond)
-
-        schemas = []
-        try:
-            log.debug("get_schemas: query = %s" % query)
-            for r in self.engine.execute(query):
-                r2 = [_s2u(x) for x in r]
-                schemas.append(r2)
-        except Exception as ex:
-            log.trace("get_schemas: " + unicode(ex))
-            raise InternalError("Could not get schema names: " + str(ex),
-                                query=query, source=ex)
-
-        log.trace("get_schemas: end")
-        return schemas
-
     def fmt_datetime(self, ts):
         if self.use_pgsql:
             return "'%s'" % ts
