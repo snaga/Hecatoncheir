@@ -34,9 +34,9 @@ class Tag2:
         assert isinstance(comment, unicode) or comment is None
 
         if not description:
-            description = ''
+            description = u''
         if not comment:
-            comment = ''
+            comment = u''
 
         q = u"INSERT INTO tags2 VALUES ('{0}','{1}','{2}')".format(label, description, comment)
         db.conn.execute(q)
@@ -64,9 +64,9 @@ class Tag2:
     @staticmethod
     def findall():
         tags = []
-        rs = db.conn.execute(u"SELECT label,description,comment FROM tags2 ORDER BY label")
+        rs = db.conn.execute(u"SELECT label FROM tags2 ORDER BY label")
         for r in rs.fetchall():
-            tags.append(Tag2(r[0], r[1], r[2]))
+            tags.append(Tag2.find(r[0]))
         return tags
 
     def update(self):

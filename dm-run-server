@@ -63,6 +63,9 @@ def index():
                         s.num_of_tables, s.description])
     tags = []
     for tag in Tag2.findall():
+        if tag.num_of_tables == 0:
+            tag.destroy()
+            continue
         tags.append([tag.label, tag.num_of_tables, tag.description])
 
     reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
@@ -282,6 +285,9 @@ def api_table_owner(db, schema, table):
                 data['tags'].append(t)
         repo.append_table(data)
         repo.close()
+        for tag in data['tags']:
+            if not Tag2.find(tag):
+                Tag2.create(tag)
         return json.dumps({'owner': data.get('owner', ''),
                            'comment': data.get('comment', ''),
                            'tags': data.get('tags', [])})
