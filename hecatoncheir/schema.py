@@ -12,6 +12,9 @@ import db
 
 class Schema2:
     def __init__(self, database_name, schema_name, description=None, comment=None, num_of_tables=0):
+        assert isinstance(description, unicode) or description is None
+        assert isinstance(comment, unicode) or comment is None
+
         self.database_name = database_name
         self.schema_name = schema_name
         self.description = description
@@ -30,10 +33,13 @@ class Schema2:
 
     @staticmethod
     def create(database_name, schema_name, description=None, comment=None):
+        assert isinstance(description, unicode) or description is None
+        assert isinstance(comment, unicode) or comment is None
+
         if not description:
-            description = ''
+            description = u''
         if not comment:
-            comment = ''
+            comment = u''
 
         q = u"""
 INSERT INTO schemas2 (database_name, schema_name, description, comment)
@@ -101,6 +107,9 @@ SELECT DISTINCT
         return a
 
     def update(self):
+        assert isinstance(self.description, unicode) or self.description is None
+        assert isinstance(self.comment, unicode) or self.comment is None
+
         q = u"""
 UPDATE schemas2
    SET description = '{2}',
@@ -182,8 +191,8 @@ class TestSchema2(unittest.TestCase):
         self.assertEquals('', s.comment)
         self.assertEquals(1, s.num_of_tables)
 
-        s.description = 'desc'
-        s.comment = 'com'
+        s.description = u'desc'
+        s.comment = u'com'
         s.update()
 
         s = Schema2.find('d', 's')
@@ -192,12 +201,12 @@ class TestSchema2(unittest.TestCase):
         self.assertEquals('com', s.comment)
 
     def test_destroy_001(self):
-        Schema2.create('d', 's', 'desc', 'com')
+        Schema2.create('d', 's', u'desc', u'com')
 
         s = Schema2.find('d', 's')
         self.assertTrue(isinstance(s, Schema2))
-        self.assertEquals('desc', s.description)
-        self.assertEquals('com', s.comment)
+        self.assertEquals(u'desc', s.description)
+        self.assertEquals(u'com', s.comment)
 
         s.destroy()
 
