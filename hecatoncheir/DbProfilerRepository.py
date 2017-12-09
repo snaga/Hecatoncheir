@@ -323,33 +323,6 @@ SELECT database_name,
         log.trace("get_schemas: end")
         return schemas
 
-    def get_table_count_by_tag(self, tag_label):
-        """
-        Get a number of tables associated with the tag.
-
-        Args:
-            tag_label(unciode): a tag label
-
-        Returns:
-            a number of tables
-        """
-        assert isinstance(tag_label, unicode)
-
-        n = None
-        query = u"""
-SELECT COUNT(*)
-  FROM tags
- WHERE tag_label = '{0}'
-""".format(tag_label)
-        try:
-            rows = self.engine.execute(query)
-            r = rows.fetchone()
-            n = r[0]
-        except Exception as ex:
-            raise InternalError("Could not get table count: " + str(ex),
-                                query=query, source=ex)
-        return n
-
     def fmt_datetime(self, ts):
         if self.use_pgsql:
             return "'%s'" % ts

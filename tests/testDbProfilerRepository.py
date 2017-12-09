@@ -600,30 +600,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual([[u'test_database2', u'test_schema2', 1]],
                          self.repo.get_schemas('test_database2'))
 
-    def test_get_table_count_001(self):
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = [u'tag1',u'tag2']
-        self.assertTrue(self.repo.append_table(t))
-
-        self.assertEqual(1, self.repo.get_table_count_by_tag(u'tag1'))
-        self.assertEqual(1, self.repo.get_table_count_by_tag(u'tag2'))
-        self.assertEqual(0, self.repo.get_table_count_by_tag(u'tag3'))
-
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table2'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = [u'tag1']
-        self.assertTrue(self.repo.append_table(t))
-
-        self.assertEqual(2, self.repo.get_table_count_by_tag(u'tag1'))
-        self.assertEqual(1, self.repo.get_table_count_by_tag(u'tag2'))
-        self.assertEqual(0, self.repo.get_table_count_by_tag(u'tag3'))
-
     def test_has_table_record_001(self):
         t = {}
         t['database_name'] = u'test_database'
