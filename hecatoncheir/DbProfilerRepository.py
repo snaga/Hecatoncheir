@@ -159,51 +159,6 @@ SELECT COUNT(*)
         log.trace("has_table_record: end")
         return False
 
-    def _build_append_table_query(self, tab):
-        query = None
-        if self.has_table_record(tab):
-            query = u"""
-UPDATE repo
-   SET data = '{4}'
- WHERE database_name = '{0}'
-   AND schema_name = '{1}'
-   AND table_name = '{2}'
-   AND created_at = {3}
-""".format(tab['database_name'], tab['schema_name'],
-                tab['table_name'], self.fmt_datetime(tab['timestamp']),
-                jsonize(tab).replace("'", "''"))
-        else:
-            query = u"""
-INSERT INTO repo VALUES ('{0}','{1}','{2}',
-                         {3}, '{4}')
-""".format(tab['database_name'], tab['schema_name'],
-                tab['table_name'], self.fmt_datetime(tab['timestamp']),
-                jsonize(tab).replace("'", "''"))
-        return query
-
-    def execute_update(self, conn, query, with_commit=True, max_retry=3):
-        retry = 0
-        err = None
-        rowcount = None
-        while retry < max_retry:
-            try:
-                cursor.execute(query)
-                rowcount = cursor.rowcount
-                cursor.close()
-                if with_commit:
-                    conn.commit()
-                err = None
-                break
-            except Exception as ex:
-                conn.rollback()
-                err = ex
-            retry += 1
-        if err:
-            msg = _(u"Excceeded the max retry count (%d) for a query: %s")
-            raise InternalError(msg % (max_retry, query),
-                                source=err)
-        return (rowcount, retry)
-
     def append_table(self, tab):
         """
         Update a table record if the same record (with same timestamp)
