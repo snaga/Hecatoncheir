@@ -14,6 +14,7 @@ from hecatoncheir.metadata import TagDesc, SchemaDesc
 from hecatoncheir.msgutil import gettext as _
 from hecatoncheir.repository import Repository
 from hecatoncheir.schema import Schema2
+from hecatoncheir.tag import Tag2
 
 table_csv_keys = [
     'DATABASE_NAME',
@@ -242,8 +243,20 @@ def process_schemacomment_csv(repo, r):
 
 
 def process_tagcomment_csv(repo, r):
-    desc = TagDesc(r['tag_name'], r['tag_description'], r['tag_comment'])
-    repo.set_tag_description(desc)
+    try:
+        Tag2.create(r['tag_name'], r['tag_description'], r['tag_comment'])
+    except Exception as ex:
+        if not unicode(ex).startswith('(sqlite3.IntegrityError) column label is not unique'):
+            raise ex
+
+    t = Tag2.find(r['tag_name'])
+    if t:
+        t.description = r['tag_description']
+        t.comment = r['tag_comment']
+        t.update()
+    else:
+        log.warning("Tag `%s' not found." % (r['tag_name']))
+        return 0
     return 1
 
 

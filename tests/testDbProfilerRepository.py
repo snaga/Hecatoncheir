@@ -674,27 +674,6 @@ class TestDbProfilerRepository(unittest.TestCase):
             self.repo.get_tags(label=u'd.s.t2\'')
         self.assertTrue(cm.exception.value.startswith("Could not get tags: "))
 
-    def test_set_tag_description_001(self):
-        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1')))
-        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc')))
-        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc', u'comment')))
-
-    def test_get_tag_description_001(self):
-        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1')))
-        self.assertEqual({'comment': None, 'label': u'tag1', 'desc': None},
-                         self.repo.get_tag_description(u'tag1').__dict__)
-
-        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc')))
-        self.assertEqual({'comment': None, 'label': u'tag1', 'desc': u'short desc'},
-                         self.repo.get_tag_description(u'tag1').__dict__)
-
-        self.assertTrue(self.repo.set_tag_description(TagDesc(u'tag1', u'short desc2', u'comment2')))
-        self.assertEqual({'comment': u'comment2', 'label': u'tag1', 'desc': u'short desc2'},
-                         self.repo.get_tag_description(u'tag1').__dict__)
-
-        self.assertEqual({'comment': None, 'label': u'nosuchtag1', 'desc': None},
-                         self.repo.get_tag_description(u'nosuchtag1').__dict__)
-
     def test_add_file_001(self):
         # tag1: 1st item
         self.assertTrue(self.repo.add_file('tag', 'tag1', 'file1.xls'))

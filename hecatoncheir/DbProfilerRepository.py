@@ -647,26 +647,6 @@ SELECT data
         log.trace('put_tag: end')
         return True
 
-    def set_tag_description(self, tdesc):
-        assert isinstance(tdesc, TagDesc)
-
-        self.delete_textelement(u'tag_desc:%s' % tdesc.label)
-        self.delete_textelement(u'tag_comment:%s' % tdesc.label)
-        if tdesc.desc is not None:
-            self.put_textelement(u'tag_desc:%s' % tdesc.label, tdesc.desc)
-        if tdesc.comment is not None:
-            self.put_textelement(u'tag_comment:%s' % tdesc.label,
-                                 tdesc.comment)
-        return True
-
-    def get_tag_description(self, label):
-        desc = self.get_textelements(u'tag_desc:%s' % label)
-        comment = self.get_textelements(u'tag_comment:%s' % label)
-        if not desc and not comment:
-            return TagDesc(label, None, None)
-        return TagDesc(label, desc[0] if desc else None,
-                       comment[0] if comment else None)
-
     def add_file(self, objtype, objid, filename):
         """Assign a file name to the object.
 

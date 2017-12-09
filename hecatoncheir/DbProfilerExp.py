@@ -214,13 +214,13 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         filename = output_path + "/tag-%s.html" % tag
         files = (repo.get_files('tag', tag) if
                  repo.get_files('tag', tag) else [])
-        desc = repo.get_tag_description(tag)
+        tmp = Tag2.find(tag)
+        assert tmp
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_tag[tag],
-                comment=desc.comment if desc else None,
+                comment=tmp.comment,
                 files=['tag-%s/%s' % (tag, x) for x in files],
-                tags=[[tag, len(tables_by_tag[tag]),
-                       desc.desc if desc else None]],
+                tags=[[tmp.label, tmp.num_of_tables, tmp.description]],
                 reponame=tag, glossary_terms=terms,
                 template_file=template_index))
 
