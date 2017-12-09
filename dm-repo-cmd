@@ -8,9 +8,15 @@ import re
 import shutil
 import sys
 
-from hecatoncheir import DbProfilerRepository
+import sqlalchemy as sa
+
+from hecatoncheir import db
 from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
+from hecatoncheir.repository import Repository
+from hecatoncheir.table import Table2
+
+global repo2
 
 
 def usage():
@@ -18,6 +24,7 @@ def usage():
 Usage: %s [options...] [repo file] [cmd] [args...]
 
 Commands:
+    init
     ls
     rm <db.schema.table>
 
@@ -29,19 +36,40 @@ Options:
 input_encoding = 'utf-8'
 
 
-def cmd_ls(repo):
-    for t in repo.get_table_list():
-        print(u'%s.%s.%s' % (t[0], t[1], t[2]))
+def cmd_init():
+    try:
+        repo2.create()
+    except sa.exc.OperationalError as ex:
+        log.error(ex)
+        return False
     return True
 
 
-def cmd_rm(repo, args):
-    for a in args:
-        tmp = a.split('.')
-        if len(tmp) != 3:
-            log.warning(_(u'Skipping `%s\'.') % a)
-            continue
-        repo.remove_table(tmp[0], tmp[1], tmp[2])
+def cmd_ls():
+    try:
+        for t in Table2.find():
+            print('%s.%s.%s' % (t.database_name, t.schema_name, t.table_name))
+    except Exception as ex:
+        log.error(ex)
+        return False
+    return True
+
+
+def cmd_rm(args):
+    try:
+        for a in args:
+            tmp = a.split('.')
+            if len(tmp) != 3:
+                log.warning(_(u'Skipping `%s\'.') % a)
+                continue
+            t = Table2.find(tmp[0], tmp[1], tmp[2])
+            if t:
+                t.destroy()
+            else:
+                log.warning(_(u"Table `%s' not found.") % a)
+    except Exception as ex:
+        log.error(ex)
+        return False
     return True
 
 if __name__ == "__main__":
@@ -70,15 +98,19 @@ if __name__ == "__main__":
         usage()
         sys.exit(1)
 
-    repo = DbProfilerRepository.DbProfilerRepository(args[0])
-    repo.open()
+    db.creds = {}
+    db.creds['use_sqlite'] = True
+    db.creds['dbname'] = args[0]
+    db.connect()
+    repo2 = Repository()
 
     args = [x.decode(input_encoding) for x in args]
     ret = False
-    if args[1] == 'ls':
-        ret = cmd_ls(repo)
+    if args[1] == 'init':
+        ret = cmd_init()
+    elif args[1] == 'ls':
+        ret = cmd_ls()
     elif args[1] == 'rm':
-        ret = cmd_rm(repo, args[2:])
+        ret = cmd_rm(args[2:])
 
-    repo.close()
     sys.exit(0 if ret else 1)
