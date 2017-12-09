@@ -411,11 +411,11 @@ INSERT INTO repo VALUES ('{0}','{1}','{2}',
         # Remove all tag id/label pairs to replace with new ones.
         tagid = "%s.%s.%s" % (tab['database_name'], tab['schema_name'],
                               tab['table_name'])
-        self.delete_tags(target=tagid)
-        if tab.get('tags'):
-            for label in tab['tags']:
-                if label:
-                    self.put_tag(Tag(label, tagid))
+        q = "DELETE FROM tags WHERE tag_id = '%s'" % tagid
+        self.engine.execute(q)
+        for tag in tab.get('tags', []):
+            q = "INSERT INTO tags (tag_id, tag_label) VALUES ('%s', '%s')" % (tagid, tag)
+            self.engine.execute(q)
 
         log.trace("append_table: end")
         return True
@@ -499,62 +499,6 @@ SELECT data
                 query=query, source=ex)
 
         return table_history
-
-    def get_tags(self, label=None, target=None):
-        assert isinstance(label, unicode) or label is None
-        assert isinstance(target, unicode) or target is None
-
-        tags = []
-        try:
-            where = u''
-            if label:
-                where = u"WHERE tag_label = '%s'" % label
-            elif target:
-                where = u"WHERE tag_id = '%s'" % target
-
-            query = u"SELECT tag_label,tag_id FROM tags %s" % where
-            for r in self.engine.execute(query):
-                tags.append(Tag(r[0], r[1]))
-        except Exception as ex:
-            raise InternalError("Could not get tags: " + str(ex),
-                                query=query, source=ex)
-        return tags
-
-    def delete_tags(self, label=None, target=None):
-        assert isinstance(label, unicode) or label is None
-        assert isinstance(target, unicode) or target is None
-
-        try:
-            where = u''
-            if label:
-                where = u"WHERE tag_label = '%s'" % label
-            elif target:
-                where = u"WHERE tag_id = '%s'" % target
-
-            query = u"DELETE FROM tags %s" % where
-            self.engine.execute(query)
-        except Exception as ex:
-            raise InternalError("Could not delete tags: " + str(ex),
-                                query=query, source=ex)
-        return True
-
-    def put_tag(self, tag):
-        assert isinstance(tag, Tag)
-
-        log.trace('put_tag: start %s %s' % (tag.target, tag.label))
-        try:
-            query = (u"DELETE FROM tags WHERE tag_id = '%s' "
-                     u"AND tag_label = '%s'" %
-                     (tag.target, tag.label))
-            self.engine.execute(query)
-            query = (u"INSERT INTO tags VALUES ('%s', '%s')" %
-                     (tag.target, tag.label))
-            self.engine.execute(query)
-        except Exception as ex:
-            raise InternalError("Could not register tag: " + str(ex),
-                                query=query, source=ex)
-        log.trace('put_tag: end')
-        return True
 
     def add_file(self, objtype, objid, filename):
         """Assign a file name to the object.

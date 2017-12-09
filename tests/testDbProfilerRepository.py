@@ -564,33 +564,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.has_table_record(t))
 
 
-    def test_put_tag_001(self):
-        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
-        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
-        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
-
-        # fail
-        with self.assertRaises(InternalError) as cm:
-            self.repo.put_tag(Tag(u'tag3', u'd.s.t2\''))
-        self.assertTrue(cm.exception.value.startswith("Could not register tag: "))
-
-    def test_get_tags_001(self):
-        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
-        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
-        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t')))
-
-        self.assertEqual(['tag1', 'tag2'], [x.label for x in self.repo.get_tags(target=u'd.s.t')])
-
-        self.assertTrue(self.repo.put_tag(Tag(u'tag3', u'd.s.t2')))
-
-        self.assertEqual(['tag1', 'tag2'], [x.label for x in self.repo.get_tags(target=u'd.s.t')])
-        self.assertEqual(['tag3'], [x.label for x in self.repo.get_tags(target=u'd.s.t2')])
-
-        # fail
-        with self.assertRaises(InternalError) as cm:
-            self.repo.get_tags(label=u'd.s.t2\'')
-        self.assertTrue(cm.exception.value.startswith("Could not get tags: "))
-
     def test_add_file_001(self):
         # tag1: 1st item
         self.assertTrue(self.repo.add_file('tag', 'tag1', 'file1.xls'))
@@ -653,36 +626,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual([u'table1.xls'], self.repo.get_files('table', 'TABLE1'))
         self.assertTrue(self.repo.delete_files('table', 'TABLE1'))
         self.assertEqual([], self.repo.get_files('table', 'TABLE1'))
-
-    def test_get_tags_002(self):
-        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
-        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t2')))
-
-        self.assertEqual(['d.s.t', 'd.s.t2'], [x.target for x in self.repo.get_tags(label=u'tag1')])
-
-        self.assertTrue(self.repo.put_tag(Tag(u'tag2', u'd.s.t3')))
-        self.assertEqual(['d.s.t', 'd.s.t2'], [x.target for x in self.repo.get_tags(label=u'tag1')])
-        self.assertEqual(['d.s.t3'], [x.target for x in self.repo.get_tags(label=u'tag2')])
-
-        # fail
-        with self.assertRaises(InternalError) as cm:
-            self.repo.get_tags(target=u'tag2\'')
-        self.assertTrue(cm.exception.value.startswith("Could not get tags: "))
-
-    def test_delete_tags_001(self):
-        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t')))
-        self.assertTrue(self.repo.put_tag(Tag(u'tag1', u'd.s.t2')))
-
-        self.assertEqual(['d.s.t', 'd.s.t2'], [x.target for x in self.repo.get_tags(label=u'tag1')])
-
-        self.assertTrue(self.repo.delete_tags(target=u'd.s.t2'))
-
-        self.assertEqual(['d.s.t'], [x.target for x in self.repo.get_tags(label=u'tag1')])
-
-        # fail
-        with self.assertRaises(InternalError) as cm:
-            self.repo.delete_tags(target=u'tag2\'')
-        self.assertTrue(cm.exception.value.startswith("Could not delete tags: "))
 
     def test_put_textelement_001(self):
         self.assertTrue(self.repo.put_textelement('id1', 'elem1'))
