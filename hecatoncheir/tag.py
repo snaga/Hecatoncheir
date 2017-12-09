@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import unittest
 
@@ -8,6 +10,10 @@ import db
 
 class Tag2:
     def __init__(self, label, description=None, comment=None, num_of_tables=0):
+        assert isinstance(label, unicode)
+        assert isinstance(description, unicode) or description is None
+        assert isinstance(comment, unicode) or comment is None
+
         self.label = label
         self.description = description
         self.comment = comment
@@ -23,19 +29,24 @@ class Tag2:
 
     @staticmethod
     def create(label, description=None, comment=None):
+        assert isinstance(label, unicode)
+        assert isinstance(description, unicode) or description is None
+        assert isinstance(comment, unicode) or comment is None
+
         if not description:
             description = ''
         if not comment:
             comment = ''
 
-        q = "INSERT INTO tags2 VALUES ('{0}','{1}','{2}')".format(label, description, comment)
+        q = u"INSERT INTO tags2 VALUES ('{0}','{1}','{2}')".format(label, description, comment)
         db.conn.execute(q)
 
         return Tag2(label, description, comment)
 
     @staticmethod
     def find(label):
-        q = "SELECT description, comment FROM tags2 WHERE label = '{0}'".format(label)
+        assert isinstance(label, unicode)
+        q = u"SELECT description, comment FROM tags2 WHERE label = '{0}'".format(label)
         rs = db.conn.execute(q)
         r = rs.fetchone()
         if not r:
@@ -44,7 +55,7 @@ class Tag2:
         comment = r[1]
 
         # Getting a number of tables with the tag label
-        q = "SELECT count(*) FROM tags WHERE tag_label = '{0}'".format(label)
+        q = u"SELECT count(*) FROM tags WHERE tag_label = '{0}'".format(label)
         rs = db.conn.execute(q)
         r = rs.fetchone()
 
@@ -53,13 +64,17 @@ class Tag2:
     @staticmethod
     def findall():
         tags = []
-        rs = db.conn.execute("SELECT label,description,comment FROM tags2 ORDER BY label")
+        rs = db.conn.execute(u"SELECT label,description,comment FROM tags2 ORDER BY label")
         for r in rs.fetchall():
             tags.append(Tag2(r[0], r[1], r[2]))
         return tags
 
     def update(self):
-        q = """
+        assert isinstance(self.label, unicode)
+        assert isinstance(self.description, unicode) or self.description is None
+        assert isinstance(self.comment, unicode) or self.comment is None
+
+        q = u"""
 UPDATE tags2
    SET description = '{1}',
        comment = '{2}'
@@ -71,7 +86,9 @@ UPDATE tags2
         return True
 
     def destroy(self):
-        q = "DELETE FROM tags2 WHERE label = '{0}'".format(self.label)
+        assert isinstance(self.label, unicode)
+
+        q = u"DELETE FROM tags2 WHERE label = '{0}'".format(self.label)
 
         db.conn.execute(q)
 
@@ -101,42 +118,50 @@ class TestTag2(unittest.TestCase):
         db.conn.close()
 
     def test_create_001(self):
-        t = Tag2.create('l', 'd', 'c')
+        t = Tag2.create(u'l', u'd', u'c')
         self.assertEqual('l', t.label)
         self.assertEqual('d', t.description)
         self.assertEqual('c', t.comment)
 
-        t = Tag2.create('l2', 'd2', 'c2')
-        self.assertEqual('l2', t.label)
-        self.assertEqual('d2', t.description)
-        self.assertEqual('c2', t.comment)
+        # unicode characters
+        t = Tag2.create(u'タグ', u'説明', u'コメント')
+        self.assertEqual(u'タグ', t.label)
+        self.assertEqual(u'説明', t.description)
+        self.assertEqual(u'コメント', t.comment)
 
     def test_create_002(self):
-        t = Tag2.create('l', 'd', 'c')
+        t = Tag2.create(u'l', u'd', u'c')
 
         with self.assertRaises(sa.exc.IntegrityError) as cm:
-            t = Tag2.create('l', 'd', 'c')
+            t = Tag2.create(u'l', u'd', u'c')
         self.assertTrue(str(cm.exception).startswith('(psycopg2.IntegrityError) duplicate key value violates unique constraint "tags2_pkey"'))
 
     def test_find_001(self):
-        Tag2.create('l', 'd', 'c')
+        Tag2.create(u'l', u'd', u'c')
 
-        t = Tag2.find('l')
+        t = Tag2.find(u'l')
         self.assertEqual('l', t.label)
         self.assertEqual('d', t.description)
         self.assertEqual('c', t.comment)
 
-    def test_find_002(self):
-        Tag2.create('l', 'd', 'c')
+        # unicode characters
+        Tag2.create(u'タグ', u'説明', u'コメント')
+        t = Tag2.find(u'タグ')
+        self.assertEqual(u'タグ', t.label)
+        self.assertEqual(u'説明', t.description)
+        self.assertEqual(u'コメント', t.comment)
 
-        t = Tag2.find('l2')
+    def test_find_002(self):
+        Tag2.create(u'l', u'd', u'c')
+
+        t = Tag2.find(u'l2')
         self.assertIsNone(t)
 
     def test_find_003(self):
-        Tag2.create('l', 'd', 'c')
+        Tag2.create(u'l', u'd', u'c')
 
         # Get a number of tables of the tag 'l'
-        t = Tag2.find('l')
+        t = Tag2.find(u'l')
         self.assertEquals(0, t.num_of_tables)
 
         # Create a new table record with a tag 'l'
@@ -146,11 +171,11 @@ class TestTag2(unittest.TestCase):
         t.update()
         
         # Get a number of tables of the tag 'l' again
-        t = Tag2.find('l')
+        t = Tag2.find(u'l')
         self.assertEquals(1, t.num_of_tables)
 
     def test_findall_001(self):
-        Tag2.create('l', 'd', 'c')
+        Tag2.create(u'l', u'd', u'c')
 
         t = Tag2.findall()
         self.assertEqual(1, len(t))
@@ -158,43 +183,48 @@ class TestTag2(unittest.TestCase):
         self.assertEqual('d', t[0].description)
         self.assertEqual('c', t[0].comment)
 
-        Tag2.create('l2', 'd2', 'c2')
+        Tag2.create(u'タグ', u'説明', u'コメント')
 
         t = Tag2.findall()
         self.assertEqual(2, len(t))
         self.assertEqual('l', t[0].label)
         self.assertEqual('d', t[0].description)
         self.assertEqual('c', t[0].comment)
-        self.assertEqual('l2', t[1].label)
-        self.assertEqual('d2', t[1].description)
-        self.assertEqual('c2', t[1].comment)
+        self.assertEqual(u'タグ', t[1].label)
+        self.assertEqual(u'説明', t[1].description)
+        self.assertEqual(u'コメント', t[1].comment)
 
     def test_update_001(self):
-        t = Tag2.create('l', 'd', 'c')
+        Tag2.create(u'l', u'd', u'c')
+        t = Tag2.find(u'l')
 
-        t.description = 'd2'
-        t.comment = 'c2'
+        # unicode characters
+        t.description = u'タグ'
+        t.comment = u'コメント'
 
         t.update()
 
-        t2 = Tag2.find('l')
+        t2 = Tag2.find(u'l')
         self.assertEqual('l', t2.label)
-        self.assertEqual('d2', t2.description)
-        self.assertEqual('c2', t2.comment)
+        self.assertEqual(u'タグ', t2.description)
+        self.assertEqual(u'コメント', t2.comment)
 
     def test_destroy_001(self):
-        Tag2.create('l', 'd', 'c')
-        Tag2.create('l2', 'd2', 'c2')
+        Tag2.create(u'l', u'd', u'c')
+        Tag2.create(u'タグ', u'説明', u'コメント')
 
-        t = Tag2.find('l')
+        t = Tag2.find(u'l')
         self.assertIsNotNone(t)
-        self.assertIsNotNone(Tag2.find('l2'))
+        self.assertIsNotNone(Tag2.find(u'タグ'))
 
         t.destroy()
 
-        self.assertIsNone(Tag2.find('l'))
-        self.assertIsNotNone(Tag2.find('l2'))
+        self.assertIsNone(Tag2.find(u'l'))
+        self.assertIsNotNone(Tag2.find(u'タグ'))
 
+        t = Tag2.find(u'タグ')
+        t.destroy()
+        self.assertIsNone(Tag2.find(u'タグ'))
 
 if __name__ == '__main__':
     unittest.main()
