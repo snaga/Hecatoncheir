@@ -45,7 +45,7 @@ class TestDbProfilerExp(unittest.TestCase):
         self.assertEqual((u'a', u'b', u'c'), DbProfilerExp.parse_table_name(u'a.b.c'))
 
     def test_get_schema_ordered_list_001(self):
-        t = [Schema2('d1', 's1', description='desc1', num_of_tables=1),
+        t = [Schema2('d1', 's1', description=u'desc1', num_of_tables=1),
              Schema2('d2', 's2', num_of_tables=1),
              Schema2('d3', 's3', num_of_tables=1),
              Schema2('d4', 's4', num_of_tables=1),
@@ -63,11 +63,11 @@ class TestDbProfilerExp(unittest.TestCase):
         self.assertEqual(g2, DbProfilerExp.get_schema_ordered_list([u's5', u's3'], t))
 
     def test_get_tag_ordered_list_001(self):
-        t = [Tag2('s1', num_of_tables=1),
-             Tag2('s2', num_of_tables=1),
-             Tag2('s3', num_of_tables=1),
-             Tag2('s4', num_of_tables=1),
-             Tag2('s5', num_of_tables=1)]
+        t = [Tag2(u's1', num_of_tables=1),
+             Tag2(u's2', num_of_tables=1),
+             Tag2(u's3', num_of_tables=1),
+             Tag2(u's4', num_of_tables=1),
+             Tag2(u's5', num_of_tables=1)]
         g = [['s1', 1, None], ['s2', 1, None], ['s3', 1, None], ['s4', 1, None], ['s5', 1, None]]
 
         self.assertEqual(g, DbProfilerExp.get_tag_ordered_list(None, t))
@@ -89,7 +89,11 @@ class TestDbProfilerExp(unittest.TestCase):
         t['columns'] = []
         t['tags'] = [u'tag1', u'tag2']
 
+        db.dump_table('repo')
+        db.dump_table('tags2')
         self.assertTrue(self.repo.append_table(t))
+        db.dump_table('repo')
+        db.dump_table('tags2')
 
         table_list = [(x.database_name, x.schema_name, x.table_name)
                       for x in Table2.find()]

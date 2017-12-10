@@ -216,7 +216,8 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         files = (repo.get_files('tag', tag) if
                  repo.get_files('tag', tag) else [])
         tmp = Tag2.find(tag)
-        assert tmp
+        if not tmp:
+            tmp = Tag2(tag)
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_tag[tag],
                 comment=tmp.comment,

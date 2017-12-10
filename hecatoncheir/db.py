@@ -37,6 +37,17 @@ def version():
     for r in rs:
         return r[0]
 
+def dump_table(table):
+    """
+    Utility function for testing purpose.
+    """
+    rs = conn.execute('SELECT * FROM %s' % table)
+    found = False
+    for r in rs:
+        print('[%s] ' % table + ','.join(r).replace('\n', '\\n'))
+        found = True
+    if not found:
+        print('[%s] No record.' % table)
 
 class TestTag2(unittest.TestCase):
     def setUp(self):
