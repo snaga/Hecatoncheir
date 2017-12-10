@@ -14,6 +14,7 @@ from hecatoncheir import logger as log
 from hecatoncheir.DbProfilerExp import export_csv, export_html
 from hecatoncheir.msgutil import gettext as _
 from hecatoncheir.repository import Repository
+from hecatoncheir.table import Table2
 
 
 def usage():

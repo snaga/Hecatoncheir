@@ -17,6 +17,7 @@ import logger as log
 from CSVUtils import list2csv
 from msgutil import gettext as _
 from schema import Schema2
+from table import Table2
 from tag import Tag2
 
 

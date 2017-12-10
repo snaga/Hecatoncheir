@@ -68,7 +68,10 @@ SELECT database_name,
         q = "DELETE FROM tags WHERE tag_id = '%s'" % tagid
         db.conn.execute(q)
 
-        for tag in self.data.get('tags', []):
+        if not self.data.get('tags'):
+            return
+
+        for tag in self.data.get('tags'):
             q = "INSERT INTO tags (tag_id, tag_label) VALUES ('%s', '%s')" % (tagid, tag)
             db.conn.execute(q)
 

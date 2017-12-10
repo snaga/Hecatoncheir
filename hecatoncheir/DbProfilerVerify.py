@@ -9,6 +9,7 @@ import sys
 import DbProfilerRepository
 import logger as log
 from msgutil import gettext as _
+from table import Table2
 
 
 def verify_column(col):
