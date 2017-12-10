@@ -143,7 +143,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         database_name = tab[0]
         schema_name = tab[1]
         table_name = tab[2]
-        data = repo.get_table(database_name, schema_name, table_name)
+        data = Table2.find(database_name, schema_name, table_name)[0].data
         dmentries = repo.get_datamap_items(database_name, schema_name,
                                            table_name)
         files = (repo.get_files('table', '.'.join(tab[0:3])) if
@@ -296,7 +296,7 @@ def export_json(repo, tables=[], output_path='./json'):
             database_name = tab[0]
             schema_name = tab[1]
             table_name = tab[2]
-            data = repo.get_table(database_name, schema_name, table_name)
+            data = Table2.find(database_name, schema_name, table_name)[0].data
             json_data.append(data)
         f.write(json.dumps(json_data, indent=2).encode('utf-8'))
         f.close()

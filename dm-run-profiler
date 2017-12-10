@@ -17,6 +17,7 @@ from hecatoncheir import logger as log
 from hecatoncheir.exception import (DbProfilerException, DriverError,
                                     InternalError, QueryError, QueryTimeout)
 from hecatoncheir.msgutil import gettext as _
+from hecatoncheir.table import Table2
 
 
 def usage():
@@ -360,8 +361,9 @@ if __name__ == "__main__":
             continue
 
         # copy nls_name and comment from previous record.
-        prevdata = repo.get_table(dbname, t[0], t[1])
-        DbProfilerBase.migrate_table_meta(prevdata, newdata)
+        t = Table2.find(dbname, t[0], t[1])
+        if len(t) == 1:
+            DbProfilerBase.migrate_table_meta(t[0].data, newdata)
         try:
             repo.append_table(newdata)
         except InternalError as ex:

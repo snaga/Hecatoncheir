@@ -62,10 +62,11 @@ class DbProfilerVerify():
         valid = 0
         invalid = 0
         for t in table_list:
-            table = repo.get_table(t[0], t[1], t[2])
-            if not table:
+            tmp = Table2.find(t[0], t[1], t[2])
+            if len(tmp) == 0:
                 log.error(_("%s.%s not found.") % (t[1], t[2]))
                 continue
+            table = tmp[0].data
             v, i = verify_table(table)
             if self.verbose:
                 log.info(self.verify_msg(t, v, i))

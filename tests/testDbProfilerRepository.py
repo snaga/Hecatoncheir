@@ -10,6 +10,7 @@ sys.path.append('..')
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir.exception import InternalError
 from hecatoncheir.metadata import Tag, TagDesc, SchemaDesc
+from hecatoncheir.table import Table2
 
 class TestDbProfilerRepository(unittest.TestCase):
     repo = None
@@ -145,40 +146,11 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t))
 
-        t = self.repo.get_table('test_database', 'test_schema', 'test_table')
+        t = Table2.find('test_database', 'test_schema', 'test_table')[0].data
         self.assertEqual(['tag1', 'tag2'], t['tags'])
 
-        t = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        t = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
         self.assertEqual(['tag2', 'tag3'], t['tags'])
-
-    def testGet_table_001(self):
-        tab = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        self.assertIsNone(tab)
-
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
-
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:40.653836'
-        self.assertTrue(self.repo.append_table(t))
-
-        tab = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        self.assertEqual('test_database', tab['database_name'])
-        self.assertEqual('test_schema', tab['schema_name'])
-        self.assertEqual('test_table', tab['table_name'])
-        self.assertEqual('2016-04-27T10:06:41.653836', tab['timestamp'])
-
-        # fail with query error
-        with self.assertRaises(InternalError) as cm:
-            self.repo.get_table('test\'_database', 'test_schema', 'test_table')
-        self.assertTrue(cm.exception.value.startswith("Could not get table data: "))
 
     def testSet_001(self):
         t = {}
@@ -217,54 +189,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEqual('test_schema', d2[0]['schema_name'])
         self.assertEqual('test_table', d2[0]['table_name'])
         self.assertEqual('2016-04-27T10:06:41.653836', d2[0]['timestamp'])
-
-    def testGet_table_002(self):
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-
-        self.assertTrue(self.repo.append_table(t))
-
-        t2 = self.repo.get_table('nosuchdatabase', 'test_schema', 'test_table')
-        self.assertIsNone(t2)
-
-        t2 = self.repo.get_table('test_database', 'nosuchschema', 'test_table')
-        self.assertIsNone(t2)
-
-        t2 = self.repo.get_table('test_database', 'test_schema', 'nosuchtable')
-        self.assertIsNone(t2)
-
-    def testGet_table_003(self):
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
-
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-28T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
-
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-26T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
-
-        t2 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-
-        self.assertIsNotNone(t2)
-        self.assertEqual('test_database', t2['database_name'])
-        self.assertEqual('test_schema', t2['schema_name'])
-        self.assertEqual('test_table', t2['table_name'])
-        self.assertEqual('2016-04-28T10:06:41.653836', t2['timestamp']) # latest entry
 
     def testGet_table_history_001(self):
         t = {}
@@ -493,8 +417,8 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.put_table_fk('test_database', 'test_schema', 'test_table', 'c1',
                                                'test_database', 'test_schema', 'test_table2', 'c1'))
 
-        tab1 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        tab2 = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
+        tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
 #        print(tab1)
 #        print(tab2)
 
@@ -505,8 +429,8 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertTrue(self.repo.put_table_fk('test_database', 'test_schema', 'test_table', 'c2',
                                                'test_database', 'test_schema', 'test_table2', 'c1', guess=True))
 
-        tab1 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        tab2 = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
+        tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
 #        print(tab1)
 #        print(tab2)
 
@@ -540,16 +464,16 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t2))
 
-        tab1 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        tab2 = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
+        tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
         self.assertEqual(['test_schema.test_table2.c1'], tab1['columns'][0]['fk'])
         self.assertEqual(['test_schema.test_table.c1'], tab2['columns'][0]['fk_ref'])
 
         self.assertTrue(self.repo.remove_table_fk('test_database', 'test_schema', 'test_table', 'c1',
                                                'test_database', 'test_schema', 'test_table2', 'c1'))
 
-        tab1 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        tab2 = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
+        tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
         self.assertEqual([], tab1['columns'][0]['fk'])
         self.assertEqual([], tab2['columns'][0]['fk_ref'])
 
@@ -579,24 +503,24 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t2))
 
-        tab1 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        tab2 = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
+        tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
         self.assertEqual(['test_schema.test_table2.c1'], tab1['columns'][0]['fk'])
         self.assertEqual(['test_schema.test_table.c1'], tab2['columns'][0]['fk_ref'])
 
         # clear table t1.
         self.assertTrue(self.repo.clear_table_fk('test_database', 'test_schema', 'test_table', 'c1'))
 
-        tab1 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        tab2 = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
+        tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
         self.assertEqual([], tab1['columns'][0]['fk'])
         self.assertEqual(['test_schema.test_table.c1'], tab2['columns'][0]['fk_ref'])
 
         # clear table t2.
         self.assertTrue(self.repo.clear_table_fk('test_database', 'test_schema', 'test_table2', 'c1'))
 
-        tab1 = self.repo.get_table('test_database', 'test_schema', 'test_table')
-        tab2 = self.repo.get_table('test_database', 'test_schema', 'test_table2')
+        tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
+        tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
         self.assertEqual([], tab1['columns'][0]['fk'])
         self.assertEqual([], tab2['columns'][0]['fk_ref'])
 

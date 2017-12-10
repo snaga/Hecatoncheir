@@ -50,13 +50,9 @@ def index():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = [(x.database_name, x.schema_name, x.table_name)
-                  for x in Table2.find()]
-
     tables_all = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables_all.append(tab)
+    for tab in Table2.find():
+        tables_all.append(tab.data)
     schemas = []
     for s in Schema2.findall():
         # [dbname,schemaname,num_of_tables,desc]
@@ -88,13 +84,9 @@ def index_tags():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = [(x.database_name, x.schema_name, x.table_name)
-                  for x in Table2.find()]
-
     tables_all = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables_all.append(tab)
+    for tab in Table2.find():
+        tables_all.append(tab.data)
     tags = []
     for tag in Tag2.findall():
         tags.append([tag.label, tag.num_of_tables, tag.description])
@@ -117,13 +109,9 @@ def index_schemas():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = [(x.database_name, x.schema_name, x.table_name)
-                  for x in Table2.find()]
-
     tables_all = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables_all.append(tab)
+    for tab in Table2.find():
+        tables_all.append(tab.data)
 
     # [[dbname, schema, num_of_tables, desc], [dbname, schema, num_of_tables, desc], ...]
     schemas = []
@@ -151,11 +139,8 @@ def index_schema(db, schema):
 
     s = Schema2.find(db, schema)
     tables = []
-    for t in Table2.find(database_name=db, schema_name=schema):
-        tab = repo.get_table(t.database_name,
-                             t.schema_name,
-                             t.table_name)
-        tables.append(tab)
+    for tab in Table2.find(database_name=db, schema_name=schema):
+        tables.append(tab.data)
 
     html = DbProfilerFormatter.to_index_html(
         tables,
@@ -174,13 +159,9 @@ def index_tag(tag):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = [(x.database_name, x.schema_name, x.table_name)
-                  for x in Table2.find(tag=tag)]
-
     tables = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables.append(tab)
+    for tab in Table2.find(tag=tag):
+        tables.append(tab.data)
 
     t = Tag2.find(tag)
     assert t
@@ -201,12 +182,9 @@ def index_validation(status):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = [(x.database_name, x.schema_name, x.table_name)
-                  for x in Table2.find()]
-
     tables = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
+    for t in Table2.find():
+        tab = t.data
         (valid, invalid) = DbProfilerVerify.verify_table(tab)
         if status == 'invalid' and invalid > 0:
             tables.append(tab)
@@ -227,7 +205,7 @@ def table(db, schema, table):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_data = repo.get_table(db, schema, table)
+    table_data = Table2.find(db, schema, table)[0].data
     datamap = repo.get_datamap_items(db, schema, table)
     validation_rules = repo.get_validation_rules(db, schema, table)
     html = DbProfilerFormatter.to_table_html(table_data,
@@ -275,7 +253,7 @@ def staticfile(filename, dir1=None, dir2=None):
 @app.route("/api/metadata/<db>.<schema>.<table>")
 def api_metadata(db, schema, table):
     repo = open_repo()
-    data = repo.get_table(db, schema, table)
+    data = Table2.find(db, schema, table)[0].data
     repo.close()
 
     return json.dumps(data, indent=2)
@@ -285,7 +263,7 @@ def api_metadata(db, schema, table):
            methods=['GET', 'POST'])
 def api_table_owner(db, schema, table):
     repo = open_repo()
-    data = repo.get_table(db, schema, table)
+    data = Table2.find(db, schema, table)[0].data
     if request.method == 'POST':
         data['owner'] = request.form['owner']
         data['comment'] = request.form['comment']
@@ -312,7 +290,7 @@ def api_table_owner(db, schema, table):
            methods=['GET', 'POST'])
 def api_column_comment(db, schema, table, column):
     repo = open_repo()
-    data = repo.get_table(db, schema, table)
+    data = Table2.find(db, schema, table)[0].data
     col = None
     for c in data['columns']:
         if c['column_name'] == column:

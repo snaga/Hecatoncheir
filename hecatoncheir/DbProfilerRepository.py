@@ -190,30 +190,6 @@ SELECT COUNT(*)
         log.trace("append_table: end")
         return True
 
-    def get_table(self, database_name, schema_name, table_name):
-        """
-        Get a table record from the repository by object name.
-
-        Args:
-            database_name(str): database name
-            schema_name(str):   schema name
-            table_name(str):    table name
-
-        Returns:
-            a dictionary of table record. {table_record}
-        """
-        assert database_name and schema_name and table_name
-
-        try:
-            t = Table2.find(database_name, schema_name, table_name)
-        except sa.exc.OperationalError as ex:
-            raise InternalError('Could not get table data: ' + str(ex))
-        if not t:
-            return None
-        assert t and len(t) == 1
-
-        return t[0].data
-
     def get_table_history(self, database_name, schema_name, table_name):
         """
         Get a table record history from the repository by object name,
@@ -492,9 +468,10 @@ INSERT INTO datamapping (
 
         ret = False
 
-        tab1 = self.get_table(database_name1, schema_name1, table_name1)
-        if tab1 is None:
+        t = Table2.find(database_name1, schema_name1, table_name1)
+        if len(t) == 0:
             return False
+        tab1 = t[0].data
 
         fk = '%s.%s.%s' % (schema_name2, table_name2, column_name2)
         if guess:
@@ -512,9 +489,10 @@ INSERT INTO datamapping (
 
         self.append_table(tab1)
 
-        tab2 = self.get_table(database_name2, schema_name2, table_name2)
-        if tab2 is None:
+        t = Table2.find(database_name2, schema_name2, table_name2)
+        if len(t) == 0:
             return False
+        tab2 = t[0].data
 
         fk_ref = '%s.%s.%s' % (schema_name1, table_name1, column_name1)
         if guess:
@@ -548,9 +526,10 @@ INSERT INTO datamapping (
 
         ret = False
 
-        tab1 = self.get_table(database_name1, schema_name1, table_name1)
-        if tab1 is None:
+        t = Table2.find(database_name1, schema_name1, table_name1)
+        if len(t) == 0:
             return False
+        tab1 = t[0].data
 
         fk = '%s.%s.%s' % (schema_name2, table_name2, column_name2)
         for col in tab1['columns']:
@@ -564,9 +543,10 @@ INSERT INTO datamapping (
 
         self.append_table(tab1)
 
-        tab2 = self.get_table(database_name2, schema_name2, table_name2)
-        if tab2 is None:
+        t = Table2.find(database_name2, schema_name2, table_name2)
+        if len(t) == 0:
             return False
+        tab2 = t[0].data
 
         fk_ref = '%s.%s.%s' % (schema_name1, table_name1, column_name1)
         for col in tab2['columns']:
@@ -590,9 +570,10 @@ INSERT INTO datamapping (
         """
         ret = False
 
-        tab = self.get_table(database_name, schema_name, table_name)
-        if tab is None:
+        t = Table2.find(database_name, schema_name, table_name)
+        if len(t) == 0:
             return False
+        tab = t[0].data
 
         for col in tab['columns']:
             if col['column_name'] == column_name:
