@@ -10,6 +10,7 @@ sys.path.append('..')
 from hecatoncheir import DbProfilerExp, DbProfilerRepository
 from hecatoncheir import db
 from hecatoncheir.repository import Repository
+from hecatoncheir.table import Table2
 from hecatoncheir.tag import Tag2
 from hecatoncheir.schema import Schema2
 from hecatoncheir.DbProfilerExp import export_html
@@ -90,7 +91,8 @@ class TestDbProfilerExp(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',
@@ -108,7 +110,8 @@ class TestDbProfilerExp(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',
@@ -139,7 +142,8 @@ class TestDbProfilerExp(unittest.TestCase):
         t['schema_name'] = u'test_schema7'
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',
@@ -161,7 +165,8 @@ class TestDbProfilerExp(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         # test for tag ordering on the global index page.
         self.assertTrue(export_html(self.repo, tables=table_list, tags=[u'tag7',u'tag6',u'tag5',u'tag4',u'tag3',u'tag2'], schemas=None,
@@ -217,7 +222,8 @@ class TestDbProfilerExp(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',

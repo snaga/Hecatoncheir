@@ -340,45 +340,6 @@ SELECT data
         log.trace('delete_textelement: end')
         return True
 
-    def get_table_list(self, database_name=None, schema_name=None,
-                       table_name=None, tag=None):
-        table_list = []
-
-        cond = []
-        if database_name:
-            cond.append("database_name = '%s'" % database_name)
-        if schema_name:
-            cond.append("schema_name = '%s'" % schema_name)
-        if table_name:
-            cond.append("table_name = '%s'" % table_name)
-        where = "WHERE (%s)" % " AND ".join(cond) if cond else ''
-
-        query = """
-SELECT database_name, schema_name, table_name, data
-  FROM repo
-{0}
- ORDER BY database_name, schema_name, table_name, created_at DESC
-""".format(where)
-
-        log.trace("get_table_list: query = %s" % query)
-
-        try:
-            for r in db.engine.execute(query):
-                found = False
-                data = json.loads(r[3])
-                if tag:
-                    if data.get('tags') and tag in data.get('tags'):
-                        found = True
-                else:
-                    found = True
-                if found and [r[0], r[1], r[2]] not in table_list:
-                    table_list.append([r[0], r[1], r[2]])
-        except Exception as ex:
-            log.error(_("Could not get data."), detail=unicode(ex))
-            return None
-
-        return table_list
-
     def merge(self, data1, data2):
         if data1 is None:
             return data2

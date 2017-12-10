@@ -127,8 +127,9 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
             n = parse_table_name(a)
             if not n[0] and not n[1] and not n[2]:
                 continue
-            table_list = repo.get_table_list(n[0], n[1], n[2])
-            asset_names[a] = ['.'.join(x) for x in table_list]
+            table_list = Table2.find(n[0], n[1], n[2])
+            asset_names[a] = ['%s.%s.%s' % (x.database_name, x.schema_name, x.table_name)
+                              for x in table_list]
         t['assigned_assets2'] = asset_names
         terms.append(t)
 

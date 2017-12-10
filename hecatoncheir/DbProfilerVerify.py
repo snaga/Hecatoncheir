@@ -56,7 +56,8 @@ class DbProfilerVerify():
         log.info(_("Verifying the validation results."))
 
         if not table_list:
-            table_list = repo.get_table_list()
+            table_list = [(x.database_name, x.schema_name, x.table_name)
+                          for x in Table2.find()]
         valid = 0
         invalid = 0
         for t in table_list:

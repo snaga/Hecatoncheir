@@ -50,7 +50,8 @@ def index():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
+    table_list = [(x.database_name, x.schema_name, x.table_name)
+                  for x in Table2.find()]
 
     tables_all = []
     for t in table_list:
@@ -87,7 +88,8 @@ def index_tags():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
+    table_list = [(x.database_name, x.schema_name, x.table_name)
+                  for x in Table2.find()]
 
     tables_all = []
     for t in table_list:
@@ -115,7 +117,8 @@ def index_schemas():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
+    table_list = [(x.database_name, x.schema_name, x.table_name)
+                  for x in Table2.find()]
 
     tables_all = []
     for t in table_list:
@@ -171,7 +174,8 @@ def index_tag(tag):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list(tag=tag)
+    table_list = [(x.database_name, x.schema_name, x.table_name)
+                  for x in Table2.find(tag=tag)]
 
     tables = []
     for t in table_list:
@@ -197,7 +201,8 @@ def index_validation(status):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
+    table_list = [(x.database_name, x.schema_name, x.table_name)
+                  for x in Table2.find()]
 
     tables = []
     for t in table_list:

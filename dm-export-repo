@@ -109,7 +109,8 @@ if __name__ == "__main__":
     db.creds['dbname'] = input_file
     repo2 = Repository()
 
-    table_list = repo.get_table_list()
+    table_list = [(x.database_name, x.schema_name, x.table_name)
+                  for x in Table2.find()]
 
     if format == 'html':
         try:
