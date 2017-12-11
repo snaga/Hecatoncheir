@@ -228,57 +228,6 @@ SELECT data
 
         return table_history
 
-    def add_file(self, objtype, objid, filename):
-        """Assign a file name to the object.
-
-        Args:
-            objtype(str): object type ['tag','schema','table']
-            objid(str): object identifier
-            filename(str): a file name or a file path.
-
-        Returns:
-            bool: True if succeeded or the file already exists.
-        """
-        if objtype not in ['tag', 'schema', 'table']:
-            raise InternalError('invalid object type: %s' % objtype)
-
-        if filename in self.get_files(objtype, objid):
-            return True
-        id_ = u'%s:%s' % (objtype, objid)
-        return self.put_textelement(id_, filename)
-
-    def get_files(self, objtype, objid):
-        """Get file names assigned to the object.
-
-        Args:
-            objtype(str): object type ['tag','schema','table']
-            objid(str): object identifier
-
-        Returns:
-            list: a list of file names.
-        """
-        if objtype not in ['tag', 'schema', 'table']:
-            raise InternalError('invalid object type: %s' % objtype)
-
-        id_ = u'%s:%s' % (objtype, objid)
-        return self.get_textelements(id_)
-
-    def delete_files(self, objtype, objid):
-        """Remove file names associated to the object.
-
-        Args:
-            objtype(str): object type ['tag','schema','table']
-            objid(str): object identifier
-
-        Returns:
-            bool: True if succeeded.
-        """
-        if objtype not in ['tag', 'schema', 'table']:
-            raise InternalError('invalid object type: %s' % objtype)
-
-        id_ = u'%s:%s' % (objtype, objid)
-        return self.delete_textelement(id_)
-
     def put_textelement(self, id_, text):
         log.trace('put_textelement: start')
         try:

@@ -136,6 +136,15 @@ CREATE TABLE schemas2 (
 );
 """)
 
+        db.conn.execute("""
+create table attachments (
+  objid text not null,
+  objtype text not null,
+  filename text not null,
+  primary key (objid, filename)
+);
+""")
+
     def destroy(self):
         self.drop_table('repo')
         self.drop_table('datamapping')
@@ -145,6 +154,7 @@ CREATE TABLE schemas2 (
         self.drop_table('textelement')
         self.drop_table('tags2')
         self.drop_table('schemas2')
+        self.drop_table('attachments')
 
     def drop_table(self, table_name):
         query = 'drop table if exists {0}'.format(table_name)

@@ -16,6 +16,7 @@ import DbProfilerVerify
 import logger as log
 from CSVUtils import list2csv
 from msgutil import gettext as _
+from attachment import Attachment
 from schema import Schema2
 from table import Table2
 from tag import Tag2
@@ -146,8 +147,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         data = Table2.find(database_name, schema_name, table_name)[0].data
         dmentries = repo.get_datamap_items(database_name, schema_name,
                                            table_name)
-        files = (repo.get_files('table', '.'.join(tab[0:3])) if
-                 repo.get_files('table', '.'.join(tab[0:3])) else [])
+        files = Attachment.find('.'.join(tab[0:3]), 'table')
 
         filename = output_path + ("/%s.%s.%s.html" %
                                   (database_name, schema_name, table_name))
@@ -198,8 +198,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     for schema in tables_by_schema:
         d, s = schema.split('.')
         filename = output_path + "/%s.html" % schema
-        files = (repo.get_files('schema', schema) if
-                 repo.get_files('schema', schema) else [])
+        files = Attachment.find(schema, 'schema')
         ss = Schema2.find(d, s)
         desc = ss.description
         export_file(filename, DbProfilerFormatter.to_index_html(
@@ -214,8 +213,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     # create index page for each tag from the tag dict
     for tag in tables_by_tag:
         filename = output_path + "/tag-%s.html" % tag
-        files = (repo.get_files('tag', tag) if
-                 repo.get_files('tag', tag) else [])
+        files = Attachment.find(tag, 'tag')
         tmp = Tag2.find(tag)
         if not tmp:
             tmp = Tag2(tag)

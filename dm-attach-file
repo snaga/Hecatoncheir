@@ -9,6 +9,7 @@ import sys
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
+from hecatoncheir.attachment import Attachment
 
 input_encoding = 'utf-8'
 
@@ -114,7 +115,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         try:
-            repo.add_file(objtype, objid, os.path.basename(filename))
+            Attachment.create(objid, objtype, os.path.basename(filename))
         except Exception as e:
             log.error(_("Could not add file name to the repository. "
                         "Abort."), detail=str(e))
@@ -123,7 +124,7 @@ if __name__ == "__main__":
     elif cmd == 'list':
         assert objtype and objid
         try:
-            for f in repo.get_files(objtype, objid):
+            for f in Attachment.find(objid, objtype):
                 print(f)
         except Exception as e:
             log.error(_("Could not get file names from the repository. "
@@ -132,11 +133,8 @@ if __name__ == "__main__":
     elif cmd == 'rm':
         assert objtype and objid and filename
         try:
-            existing_files = repo.get_files(objtype, objid)
-            repo.delete_files(objtype, objid)
-            for f in existing_files:
-                if f != filename:
-                    repo.add_file(objtype, objid, f)
+            a = Attachment.find(objid, objtype, filename)
+            a.destroy()
         except Exception as e:
             log.error(_("Could not remove the file from the repository. "
                         "Abort."), detail=str(e))
