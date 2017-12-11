@@ -9,6 +9,7 @@ import sys
 import DbProfilerRepository
 import logger as log
 from msgutil import gettext as _
+from table import Table2
 
 
 def verify_column(col):
@@ -56,14 +57,16 @@ class DbProfilerVerify():
         log.info(_("Verifying the validation results."))
 
         if not table_list:
-            table_list = repo.get_table_list()
+            table_list = [(x.database_name, x.schema_name, x.table_name)
+                          for x in Table2.find()]
         valid = 0
         invalid = 0
         for t in table_list:
-            table = repo.get_table(t[0], t[1], t[2])
-            if not table:
+            tmp = Table2.find(t[0], t[1], t[2])
+            if len(tmp) == 0:
                 log.error(_("%s.%s not found.") % (t[1], t[2]))
                 continue
+            table = tmp[0].data
             v, i = verify_table(table)
             if self.verbose:
                 log.info(self.verify_msg(t, v, i))

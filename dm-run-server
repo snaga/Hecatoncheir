@@ -13,8 +13,13 @@ from flask import Flask, request, Response, jsonify
 from hecatoncheir import DbProfilerFormatter
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir import DbProfilerVerify
+from hecatoncheir import db
 from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
+from hecatoncheir.repository import Repository
+from hecatoncheir.schema import Schema2
+from hecatoncheir.table import Table2
+from hecatoncheir.tag import Tag2
 
 app = Flask(__name__)
 
@@ -23,6 +28,12 @@ def open_repo():
     filename = os.environ["DBPROF_REPOFILE"]
     repo = DbProfilerRepository.DbProfilerRepository(filename)
     repo.open()
+
+    db.creds = {}
+    db.creds['use_sqlite'] = True
+    db.creds['dbname'] = filename
+    repo2 = Repository()
+
     return repo
 
 
@@ -39,22 +50,20 @@ def index():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
-
     tables_all = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables_all.append(tab)
+    for tab in Table2.find():
+        tables_all.append(tab.data)
     schemas = []
-    for s in repo.get_schemas():
-        desc = repo.get_schema_description(s[1])
-        s.append(u'' if not desc else desc.desc)
-        schemas.append(s)
+    for s in Schema2.findall():
+        # [dbname,schemaname,num_of_tables,desc]
+        schemas.append([s.database_name, s.schema_name,
+                        s.num_of_tables, s.description])
     tags = []
-    for label in repo.get_tag_labels():
-        desc = repo.get_tag_description(label)
-        tags.append([label, repo.get_table_count_by_tag(label),
-                     u'' if not desc else desc.desc])
+    for tag in Tag2.findall():
+        if tag.num_of_tables == 0:
+            tag.destroy()
+            continue
+        tags.append([tag.label, tag.num_of_tables, tag.description])
 
     reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
     reponame = re.sub('\..*$', '', reponame)
@@ -75,15 +84,12 @@ def index_tags():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
-
     tables_all = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables_all.append(tab)
+    for tab in Table2.find():
+        tables_all.append(tab.data)
     tags = []
-    for label in repo.get_tag_labels():
-        tags.append([label, repo.get_table_count_by_tag(label)])
+    for tag in Tag2.findall():
+        tags.append([tag.label, tag.num_of_tables, tag.description])
 
     reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
     reponame = re.sub('\..*$', '', reponame)
@@ -103,13 +109,15 @@ def index_schemas():
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
-
     tables_all = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables_all.append(tab)
-    schemas = repo.get_schemas()
+    for tab in Table2.find():
+        tables_all.append(tab.data)
+
+    # [[dbname, schema, num_of_tables, desc], [dbname, schema, num_of_tables, desc], ...]
+    schemas = []
+    for s in Schema2.findall():
+        schemas.append([s.database_name, s.schema_name,
+                        s.num_of_tables, s.description])
 
     reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
     reponame = re.sub('\..*$', '', reponame)
@@ -129,18 +137,16 @@ def index_schema(db, schema):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
-
+    s = Schema2.find(db, schema)
     tables = []
-    for t in table_list:
-        if t[0] == db and t[1] == schema:
-            tab = repo.get_table(t[0], t[1], t[2])
-            tables.append(tab)
-    desc = repo.get_schema_description(u'%s.%s' % (db, schema))
+    for tab in Table2.find(database_name=db, schema_name=schema):
+        tables.append(tab.data)
+
     html = DbProfilerFormatter.to_index_html(
         tables,
-        comment=desc.comment if desc else None,
-        schemas=[[db, schema, len(tables), desc.comment if desc else None]],
+        comment=s.comment,
+        schemas=[[s.database_name, s.schema_name,
+                  s.num_of_tables, s.description]],
         reponame=schema, glossary_terms=terms,
         editable=True).encode('utf-8')
 
@@ -153,17 +159,16 @@ def index_tag(tag):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list(tag=tag)
-
     tables = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
-        tables.append(tab)
-    comment = (repo.get_tag_description(tag)).comment
-    desc = repo.get_tag_description(tag)
+    for tab in Table2.find(tag=tag):
+        tables.append(tab.data)
+
+    t = Tag2.find(tag)
+    assert t
     html = DbProfilerFormatter.to_index_html(tables,
-                                             comment=comment,
-                                             tags=[[tag, len(tables), desc]],
+                                             comment=t.comment,
+                                             tags=[[tag, t.num_of_tables,
+                                                    t.description]],
                                              reponame=tag,
                                              glossary_terms=terms,
                                              editable=True).encode('utf-8')
@@ -177,11 +182,9 @@ def index_validation(status):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_list = repo.get_table_list()
-
     tables = []
-    for t in table_list:
-        tab = repo.get_table(t[0], t[1], t[2])
+    for t in Table2.find():
+        tab = t.data
         (valid, invalid) = DbProfilerVerify.verify_table(tab)
         if status == 'invalid' and invalid > 0:
             tables.append(tab)
@@ -202,7 +205,7 @@ def table(db, schema, table):
     repo = open_repo()
     terms = get_glossary_terms(repo)
 
-    table_data = repo.get_table(db, schema, table)
+    table_data = Table2.find(db, schema, table)[0].data
     datamap = repo.get_datamap_items(db, schema, table)
     validation_rules = repo.get_validation_rules(db, schema, table)
     html = DbProfilerFormatter.to_table_html(table_data,
@@ -250,7 +253,7 @@ def staticfile(filename, dir1=None, dir2=None):
 @app.route("/api/metadata/<db>.<schema>.<table>")
 def api_metadata(db, schema, table):
     repo = open_repo()
-    data = repo.get_table(db, schema, table)
+    data = Table2.find(db, schema, table)[0].data
     repo.close()
 
     return json.dumps(data, indent=2)
@@ -260,7 +263,7 @@ def api_metadata(db, schema, table):
            methods=['GET', 'POST'])
 def api_table_owner(db, schema, table):
     repo = open_repo()
-    data = repo.get_table(db, schema, table)
+    data = Table2.find(db, schema, table)[0].data
     if request.method == 'POST':
         data['owner'] = request.form['owner']
         data['comment'] = request.form['comment']
@@ -270,6 +273,9 @@ def api_table_owner(db, schema, table):
                 data['tags'].append(t)
         repo.append_table(data)
         repo.close()
+        for tag in data['tags']:
+            if not Tag2.find(tag):
+                Tag2.create(tag)
         return json.dumps({'owner': data.get('owner', ''),
                            'comment': data.get('comment', ''),
                            'tags': data.get('tags', [])})
@@ -284,7 +290,7 @@ def api_table_owner(db, schema, table):
            methods=['GET', 'POST'])
 def api_column_comment(db, schema, table, column):
     repo = open_repo()
-    data = repo.get_table(db, schema, table)
+    data = Table2.find(db, schema, table)[0].data
     col = None
     for c in data['columns']:
         if c['column_name'] == column:

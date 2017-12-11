@@ -8,12 +8,29 @@ import unittest
 sys.path.append('..')
 
 from hecatoncheir import DbProfilerExp, DbProfilerRepository
+from hecatoncheir import db
+from hecatoncheir.repository import Repository
+from hecatoncheir.table import Table2
+from hecatoncheir.tag import Tag2
+from hecatoncheir.schema import Schema2
 from hecatoncheir.DbProfilerExp import export_html
 
 class TestDbProfilerExp(unittest.TestCase):
     repo = None
 
     def setUp(self):
+        db.creds = {}
+        db.creds['host'] = os.environ.get('PGHOST', 'localhost')
+        db.creds['port'] = os.environ.get('PGPORT', 5432)
+        db.creds['dbname'] = os.environ.get('PGDATABASE', 'datacatalog')
+        db.creds['username'] = os.environ.get('PGUSER', 'postgres')
+        db.creds['password'] = os.environ.get('PGPASSWORD', 'postgres')
+        db.connect()
+
+        r = Repository()
+        r.destroy()
+        r.create()
+
         self.repo = DbProfilerRepository.DbProfilerRepository()
         self.repo.init()
         self.repo.open()
@@ -28,28 +45,39 @@ class TestDbProfilerExp(unittest.TestCase):
         self.assertEqual((u'a', u'b', u'c'), DbProfilerExp.parse_table_name(u'a.b.c'))
 
     def test_get_schema_ordered_list_001(self):
-        g = [['db', 's1', 1], ['db', 's2', 1], ['db', 's3', 1], ['db', 's4', 1], ['db', 's5', 1]]
+        t = [Schema2('d1', 's1', description=u'desc1', num_of_tables=1),
+             Schema2('d2', 's2', num_of_tables=1),
+             Schema2('d3', 's3', num_of_tables=1),
+             Schema2('d4', 's4', num_of_tables=1),
+             Schema2('d5', 's5', num_of_tables=1)]
 
-        self.assertEqual(g, DbProfilerExp.get_schema_ordered_list(None, g))
-        self.assertEqual(g, DbProfilerExp.get_schema_ordered_list([], g))
+        g = [['d1', 's1', 1, 'desc1'], ['d2', 's2', 1, None], ['d3', 's3', 1, None], ['d4', 's4', 1, None], ['d5', 's5', 1, None]]
 
-        g2 = [['db', 's5', 1], ['db', 's1', 1], ['db', 's2', 1], ['db', 's3', 1], ['db', 's4', 1]]
-        self.assertEqual(g2, DbProfilerExp.get_schema_ordered_list([u's5'], g))
+        self.assertEqual(g, DbProfilerExp.get_schema_ordered_list(None, t))
+        self.assertEqual(g, DbProfilerExp.get_schema_ordered_list([], t))
 
-        g2 = [['db', 's5', 1], ['db', 's3', 1], ['db', 's1', 1], ['db', 's2', 1], ['db', 's4', 1]]
-        self.assertEqual(g2, DbProfilerExp.get_schema_ordered_list([u's5', u's3'], g))
+        g2 = [['d5', 's5', 1, None], ['d1', 's1', 1, 'desc1'], ['d2', 's2', 1, None], ['d3', 's3', 1, None], ['d4', 's4', 1, None]]
+        self.assertEqual(g2, DbProfilerExp.get_schema_ordered_list([u's5'], t))
+
+        g2 = [['d5', 's5', 1, None], ['d3', 's3', 1, None], ['d1', 's1', 1, 'desc1'], ['d2', 's2', 1, None], ['d4', 's4', 1, None]]
+        self.assertEqual(g2, DbProfilerExp.get_schema_ordered_list([u's5', u's3'], t))
 
     def test_get_tag_ordered_list_001(self):
-        g = [['s1', 1], ['s2', 1], ['s3', 1], ['s4', 1], ['s5', 1]]
+        t = [Tag2(u's1', num_of_tables=1),
+             Tag2(u's2', num_of_tables=1),
+             Tag2(u's3', num_of_tables=1),
+             Tag2(u's4', num_of_tables=1),
+             Tag2(u's5', num_of_tables=1)]
+        g = [['s1', 1, None], ['s2', 1, None], ['s3', 1, None], ['s4', 1, None], ['s5', 1, None]]
 
-        self.assertEqual(g, DbProfilerExp.get_tag_ordered_list(None, g))
-        self.assertEqual(g, DbProfilerExp.get_tag_ordered_list([], g))
+        self.assertEqual(g, DbProfilerExp.get_tag_ordered_list(None, t))
+        self.assertEqual(g, DbProfilerExp.get_tag_ordered_list([], t))
 
-        g2 = [['s5', 1], ['s1', 1], ['s2', 1], ['s3', 1], ['s4', 1]]
-        self.assertEqual(g2, DbProfilerExp.get_tag_ordered_list([u's5'], g))
+        g2 = [['s5', 1, None], ['s1', 1, None], ['s2', 1, None], ['s3', 1, None], ['s4', 1, None]]
+        self.assertEqual(g2, DbProfilerExp.get_tag_ordered_list([u's5'], t))
 
-        g2 = [['s5', 1], ['s3', 1], ['s1', 1], ['s2', 1], ['s4', 1]]
-        self.assertEqual(g2, DbProfilerExp.get_tag_ordered_list([u's5', u's3'], g))
+        g2 = [['s5', 1, None], ['s3', 1, None], ['s1', 1, None], ['s2', 1, None], ['s4', 1, None]]
+        self.assertEqual(g2, DbProfilerExp.get_tag_ordered_list([u's5', u's3'], t))
 
     def testExport_html_001(self):
         t = {}
@@ -61,9 +89,14 @@ class TestDbProfilerExp(unittest.TestCase):
         t['columns'] = []
         t['tags'] = [u'tag1', u'tag2']
 
+        db.dump_table('repo')
+        db.dump_table('tags2')
         self.assertTrue(self.repo.append_table(t))
+        db.dump_table('repo')
+        db.dump_table('tags2')
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',
@@ -81,7 +114,8 @@ class TestDbProfilerExp(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',
@@ -112,7 +146,8 @@ class TestDbProfilerExp(unittest.TestCase):
         t['schema_name'] = u'test_schema7'
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',
@@ -128,9 +163,14 @@ class TestDbProfilerExp(unittest.TestCase):
         t['columns'] = []
         t['tags'] = [u'tag1', u'tag2', u'tag3', u'tag4', u'tag5', u'tag6', u'tag7']
 
+        # FIXME: Remove this later after refactoring table handling.
+        for l in t['tags']:
+            Tag2.create(l)
+
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         # test for tag ordering on the global index page.
         self.assertTrue(export_html(self.repo, tables=table_list, tags=[u'tag7',u'tag6',u'tag5',u'tag4',u'tag3',u'tag2'], schemas=None,
@@ -186,7 +226,8 @@ class TestDbProfilerExp(unittest.TestCase):
 
         self.assertTrue(self.repo.append_table(t))
 
-        table_list = self.repo.get_table_list()
+        table_list = [(x.database_name, x.schema_name, x.table_name)
+                      for x in Table2.find()]
 
         self.assertTrue(export_html(self.repo, tables=table_list, tags=None, schemas=None,
                                     template_path='../hecatoncheir/templates/en',

@@ -16,6 +16,10 @@ import DbProfilerVerify
 import logger as log
 from CSVUtils import list2csv
 from msgutil import gettext as _
+from attachment import Attachment
+from schema import Schema2
+from table import Table2
+from tag import Tag2
 
 
 def export_file(filename, body):
@@ -45,24 +49,18 @@ def parse_table_name(s):
     return (db, schema, table)
 
 
-def append_schema_desc(repo, schemas):
-    tmp = []
-    for s in schemas:
-        desc = repo.get_schema_description(u'%s.%s' % (s[0], s[1]))
-        tmp.append([s[0], s[1], s[2], desc.desc if desc else None])
-    return tmp
-
-
-def append_tag_desc(repo, tags):
-    tmp = []
-    for s in tags:
-        desc = repo.get_tag_description(s[0])
-        tmp.append([s[0], s[1], desc.desc if desc else None])
-    return tmp
-
-
+# top_schemas: list of schema name string: [u's5']
+# all_schemas: list of Schema2 objects: [Schema2, Schema2, Schema2, ...]
+# schema_index: list of lists (dbname, schemaname, num_of_tables, desc)
+#        [['db', 's5', 1, 'desc'], ['db', 's1', 1, 'desc'], ['db', 's2', 1, 'desc'], ...]
 def get_schema_ordered_list(top_schemas, all_schemas):
-    schema_index = copy.copy(all_schemas)
+    assert isinstance(top_schemas, list) or top_schemas is None
+    assert isinstance(all_schemas, list)
+
+    schema_index = []
+    for schema in all_schemas:
+        schema_index.append([schema.database_name, schema.schema_name,
+                             schema.num_of_tables, schema.description])
     if not top_schemas:
         return schema_index
     # move top-level shcmeas to beginning of the list.
@@ -75,8 +73,18 @@ def get_schema_ordered_list(top_schemas, all_schemas):
     return schema_index
 
 
+# top_tags: list of label string: [u's5', u's3']
+# all_tags: list of Tag2 objects: [Tag2, Tag2, Tag2, ...]
+# tag_index: list of the lists (schema, num_of_tables, desc):
+#     [['s5', 1, 'desc'], ['s3', 1, 'desc'], ['s1', 1, 'desc'], ...]
 def get_tag_ordered_list(top_tags, all_tags):
-    tag_index = copy.copy(all_tags)
+    assert isinstance(top_tags, list) or top_tags is None
+    assert isinstance(all_tags, list)
+
+    tag_index = []
+    for tag in all_tags:
+        tag_index.append([tag.label, tag.num_of_tables, tag.description])
+
     if not top_tags:
         return tag_index
     # move top-level tags to beginning of the list.
@@ -121,8 +129,9 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
             n = parse_table_name(a)
             if not n[0] and not n[1] and not n[2]:
                 continue
-            table_list = repo.get_table_list(n[0], n[1], n[2])
-            asset_names[a] = ['.'.join(x) for x in table_list]
+            table_list = Table2.find(n[0], n[1], n[2])
+            asset_names[a] = ['%s.%s.%s' % (x.database_name, x.schema_name, x.table_name)
+                              for x in table_list]
         t['assigned_assets2'] = asset_names
         terms.append(t)
 
@@ -135,11 +144,10 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         database_name = tab[0]
         schema_name = tab[1]
         table_name = tab[2]
-        data = repo.get_table(database_name, schema_name, table_name)
+        data = Table2.find(database_name, schema_name, table_name)[0].data
         dmentries = repo.get_datamap_items(database_name, schema_name,
                                            table_name)
-        files = (repo.get_files('table', '.'.join(tab[0:3])) if
-                 repo.get_files('table', '.'.join(tab[0:3])) else [])
+        files = Attachment.find('.'.join(tab[0:3]), 'table')
 
         filename = output_path + ("/%s.%s.%s.html" %
                                   (database_name, schema_name, table_name))
@@ -190,9 +198,9 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     for schema in tables_by_schema:
         d, s = schema.split('.')
         filename = output_path + "/%s.html" % schema
-        files = (repo.get_files('schema', schema) if
-                 repo.get_files('schema', schema) else [])
-        desc = repo.get_schema_description(schema)
+        files = Attachment.find(schema, 'schema')
+        ss = Schema2.find(d, s)
+        desc = ss.description
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_schema[schema],
                 comment=desc.comment if desc else None,
@@ -205,15 +213,15 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     # create index page for each tag from the tag dict
     for tag in tables_by_tag:
         filename = output_path + "/tag-%s.html" % tag
-        files = (repo.get_files('tag', tag) if
-                 repo.get_files('tag', tag) else [])
-        desc = repo.get_tag_description(tag)
+        files = Attachment.find(tag, 'tag')
+        tmp = Tag2.find(tag)
+        if not tmp:
+            tmp = Tag2(tag)
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_tag[tag],
-                comment=desc.comment if desc else None,
+                comment=tmp.comment,
                 files=['tag-%s/%s' % (tag, x) for x in files],
-                tags=[[tag, len(tables_by_tag[tag]),
-                       desc.desc if desc else None]],
+                tags=[[tmp.label, tmp.num_of_tables, tmp.description]],
                 reponame=tag, glossary_terms=terms,
                 template_file=template_index))
 
@@ -233,14 +241,9 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     # create global index page
     filename = output_path + "/index.html"
 
-    schemas2 = get_schema_ordered_list(schemas, repo.get_schemas())
-    schemas2 = append_schema_desc(repo, schemas2)
+    schemas2 = get_schema_ordered_list(schemas, Schema2.findall())
 
-    tags2 = []
-    for label in sorted(repo.get_tag_labels()):
-        tags2.append([label, repo.get_table_count_by_tag(label)])
-    tags2 = get_tag_ordered_list(tags, tags2)
-    tags2 = append_tag_desc(repo, tags2)
+    tags2 = get_tag_ordered_list(tags, Tag2.findall())
 
     export_file(filename, DbProfilerFormatter.to_index_html(
             tables_all, schemas=schemas2, tags=tags2,
@@ -291,7 +294,7 @@ def export_json(repo, tables=[], output_path='./json'):
             database_name = tab[0]
             schema_name = tab[1]
             table_name = tab[2]
-            data = repo.get_table(database_name, schema_name, table_name)
+            data = Table2.find(database_name, schema_name, table_name)[0].data
             json_data.append(data)
         f.write(json.dumps(json_data, indent=2).encode('utf-8'))
         f.close()
