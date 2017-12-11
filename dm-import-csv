@@ -10,7 +10,6 @@ from hecatoncheir import CSVUtils
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir import db
 from hecatoncheir import logger as log
-from hecatoncheir.metadata import TagDesc, SchemaDesc
 from hecatoncheir.msgutil import gettext as _
 from hecatoncheir.repository import Repository
 from hecatoncheir.schema import Schema2

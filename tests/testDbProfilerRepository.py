@@ -9,7 +9,6 @@ sys.path.append('..')
 
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir.exception import InternalError
-from hecatoncheir.metadata import Tag, TagDesc, SchemaDesc
 from hecatoncheir.table import Table2
 
 class TestDbProfilerRepository(unittest.TestCase):
@@ -275,35 +274,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertEquals(2, len(d))
         self.assertEquals(d[0]['record_id'], 'REC001')
         self.assertEquals(d[1]['record_id'], 'REC002')
-
-    def test_has_table_record_001(self):
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = [u'tag1',u'tag2']
-        self.assertFalse(self.repo.has_table_record(t))
-
-        self.assertTrue(self.repo.append_table(t))
-
-        self.assertTrue(self.repo.has_table_record(t))
-
-    def test_put_textelement_001(self):
-        self.assertTrue(self.repo.put_textelement('id1', 'elem1'))
-        self.assertTrue(self.repo.put_textelement('id1', None))
-        self.assertTrue(self.repo.put_textelement('id2', u'エレメント2'))
-
-    def test_get_textelements_001(self):
-        self.repo.put_textelement('id1', 'elem1')
-        self.assertEqual(['elem1'], self.repo.get_textelements('id1'))
-
-        self.repo.put_textelement('id1', None)
-        self.assertEqual(['elem1', ''], self.repo.get_textelements('id1'))
-
-        self.repo.put_textelement('id2', u'エレメント2')
-        self.assertEqual([u'エレメント2'], self.repo.get_textelements('id2'))
-        self.assertEqual(['elem1', ''], self.repo.get_textelements('id1'))
 
     def test_get_datamap_source_tables_001(self):
         d = {}

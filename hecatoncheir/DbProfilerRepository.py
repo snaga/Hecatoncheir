@@ -11,21 +11,10 @@ import sqlalchemy as sa
 import db
 import logger as log
 from exception import DbProfilerException, InternalError
-from metadata import Tag, TagDesc, SchemaDesc
 from logger import str2unicode as _s2u
 from msgutil import gettext as _, jsonize
 from repository import Repository
 from table import Table2
-
-
-def are_same_tables(d1, d2):
-    if d1['database_name'] != d2['database_name']:
-        return False
-    if d1['schema_name'] != d2['schema_name']:
-        return False
-    if d1['table_name'] != d2['table_name']:
-        return False
-    return True
 
 
 class DbProfilerRepository():
@@ -114,51 +103,6 @@ class DbProfilerRepository():
             return "'%s'" % ts
         return "datetime('%s')" % ts
 
-
-    def has_table_record(self, tab):
-        """
-        Check if the table record exist in the repository.
-
-        Args:
-            tab: a dictionary of table record.
-
-        Returns:
-            True if the table record exists, otherwise False.
-        """
-        assert (tab['database_name'] and tab['schema_name'] and
-                tab['table_name'])
-
-        log.trace("has_table_record: start %s.%s.%s" %
-                  (tab['database_name'], tab['schema_name'],
-                   tab['table_name']))
-
-        query = """
-SELECT COUNT(*)
-  FROM repo
- WHERE database_name = '{database_name}'
-   AND schema_name = '{schema_name}'
-   AND table_name = '{table_name}'
-""".format(**tab)
-        if self.use_pgsql:
-            query = query + "   AND created_at = '{timestamp}'".format(**tab)
-        else:
-            query = query + "   AND created_at = '{timestamp}'".format(**tab)
-
-        try:
-            log.debug("has_table_record: query = %s" % query)
-            rows = db.engine.execute(query)
-            r = rows.fetchone()
-            log.debug("has_table_record: r = %s" % unicode(r))
-            if r[0] > 0:
-                return True
-        except Exception as ex:
-            log.trace("has_table_record: " + unicode(ex))
-            raise InternalError("Could not get table info: " + str(ex),
-                                query=query, source=ex)
-
-        log.trace("has_table_record: end")
-        return False
-
     def append_table(self, tab):
         """
         Update a table record if the same record (with same timestamp)
@@ -227,59 +171,6 @@ SELECT data
                 query=query, source=ex)
 
         return table_history
-
-    def put_textelement(self, id_, text):
-        log.trace('put_textelement: start')
-        try:
-            query = (u"INSERT INTO textelement VALUES ('%s', '%s')" %
-                     (id_, text if text else ''))
-            db.engine.execute(query)
-        except Exception as ex:
-            raise InternalError("Could not register text element: " + str(ex),
-                                query=query, source=ex)
-        log.trace('put_textelement: end')
-        return True
-
-    def get_textelements(self, id_):
-        log.trace('get_textelements: start')
-        texts = []
-        try:
-            query = u"SELECT text_ FROM textelement WHERE id_= '%s'" % id_
-            for r in db.engine.execute(query):
-                assert isinstance(r[0], unicode)
-                texts.append(r[0])
-        except Exception as ex:
-            raise InternalError("Could not get text element: " + ex,
-                                query=query, source=ex)
-        log.trace('get_textelements: end')
-        return texts
-
-    def delete_textelement(self, id_):
-        log.trace('delete_textelement: start')
-        try:
-            query = u"DELETE FROM textelement WHERE id_= '%s'" % id_
-            db.engine.execute(query)
-        except Exception as ex:
-            raise InternalError("Could not delete text element: " + str(ex),
-                                query=query, source=ex)
-        log.trace('delete_textelement: end')
-        return True
-
-    def merge(self, data1, data2):
-        if data1 is None:
-            return data2
-
-        for d1 in data1:
-            for d2 in data2:
-                if are_same_tables(d1, d2):
-                    data1.remove(d1)
-                    log.trace(u"add: %s.%s %s -> %s" %
-                              (d1['schema_name'], d1['table_name'],
-                               d1['timestamp'], d2['timestamp']))
-                log.trace(u"add: %s.%s" %
-                          (d2['schema_name'], d2['table_name']))
-        data1.extend(data2)
-        return data1
 
     def get_datamap_items(self, database_name, schema_name, table_name,
                           column_name=None):
@@ -851,17 +742,6 @@ UPDATE validation_rule
         if rowcount == 0:
             return False
         return True
-
-    def exists(self):
-        found = None
-        try:
-            found = os.path.exists(self.filename)
-        except Exception as ex:
-            raise DbProfilerException(
-                _("Could not access to the repository file `%s'.") %
-                self.filename)
-        return found
-
 
     def open(self):
         assert db.engine
