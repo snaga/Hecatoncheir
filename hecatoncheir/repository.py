@@ -173,10 +173,11 @@ class TestRepository(unittest.TestCase):
         db.creds['password'] = os.environ.get('PGPASSWORD', 'postgres')
 
         self.repo = Repository()
+        self.repo.destroy()
         self.maxDiff = None
 
     def tearDown(self):
-        self.repo.destroy()
+        pass
 
     def test_create_001(self):
         self.repo.create()
