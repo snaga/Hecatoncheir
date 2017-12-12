@@ -20,7 +20,7 @@ class Table2:
         q = """
 INSERT INTO repo VALUES ('{0}','{1}','{2}','{3}','{4}')
 """.format(database_name, schema_name, table_name,
-           data['timestamp'],
+           datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f"),
            jsonize(data).replace("'", "''"))
 
         db.conn.execute(q)
@@ -80,7 +80,7 @@ SELECT database_name,
         q = """
 INSERT INTO repo VALUES ('{0}','{1}','{2}','{3}','{4}')
 """.format(self.database_name, self.schema_name, self.table_name,
-           self.data['timestamp'],
+           datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f"),
            jsonize(self.data).replace("'", "''"))
         db.conn.execute(q)
 

@@ -157,20 +157,31 @@ SELECT data
  WHERE database_name = '{0}'
    AND schema_name = '{1}'
    AND table_name = '{2}'
- ORDER BY created_at DESC
 """.format(database_name, schema_name, table_name)
 
         log.trace("get_table_history: query = %s" % query)
 
         try:
             for r in db.engine.execute(query):
-                table_history.append(json.loads(unicode(r[0])))
+                data = json.loads(unicode(r[0]))
+
+                # let's sort by the timestamp field in the table data,
+                # not the created_at field of the repo table.
+                done = False
+                for i, t in enumerate(table_history):
+                    if data['timestamp'] > t['timestamp']:
+                        table_history.insert(i+1, data)
+                        done = True
+                        continue
+                if not done:
+                    table_history.insert(0, data)
         except Exception as ex:
             raise InternalError(
                 "Could not get table data with its history: " + str(ex),
                 query=query, source=ex)
 
-        return table_history
+        # newest first.
+        return [x for x in reversed(table_history)]
 
     def get_datamap_items(self, database_name, schema_name, table_name,
                           column_name=None):
