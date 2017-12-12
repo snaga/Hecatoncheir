@@ -9,6 +9,7 @@ sys.path.append('..')
 
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir.exception import InternalError
+from hecatoncheir import db
 from hecatoncheir.table import Table2
 
 class TestDbProfilerRepository(unittest.TestCase):
@@ -75,111 +76,15 @@ class TestDbProfilerRepository(unittest.TestCase):
         if not repo.use_pgsql:
             self.assertFalse(os.path.exists(fname))
 
-    def testAppend_table_001(self):
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-
-        self.assertTrue(self.repo.append_table(t))
-        self.assertTrue(self.repo.append_table(t))
-
-        # fail with query error
-        t = {}
-        t['database_name'] = u'test\'_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-
-        with self.assertRaises(InternalError) as cm:
-            self.repo.append_table(t)
-        self.assertTrue(cm.exception.value.startswith('Could not append table data: '))
-
-    def testAppend_table_002(self):
-        # different timestamp must go to the different records.
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
-
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-28T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
-
-        d = self.repo.get()
-        self.assertEqual(2, len(d))
-
-        self.assertEqual('test_database', d[0]['database_name'])
-        self.assertEqual('test_schema', d[0]['schema_name'])
-        self.assertEqual('test_table', d[0]['table_name'])
-        self.assertEqual('2016-04-27T10:06:41.653836', d[0]['timestamp'])
-
-        self.assertEqual('test_database', d[1]['database_name'])
-        self.assertEqual('test_schema', d[1]['schema_name'])
-        self.assertEqual('test_table', d[1]['table_name'])
-        self.assertEqual('2016-04-28T10:06:41.653836', d[1]['timestamp'])
-
-    def testAppend_table_003(self):
-        # append table records with tags
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = [u'tag1', u'tag2']
-
-        self.assertTrue(self.repo.append_table(t))
-
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table2'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        t['tags'] = [u'tag2', u'tag3']
-
-        self.assertTrue(self.repo.append_table(t))
-
-        t = Table2.find('test_database', 'test_schema', 'test_table')[0].data
-        self.assertEqual(['tag1', 'tag2'], t['tags'])
-
-        t = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
-        self.assertEqual(['tag2', 'tag3'], t['tags'])
-
-    def testSet_001(self):
-        t = {}
-        t['database_name'] = u'test_database'
-        t['schema_name'] = u'test_schema'
-        t['table_name'] = u'test_table'
-        t['timestamp'] = '2016-04-27T10:06:41.653836'
-        d = []
-        d.append(t)
-
-        self.repo.set(d)
-
-        data_all = self.repo.get()
-        self.assertIsNotNone(data_all)
-        self.assertEqual(1, len(data_all))
-        self.assertEqual('test_database', data_all[0]['database_name'])
-        self.assertEqual('test_schema', data_all[0]['schema_name'])
-        self.assertEqual('test_table', data_all[0]['table_name'])
-        self.assertEqual('2016-04-27T10:06:41.653836', data_all[0]['timestamp'])
-
     def testGet_001(self):
         t = {}
         t['database_name'] = u'test_database'
         t['schema_name'] = u'test_schema'
         t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        d = []
-        d.append(t)
 
-        self.repo.set(d)
+        self.assertIsNotNone(Table2.create(t['database_name'], t['schema_name'], t['table_name'], t))
+
         d2 = self.repo.get()
 
         self.assertIsNotNone(d2)
@@ -195,21 +100,21 @@ class TestDbProfilerRepository(unittest.TestCase):
         t['schema_name'] = u'test_schema'
         t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-27T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
+        self.assertIsNotNone(Table2.create(t['database_name'], t['schema_name'], t['table_name'], t))
 
         t = {}
         t['database_name'] = u'test_database'
         t['schema_name'] = u'test_schema'
         t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-28T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
+        self.assertIsNotNone(Table2.create(t['database_name'], t['schema_name'], t['table_name'], t))
 
         t = {}
         t['database_name'] = u'test_database'
         t['schema_name'] = u'test_schema'
         t['table_name'] = u'test_table'
         t['timestamp'] = '2016-04-26T10:06:41.653836'
-        self.assertTrue(self.repo.append_table(t))
+        self.assertIsNotNone(Table2.create(t['database_name'], t['schema_name'], t['table_name'], t))
 
         thist = self.repo.get_table_history('test_database', 'test_schema', 'test_table')
         self.assertEqual(3, len(thist))
@@ -307,7 +212,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         t1['columns'] = [{'column_name': 'c1'},
                          {'column_name': 'c2'}]
 
-        self.assertTrue(self.repo.append_table(t1))
+        self.assertIsNotNone(Table2.create(t1['database_name'], t1['schema_name'], t1['table_name'], t1))
 
         t2 = {}
         t2['database_name'] = u'test_database'
@@ -317,7 +222,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         t2['columns'] = [{'column_name': 'c1'},
                          {'column_name': 'c2'}]
 
-        self.assertTrue(self.repo.append_table(t2))
+        self.assertIsNotNone(Table2.create(t2['database_name'], t2['schema_name'], t2['table_name'], t2))
 
         # test_schema.test_table.c1 -> test_schema.test_table2.c1
         self.assertTrue(self.repo.put_table_fk('test_database', 'test_schema', 'test_table', 'c1',
@@ -358,7 +263,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         t1['columns'] = [{'column_name': 'c1',
                           'fk': ['test_schema.test_table2.c1']}]
 
-        self.assertTrue(self.repo.append_table(t1))
+        self.assertIsNotNone(Table2.create(t1['database_name'], t1['schema_name'], t1['table_name'], t1))
 
         t2 = {}
         t2['database_name'] = u'test_database'
@@ -368,7 +273,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         t2['columns'] = [{'column_name': 'c1',
                           'fk_ref': ['test_schema.test_table.c1']}]
 
-        self.assertTrue(self.repo.append_table(t2))
+        self.assertIsNotNone(Table2.create(t2['database_name'], t2['schema_name'], t2['table_name'], t2))
 
         tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
         tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data
@@ -397,7 +302,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         t1['columns'] = [{'column_name': 'c1',
                           'fk': ['test_schema.test_table2.c1']}]
 
-        self.assertTrue(self.repo.append_table(t1))
+        self.assertIsNotNone(Table2.create(t1['database_name'], t1['schema_name'], t1['table_name'], t1))
 
         t2 = {}
         t2['database_name'] = u'test_database'
@@ -407,7 +312,7 @@ class TestDbProfilerRepository(unittest.TestCase):
         t2['columns'] = [{'column_name': 'c1',
                           'fk_ref': ['test_schema.test_table.c1']}]
 
-        self.assertTrue(self.repo.append_table(t2))
+        self.assertIsNotNone(Table2.create(t2['database_name'], t2['schema_name'], t2['table_name'], t2))
 
         tab1 = Table2.find('test_database', 'test_schema', 'test_table')[0].data
         tab2 = Table2.find('test_database', 'test_schema', 'test_table2')[0].data

@@ -263,7 +263,8 @@ def api_metadata(db, schema, table):
            methods=['GET', 'POST'])
 def api_table_owner(db, schema, table):
     repo = open_repo()
-    data = Table2.find(db, schema, table)[0].data
+    tab = Table2.find(db, schema, table)[0]
+    data = tab.data
     if request.method == 'POST':
         data['owner'] = request.form['owner']
         data['comment'] = request.form['comment']
@@ -271,7 +272,7 @@ def api_table_owner(db, schema, table):
         for t in request.form['tags'].replace(' ', '').split(','):
             if len(t) > 0:
                 data['tags'].append(t)
-        repo.append_table(data)
+        tab.update()
         repo.close()
         for tag in data['tags']:
             if not Tag2.find(tag):
@@ -290,14 +291,15 @@ def api_table_owner(db, schema, table):
            methods=['GET', 'POST'])
 def api_column_comment(db, schema, table, column):
     repo = open_repo()
-    data = Table2.find(db, schema, table)[0].data
+    tab = Table2.find(db, schema, table)[0]
+    data = tab.data
     col = None
     for c in data['columns']:
         if c['column_name'] == column:
             col = c
     if request.method == 'POST':
         col['comment'] = request.form['comment']
-        repo.append_table(data)
+        tab.update()
         repo.close()
         return json.dumps({'comment': col['comment']})
     else:

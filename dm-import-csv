@@ -145,7 +145,7 @@ def process_table_csv(repo, r):
     tab["owner"] = r.get('table_owner', tab.get("owner", ''))
     tab["tags"] = [x.strip() for x in r.get('tags', '').split(',')]
 
-    repo.append_table(tab)
+    tab.update()
     return 1
 
 
@@ -192,7 +192,7 @@ def process_column_csv(repo, r):
                 tmp2 = [tab["database_name"], tab["schema_name"],
                         tab["table_name"], col["column_name"]]
                 fk_list.append(tmp2 + tmp + [guess])
-    repo.append_table(tab)
+    tab.update()
     return 1
 
 
