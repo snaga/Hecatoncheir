@@ -69,19 +69,6 @@ class DbProfilerRepository():
         log.info(_("The repository has been destroyed."))
         return True
 
-    def set(self, data):
-        try:
-            db.engine.execute("DELETE FROM repo")
-        except Exception as e:
-            log.error(_("Could not initialize the repository."),
-                      detail=unicode(e))
-            return False
-
-        for d in data:
-            self.append_table(d)
-
-        return True
-
     def get(self):
         jsondata = u""
         try:
@@ -102,37 +89,6 @@ class DbProfilerRepository():
         if self.use_pgsql:
             return "'%s'" % ts
         return "datetime('%s')" % ts
-
-    def append_table(self, tab):
-        """
-        Update a table record if the same record (with same timestamp)
-        already exist.
-        Otherwise, append the table record to the repository.
-
-        Args:
-            tab: a dictionary of table record.
-
-        Returns:
-            True on success, otherwise False.
-        """
-        assert (tab['database_name'] and tab['schema_name'] and
-                tab['table_name'] and tab['timestamp'])
-
-        try:        
-            t = Table2.find(tab['database_name'], tab['schema_name'],
-                            tab['table_name'])
-            if t:
-                assert len(t) == 1
-                t[0].data = tab
-                t[0].update()
-            else:
-                Table2.create(tab['database_name'], tab['schema_name'],
-                              tab['table_name'], tab)
-        except sa.exc.OperationalError as ex:
-            raise InternalError('Could not append table data: ' + str(ex))
-
-        log.trace("append_table: end")
-        return True
 
     def get_table_history(self, database_name, schema_name, table_name):
         """
@@ -157,20 +113,31 @@ SELECT data
  WHERE database_name = '{0}'
    AND schema_name = '{1}'
    AND table_name = '{2}'
- ORDER BY created_at DESC
 """.format(database_name, schema_name, table_name)
 
         log.trace("get_table_history: query = %s" % query)
 
         try:
             for r in db.engine.execute(query):
-                table_history.append(json.loads(unicode(r[0])))
+                data = json.loads(unicode(r[0]))
+
+                # let's sort by the timestamp field in the table data,
+                # not the created_at field of the repo table.
+                done = False
+                for i, t in enumerate(table_history):
+                    if data['timestamp'] > t['timestamp']:
+                        table_history.insert(i+1, data)
+                        done = True
+                        continue
+                if not done:
+                    table_history.insert(0, data)
         except Exception as ex:
             raise InternalError(
                 "Could not get table data with its history: " + str(ex),
                 query=query, source=ex)
 
-        return table_history
+        # newest first.
+        return [x for x in reversed(table_history)]
 
     def get_datamap_items(self, database_name, schema_name, table_name,
                           column_name=None):
@@ -309,9 +276,9 @@ INSERT INTO datamapping (
         ret = False
 
         t = Table2.find(database_name1, schema_name1, table_name1)
-        if len(t) == 0:
-            return False
-        tab1 = t[0].data
+        assert len(t) == 1
+        t1 = t[0]
+        tab1 = t1.data
 
         fk = '%s.%s.%s' % (schema_name2, table_name2, column_name2)
         if guess:
@@ -327,12 +294,12 @@ INSERT INTO datamapping (
                     col['fk'].append(fk)
                     ret = True
 
-        self.append_table(tab1)
+        t1.update()
 
         t = Table2.find(database_name2, schema_name2, table_name2)
-        if len(t) == 0:
-            return False
-        tab2 = t[0].data
+        assert len(t) == 1
+        t2 = t[0]
+        tab2 = t2.data
 
         fk_ref = '%s.%s.%s' % (schema_name1, table_name1, column_name1)
         if guess:
@@ -348,7 +315,7 @@ INSERT INTO datamapping (
                     col['fk_ref'].append(fk_ref)
                     ret = True
 
-        self.append_table(tab2)
+        t2.update()
 
         return ret
 
@@ -367,9 +334,9 @@ INSERT INTO datamapping (
         ret = False
 
         t = Table2.find(database_name1, schema_name1, table_name1)
-        if len(t) == 0:
-            return False
-        tab1 = t[0].data
+        assert len(t) == 1
+        t1 = t[0]
+        tab1 = t1.data
 
         fk = '%s.%s.%s' % (schema_name2, table_name2, column_name2)
         for col in tab1['columns']:
@@ -381,12 +348,13 @@ INSERT INTO datamapping (
                     col['fk'].remove(fk)
                     ret = True
 
-        self.append_table(tab1)
+        t1.update()
 
         t = Table2.find(database_name2, schema_name2, table_name2)
         if len(t) == 0:
             return False
-        tab2 = t[0].data
+        t2 = t[0]
+        tab2 = t2.data
 
         fk_ref = '%s.%s.%s' % (schema_name1, table_name1, column_name1)
         for col in tab2['columns']:
@@ -397,7 +365,7 @@ INSERT INTO datamapping (
                 col['fk_ref'].remove(fk_ref)
                 ret = True
 
-        self.append_table(tab2)
+        t2.update()
 
         return ret
 
@@ -411,8 +379,8 @@ INSERT INTO datamapping (
         ret = False
 
         t = Table2.find(database_name, schema_name, table_name)
-        if len(t) == 0:
-            return False
+        assert len(t) == 1
+        t1 = t[0]
         tab = t[0].data
 
         for col in tab['columns']:
@@ -425,7 +393,7 @@ INSERT INTO datamapping (
                     assert isinstance(col['fk_ref'], list)
                     col['fk_ref'] = []
                     ret = True
-        self.append_table(tab)
+        t1.update()
 
         return ret
 
