@@ -131,6 +131,32 @@ def print_config(config):
     log.info("---------------------------------")
 
 
+def get_profiler(config):
+    profiler = None
+
+    if dbtype == 'pgsql':
+        profiler = PgProfiler.PgProfiler(config.host, config.port, config.dbname,
+                                         config.dbuser, config.dbpass)
+    elif dbtype == 'oracle':
+        if config.tnsname:
+            config.dbname = config.tnsname
+            config.host = None
+            config.port = None
+            log.info(_("TNS info: %s@%s") % (config.dbuser, config.tnsname))
+        else:
+            log.info(_("Conn info: %s@%s:%s/%s") % (config.dbuser, config.host, config.port, config.dbname))
+        profiler = OraProfiler.OraProfiler(config.host, config.port, config.dbname,
+                                           config.dbuser, config.dbpass)
+    elif dbtype == 'mysql':
+        profiler = MyProfiler.MyProfiler(config.host, config.port, config.dbname,
+                                         config.dbuser, config.dbpass)
+    elif dbtype == 'mssql':
+        profiler = MSSQLProfiler.MSSQLProfiler(config.host, config.port, config.dbname,
+                                               config.dbuser, config.dbpass)
+
+    return profiler
+
+
 input_encoding = 'utf-8'
 
 if __name__ == "__main__":
@@ -232,25 +258,8 @@ if __name__ == "__main__":
 
     print_config(config)
 
-    profiler = None
-    if dbtype == 'pgsql':
-        profiler = PgProfiler.PgProfiler(config.host, config.port, config.dbname,
-                                         config.dbuser, config.dbpass)
-    elif dbtype == 'oracle':
-        if tnsname:
-            config.host = None
-            config.port = None
-            config.dbname = tnsname
-        profiler = OraProfiler.OraProfiler(config.host, config.port, config.dbname,
-                                           config.dbuser, config.dbpass)
-    elif dbtype == 'mysql':
-        profiler = MyProfiler.MyProfiler(config.host, config.port, config.dbname,
-                                         config.dbuser, config.dbpass)
-    elif dbtype == 'mssql':
-        profiler = MSSQLProfiler.MSSQLProfiler(config.host, config.port, config.dbname,
-                                               config.dbuser, config.dbpass)
-    else:
-        assert False
+    profiler = get_profiler(config)
+    assert profiler
 
     profiler.profile_sample_rows = enable_sample_rows
 
