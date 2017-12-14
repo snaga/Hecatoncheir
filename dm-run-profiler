@@ -22,7 +22,7 @@ from hecatoncheir.table import Table2
 
 def usage():
     print '''
-Usage: %s [option...] [schema.table] ...
+Usage: %s [option...] [schema[.table]] ...
 
 Options:
     --dbtype=TYPE              Database type
@@ -32,8 +32,6 @@ Options:
     --tnsname=STRING           TNS name (Oracle only)
     --user=STRING              User name
     --pass=STRING              User password
-    -s=STRING                  Schema name
-    -t=STRING                  Table name
     -P=INTEGER                 Parallel degree of table scan
     -o=FILENAME                Output file
     --batch=FILENAME           Batch execution
@@ -157,33 +155,37 @@ def get_profiler(config):
     return profiler
 
 
-def table_list_from_file(filename):
+def table_list_from_file(profiler, filename):
     tables = []
     try:
         for line in open(filename):
-            line = line.strip()
-            if line.startswith("#"):
+            a = line.strip()
+            if a.startswith("#"):
                 continue
-            t = line.split(".")
-            if len(t) == 2 and len(t[0]) and len(t[1]):
+            t = a.split(".")
+            if len(t) == 2 and t[0] and t[1]:
                 tables.append([t[0], t[1]])
+            elif len(t) == 1 and t[0]:
+                tables.extend(table_list_from_schema(profiler, t[0]))
             else:
-                log.error(_("Specify table name in "
-                            "<SCHEMA.TABLE> format: <%s>") % line)
+                log.error(_("Specify schema/table name in "
+                            "[SCHEMA[.TABLE]] format: <%s>") % a)
     except Exception as ex:
         log.error("Could not read a table list file `%s'." % filename)
     return tables
 
 
-def table_list_from_args(args):
+def table_list_from_args(profiler, args):
     tables = []
     for a in args:
         t = a.split(".")
-        if len(t) == 2 and len(t[0]) and len(t[1]):
+        if len(t) == 2 and t[0] and t[1]:
             tables.append([t[0], t[1]])
+        elif len(t) == 1 and t[0]:
+            tables.extend(table_list_from_schema(profiler, t[0]))
         else:
-            log.error(_("Specify table name in "
-                        "<SCHEMA.TABLE> format: <%s>") % a)
+            log.error(_("Specify schema/table name in "
+                        "[SCHEMA[.TABLE]] format: <%s>") % a)
     return tables
 
 
@@ -211,7 +213,7 @@ if __name__ == "__main__":
     config = Config(dbtype)
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:t:P:o:",
+        opts, args = getopt.getopt(sys.argv[1:], "P:o:",
                                    ["help", "dbtype=", "host=", "port=",
                                     "dbname=", "tnsname=", "user=", "pass=",
                                     "batch=", "enable-validation",
@@ -227,8 +229,6 @@ if __name__ == "__main__":
         usage()
         sys.exit(1)
 
-    schema_name = None
-    table_name = None
     parallel_degree = None
     output_file = None
     table_list = None
@@ -242,11 +242,7 @@ if __name__ == "__main__":
     timeout = None
 
     for o, a in opts:
-        if o in ("-t"):
-            table_name = a
-        elif o in ("-s"):
-            schema_name = a
-        elif o in ("-P"):
+        if o in ("-P"):
             parallel_degree = int(a)
         elif o in ("-o"):
             output_file = a
@@ -312,23 +308,20 @@ if __name__ == "__main__":
     try:
         profiler.connect()
 
-        tables.extend(table_list_from_args(args))
+        # Getting table names from arguments.
+        if args:
+            tables.extend(table_list_from_args(profiler, args))
 
         # Using a table list file.
         if table_list:
-            tables.extend(table_list_from_file(table_list))
+            tables.extend(table_list_from_file(profiler, table_list))
 
-        # Looking at all tables in all schemas.
-        if len(tables) == 0 and not schema_name and not table_name:
+        # If nothing specified, show the list of schemas, then exit.
+        if len(tables) == 0:
             for s in profiler.get_schema_names():
-                tables.extend(table_list_from_schema(profiler, s))
-        # Looking at all tables in the specified schema.
-        elif schema_name and not table_name:
-            for t in profiler.get_table_names(schema_name):
-                tables.append([schema_name, t])
-        # Looking at one specified table.
-        elif schema_name and table_name:
-            tables.append([schema_name, table_name])
+                log.info(u'Please specify one or more schemas:')
+                log.info(u'  %s' % s)
+                sys.exit(1)
     except DbProfilerException as e:
         error, = e.source.args
         log.error(u"%s" % unicode(e), detail=error.message)

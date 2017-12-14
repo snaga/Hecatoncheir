@@ -173,7 +173,7 @@ dm-run-profiler
 
 ::
 
-  Usage: dm-run-profiler [option...] [schema.table] ...
+  Usage: dm-run-profiler [option...] [schema[.table]] ...
   
   Options:
       --dbtype=TYPE              Database type
@@ -183,8 +183,6 @@ dm-run-profiler
       --tnsname=STRING           TNS name (Oracle only)
       --user=STRING              User name
       --pass=STRING              User password
-      -s=STRING                  Schema name
-      -t=STRING                  Table name
       -P=INTEGER                 Parallel degree of table scan
       -o=FILENAME                Output file
       --batch=FILENAME           Batch execution
@@ -217,10 +215,6 @@ dm-run-profiler
 ``--user`` specifies an user name to connect to the database.
 
 ``--pass`` specifies the password to connect to the database.
-
-``-s`` specifies the target schema name.
-
-``-t`` specifies the target table name.
 
 ``-P`` specifies the degree of parallel scan.
 
