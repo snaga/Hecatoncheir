@@ -38,6 +38,7 @@ Hecatoncheirでは、以下の機能を提供しています。
 * PostgreSQL
 * MySQL
 * Amazon Redshift
+* Google BigQuery
 
 以下のRDBMS製品は、今後、順次対応する予定です。
 
@@ -46,7 +47,6 @@ Hecatoncheirでは、以下の機能を提供しています。
 * Apache Hive
 * Apache Spark
 * Vertica
-* Google BigQuery
 
 対応オペレーティングシステム
 ----------------------------

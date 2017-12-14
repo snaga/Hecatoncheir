@@ -38,6 +38,7 @@ The latest version supports following databases:
 * PostgreSQL
 * MySQL
 * Amazon Redshift
+* Google BigQuery
 
 Following databases are coming in the future releases:
 
@@ -46,7 +47,6 @@ Following databases are coming in the future releases:
 * Apache Hive
 * Apache Spark
 * Vertica
-* Google BigQuery
 
 Operating Systems
 -----------------

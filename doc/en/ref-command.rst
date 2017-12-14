@@ -183,6 +183,7 @@ dm-run-profiler
       --tnsname=STRING           TNS name (Oracle only)
       --user=STRING              User name
       --pass=STRING              User password
+      --credential=STRING        Credential file name (BigQuery only)
       -P=INTEGER                 Parallel degree of table scan
       -o=FILENAME                Output file
       --batch=FILENAME           Batch execution
@@ -195,10 +196,11 @@ dm-run-profiler
       --skip-table-profiling     Skip table (and column) profiling
       --skip-column-profiling    Skip column profiling
       --column-profiling-threshold=INTEGER
-                                 Threshold number of rows to skip profiling columns
+                                 Threshold number of rows to skip profiling
+                                 columns
   
       --timeout=NUMBER           Query timeout in seconds (default:no timeout)
-
+  
       --help                     Print this help.
 
 
@@ -215,6 +217,8 @@ dm-run-profiler
 ``--user`` specifies an user name to connect to the database.
 
 ``--pass`` specifies the password to connect to the database.
+
+``--credential`` specifies a credential file (json) for connecting to the BigQuery database.
 
 ``-P`` specifies the degree of parallel scan.
 
