@@ -51,22 +51,16 @@ You can specify one or more table names in command-line arguments.
 
   dm-run-profiler --dbtype oracle --tnsname ORCL --user scott --pass tiger SCOTT.CUSTOMER SCOTT.ORDERS
 
-By using ``-s`` option, you can automatically profile all tables in the specific schema.
+If you specify only schema name, the profiler will find all tables in the schema and scan them all.
 
-In following example, you can see how to profile all the tables in ``public`` schema in ``testdb`` databse on PostgreSQL.
-
-::
-
-  dm-run-profiler --dbtype pgsql --dbname testdb --user postgres --pass postgres -s public
-
-
-When no schema name or no table name are supplied, all tables in all schemas (excepting some system and demo schemas) where the connecting user can read will be set for for profiling targets.
-
-In following example, the user ``SCOTT`` will profile all the tables in all the schema which it can see.
+Following example shows how to scan all tables in ``SCOTT`` schema in ``ORCL`` database on Oracle.
 
 ::
 
-  dm-run-profiler --dbtype oracle --tnsname ORCL --user scott --pass tiger
+  dm-run-profiler --dbtype oracle --tnsname ORCL --user scott --pass tiger SCOTT
+
+
+When no schema/table name are supplied, a list of schema names will be shown. You need to specify one or more schemas in the list.
 
 See ":ref:`ref-command`" for more information about ``dm-run-profiler`` command.
 

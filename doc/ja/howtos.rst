@@ -53,22 +53,16 @@ Oracleデータベースに対してプロファイリングを行う場合に�
 
   dm-run-profiler --dbtype oracle --tnsname ORCL --user scott --pass tiger SCOTT.CUSTOMER SCOTT.ORDERS
 
-また、-sオプションでスキーマ名を指定することで、任意のスキーマ内のすべてのテーブルについてプロファイリングすることができます。
+スキーマ名だけを指定した場合には、指定したスキーマ内のすべてのテーブルを検出し、プロファイリングします。
 
-以下は、PostgreSQLの ``testdb`` データベースの ``public`` スキーマ内のすべてのテーブルを対象にプロファイリングする実行例です。
-
-::
-
-  dm-run-profiler --dbtype pgsql --dbname testdb --user postgres --pass postgres -s public
-
-
-スキーマ名やテーブル名を何も指定しないと、接続したユーザが参照できるスキーマ（一部のシステム系、サンプル系スキーマを除く）に含まれるすべてのテーブルを対象にプロファイリングします。
-
-以下の実行例では、 ``SCOTT`` ユーザが参照できるスキーマのすべてのテーブルをプロファイリングします。
+以下は、Oracleの ``ORCL`` データベースの ``SCOTT`` スキーマ内のすべてのテーブルを対象にプロファイリングする実行例です。
 
 ::
 
-  dm-run-profiler --dbtype oracle --tnsname ORCL --user scott --pass tiger
+  dm-run-profiler --dbtype oracle --tnsname ORCL --user scott --pass tiger SCOTT
+
+
+スキーマ名やテーブル名が何も指定されなかった場合、データベース内に存在するスキーマの一覧が表示されます。1つかそれ以上のスキーマを指定する必要があります。
 
 ``dm-run-profiler`` コマンドの詳細については「:ref:`ref-command`」を参照してください。
 

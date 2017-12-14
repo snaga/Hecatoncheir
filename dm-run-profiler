@@ -22,7 +22,7 @@ from hecatoncheir.table import Table2
 
 def usage():
     print '''
-Usage: %s [option...] [schema.table] ...
+Usage: %s [option...] [schema[.table]] ...
 
 Options:
     --dbtype=TYPE              Database type
@@ -32,8 +32,6 @@ Options:
     --tnsname=STRING           TNS name (Oracle only)
     --user=STRING              User name
     --pass=STRING              User password
-    -s=STRING                  Schema name
-    -t=STRING                  Table name
     -P=INTEGER                 Parallel degree of table scan
     -o=FILENAME                Output file
     --batch=FILENAME           Batch execution
@@ -55,9 +53,175 @@ Options:
 
 ''' % os.path.basename(sys.argv[0])
 
-if __name__ == "__main__":
+
+class Config():
+    def __init__(self, dbtype):
+        assert dbtype in ['pgsql','mysql','oracle','mssql']
+
+        self.host = None
+        self.port = None
+        self.dbname = None
+        self.dbuser = None
+        self.dbpass = None
+        self.tnsname = None
+        self.credential_file = None
+
+        if dbtype == 'pgsql':
+            self.init_pgsql()
+        elif dbtype == 'mysql':
+            self.init_mysql()
+        elif dbtype == 'oracle':
+            self.init_oracle()
+        elif dbtype == 'mssql':
+            self.init_mssql()
+
+    def init_pgsql(self):
+        self.host = os.environ.get('PGHOST', u'localhost')
+        self.port = os.environ.get('PGPORT', 5432)
+        self.dbname = os.environ.get('PGDATABASE', u'postgres')
+        self.dbuser = os.environ.get('PGUSER', u'postgres')
+        self.dbpass = os.environ.get('PGPASSWORD', None)
+
+    def init_mysql(self):
+        self.host = u'localhost'
+        self.port = 3306
+        self.dbname = u'mysql'
+        self.dbuser = u'mysql'
+        self.dbpass = None
+
+    def init_oracle(self):
+        self.host = u'localhost'
+        self.port = 1521
+        self.dbname = u'ORCL'
+        self.dbuser = u'scott'
+        self.dbpass = None
+        self.tnsname = None
+
+    def init_mssql(self):
+        self.host = u'localhost'
+        self.port = 1433
+        self.dbname = u'db'
+        self.dbuser = u'sa'
+        self.dbpass = None
+
+
+def get_dbtype(argv):
+    dbtype = None
+    for i, o in enumerate(sys.argv[1:]):
+        if o == '--dbtype':
+            try:
+                dbtype = sys.argv[i+2]
+            except IndexError as ex:
+                if str(ex) == 'list index out of range':
+                    pass
+                else:
+                    raise ex
+    return dbtype
+
+
+def print_config(config):
+    log.info("------ Connection settings ------")
+    for k in sorted(vars(config)):
+        if k == 'dbpass':
+            log.info(u'%s: ****' % k)
+        else:
+            log.info(u'%s: %s' % (k, vars(config)[k] if vars(config)[k] else '(none)'))
+    log.info("---------------------------------")
+
+
+def get_profiler(config):
+    profiler = None
+
+    if dbtype == 'pgsql':
+        profiler = PgProfiler.PgProfiler(config.host, config.port, config.dbname,
+                                         config.dbuser, config.dbpass)
+    elif dbtype == 'oracle':
+        if config.tnsname:
+            config.dbname = config.tnsname
+            config.host = None
+            config.port = None
+            log.info(_("TNS info: %s@%s") % (config.dbuser, config.tnsname))
+        else:
+            log.info(_("Conn info: %s@%s:%s/%s") % (config.dbuser, config.host, config.port, config.dbname))
+        profiler = OraProfiler.OraProfiler(config.host, config.port, config.dbname,
+                                           config.dbuser, config.dbpass)
+    elif dbtype == 'mysql':
+        profiler = MyProfiler.MyProfiler(config.host, config.port, config.dbname,
+                                         config.dbuser, config.dbpass)
+    elif dbtype == 'mssql':
+        profiler = MSSQLProfiler.MSSQLProfiler(config.host, config.port, config.dbname,
+                                               config.dbuser, config.dbpass)
+
+    return profiler
+
+
+def table_list_from_file(profiler, filename):
+    tables = []
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:t:P:o:",
+        for line in open(filename):
+            a = line.strip()
+            if a.startswith("#"):
+                continue
+            t = a.split(".")
+            if len(t) == 2 and t[0] and t[1]:
+                tables.append([t[0], t[1]])
+            elif len(t) == 1 and t[0]:
+                tables.extend(table_list_from_schema(profiler, t[0]))
+            else:
+                log.error(_("Specify schema/table name in "
+                            "[SCHEMA[.TABLE]] format: <%s>") % a)
+    except Exception as ex:
+        log.error("Could not read a table list file `%s'." % filename)
+    return tables
+
+
+def table_list_from_args(profiler, args):
+    tables = []
+    for a in args:
+        t = a.split(".")
+        if len(t) == 2 and t[0] and t[1]:
+            tables.append([t[0], t[1]])
+        elif len(t) == 1 and t[0]:
+            tables.extend(table_list_from_schema(profiler, t[0]))
+        else:
+            log.error(_("Specify schema/table name in "
+                        "[SCHEMA[.TABLE]] format: <%s>") % a)
+    return tables
+
+
+def table_list_from_schema(profiler, schema):
+    tables = []
+    for t in profiler.get_table_names(schema):
+        tables.append([schema, t])
+    return tables
+
+
+def table_list_dedup(tables):
+    tables2 = []
+    for t in tables:
+        if not t in tables2:
+            tables2.append(t)
+    return tables2
+
+
+input_encoding = 'utf-8'
+
+if __name__ == "__main__":
+    dbtype = get_dbtype(sys.argv[1:])
+
+    if not dbtype:
+        log.error(_("Specify your database type with --dbtype."))
+        usage()
+        sys.exit(1)
+
+    if dbtype not in ['pgsql','mysql','oracle','mssql']:
+        log.error("Database type `%s' is not supported." % dbtype)
+        sys.exit(1)
+
+    config = Config(dbtype)
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "P:o:",
                                    ["help", "dbtype=", "host=", "port=",
                                     "dbname=", "tnsname=", "user=", "pass=",
                                     "batch=", "enable-validation",
@@ -73,14 +237,6 @@ if __name__ == "__main__":
         usage()
         sys.exit(1)
 
-    dbtype = None
-    host = None
-    port = None
-    dbname = None
-    dbuser = None
-    dbpass = None
-    schema_name = None
-    table_name = None
     parallel_degree = None
     output_file = None
     table_list = None
@@ -91,32 +247,27 @@ if __name__ == "__main__":
     column_profiling_threshold = None
     skip_record_validation = False
     debug = None
-    tnsname = None
     timeout = None
 
     for o, a in opts:
-        if o in ("-t"):
-            table_name = a
-        elif o in ("-s"):
-            schema_name = a
-        elif o in ("-P"):
+        if o in ("-P"):
             parallel_degree = int(a)
         elif o in ("-o"):
             output_file = a
         elif o in ("--dbtype"):
-            dbtype = a
+            assert dbtype == a
         elif o in ("--host"):
-            host = a
+            config.host = a.decode(input_encoding)
         elif o in ("--port"):
-            port = int(a)
+            config.port = int(a)
         elif o in ("--dbname"):
-            dbname = a
+            config.dbname = a.decode(input_encoding)
         elif o in ("--tnsname"):
-            tnsname = a
+            config.tnsname = a.decode(input_encoding)
         elif o in ("--user"):
-            dbuser = a
+            config.dbuser = a.decode(input_encoding)
         elif o in ("--pass"):
-            dbpass = a
+            config.dbpass = a.decode(input_encoding)
         elif o in ("--batch"):
             table_list = a
         elif o in ("--enable-validation"):
@@ -142,72 +293,14 @@ if __name__ == "__main__":
             log.error("unexpected option. internal error.")
             sys.exit(1)
 
-    if dbtype is None:
-        log.error(_("Specify your database type with --dbtype."))
-        sys.exit(1)
-
-    default_host = 'localhost'
-    default_port = None
-
-    if dbtype == 'pgsql':
-        default_port = 5432
-    elif dbtype == 'oracle':
-        default_port = 1521
-    elif dbtype == 'mysql':
-        default_port = 3306
-    elif dbtype == 'mssql':
-        default_port = 1433
-    else:
-        log.error(_("Unsupported database type: %s") % dbtype)
-        sys.exit(1)
-
-    if host is None:
-        host = default_host
-    if port is None:
-        port = default_port
-
-    if dbtype == 'oracle' and tnsname is not None:
-        dbname = tnsname
-
-    if dbname is None:
-        log.error(_("Specify database name with --dbname."))
-        sys.exit(1)
-
-    if dbuser is None:
-        log.error(_("Specify database user name with --user."))
-        sys.exit(1)
-
-    if dbpass is None:
+    if config.dbpass is None:
         log.error(_("Specify database password with --pass."))
         sys.exit(1)
 
-    if tnsname is not None:
-        log.info(_("TNS info: %s@%s") % (dbuser, tnsname))
-    else:
-        log.info(_("Conn info: %s@%s:%s/%s") % (dbuser, host, port, dbname))
+    print_config(config)
 
-    dbname = unicode(dbname)
-
-    profiler = None
-    if dbtype == 'pgsql':
-        profiler = PgProfiler.PgProfiler(host, port, dbname, dbuser,
-                                         dbpass)
-    elif dbtype == 'oracle':
-        log.trace("dbname = %s, tnsname = %s" % (dbname, tnsname))
-        if tnsname is not None:
-            host = None
-            port = None
-        profiler = OraProfiler.OraProfiler(host, port, dbname, dbuser, dbpass)
-    elif dbtype == 'mysql':
-        profiler = MyProfiler.MyProfiler(host, port, dbname, dbuser, dbpass)
-    elif dbtype == 'mssql':
-        profiler = MSSQLProfiler.MSSQLProfiler(host, port, dbname, dbuser,
-                                               dbpass)
-    else:
-        log.error(_("Internal error (%d)") % 1)
-        log.error(_("Abort."))
-        traceback.print_exc()
-        sys.exit(1)
+    profiler = get_profiler(config)
+    assert profiler
 
     profiler.profile_sample_rows = enable_sample_rows
 
@@ -223,38 +316,20 @@ if __name__ == "__main__":
     try:
         profiler.connect()
 
-        if len(args) > 0:
-            for a in args:
-                if a.find('.') >= 0:
-                    tables.append(a.split('.'))
-                else:
-                    log.error(_("Specify table name in "
-                                "<SCHEMA.TABLE> format: <%s>") % a)
-                    sys.exit(1)
+        # Getting table names from arguments.
+        if args:
+            tables.extend(table_list_from_args(profiler, args))
+
         # Using a table list file.
-        elif table_list:
-            if os.path.exists(table_list) is False:
-                log.error(_("Table list file %s not found.") % table_list)
-                sys.exit(1)
-            for line in open(table_list):
-                line = line.rstrip()
-                if line.startswith("#"):
-                    continue
-                t = line.split(".")
-                if len(t) == 2 and len(t[0]) > 0 and len(t[1]) > 0:
-                    tables.append([t[0], t[1]])
-        # Looking at all tables in all schemas.
-        elif schema_name is None:
+        if table_list:
+            tables.extend(table_list_from_file(profiler, table_list))
+
+        # If nothing specified, show the list of schemas, then exit.
+        if len(tables) == 0:
             for s in profiler.get_schema_names():
-                for t in profiler.get_table_names(s):
-                    tables.append([s, t])
-        # Looking at all tables in the specified schema.
-        elif schema_name and table_name is None:
-            for t in profiler.get_table_names(schema_name):
-                tables.append([schema_name, t])
-        # Looking at one specified table.
-        elif schema_name and table_name:
-            tables.append([schema_name, table_name])
+                log.info(u'Please specify one or more schemas:')
+                log.info(u'  %s' % s)
+                sys.exit(1)
     except DbProfilerException as e:
         error, = e.source.args
         log.error(u"%s" % unicode(e), detail=error.message)
@@ -265,6 +340,8 @@ if __name__ == "__main__":
         log.error(_("Abort."))
         traceback.print_exc()
         sys.exit(3)
+
+    tables = table_list_dedup(tables)
 
     try:
         repo = DbProfilerRepository.DbProfilerRepository(output_file)
@@ -314,7 +391,7 @@ if __name__ == "__main__":
 
         validation_rules = None
         if enable_validation:
-            validation_rules = repo.get_validation_rules(dbname, t[0], t[1])
+            validation_rules = repo.get_validation_rules(config.dbname, t[0], t[1])
 
         profiler.skip_table_profiling = skip_table_profiling
         profiler.skip_column_profiling = skip_column_profiling
@@ -361,11 +438,11 @@ if __name__ == "__main__":
             continue
 
         # copy nls_name and comment from previous record.
-        t = Table2.find(dbname, t[0], t[1])
-        if len(t) == 1:
-            DbProfilerBase.migrate_table_meta(t[0].data, newdata)
+        tab = Table2.find(config.dbname, t[0], t[1])
+        if len(tab) == 1:
+            DbProfilerBase.migrate_table_meta(tab[0].data, newdata)
         try:
-            Table2.create(dbname, t[0], t[1], newdata)
+            Table2.create(config.dbname, t[0], t[1], newdata)
         except InternalError as ex:
             log.error(_("Could not append table data (%s.%s) to "
                         "the repository.") % (t[0], t[1]),

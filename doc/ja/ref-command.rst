@@ -172,7 +172,7 @@ dm-run-profilerコマンド
 
 ::
 
-  Usage: dm-run-profiler [option...] [schema.table] ...
+  Usage: dm-run-profiler [option...] [schema[.table]] ...
   
   Options:
       --dbtype=TYPE              Database type
@@ -182,8 +182,6 @@ dm-run-profilerコマンド
       --tnsname=STRING           TNS name (Oracle only)
       --user=STRING              User name
       --pass=STRING              User password
-      -s=STRING                  Schema name
-      -t=STRING                  Table name
       -P=INTEGER                 Parallel degree of table scan
       -o=FILENAME                Output file
       --batch=FILENAME           Batch execution
@@ -216,10 +214,6 @@ dm-run-profilerコマンド
 ``--user`` はデータベースに接続するユーザ名です。
 
 ``--pass`` はデータベースに接続するパスワードです。
-
-``-s`` は対象とするスキーマ名です。
-
-``-t`` は対象とするテーブル名です。
 
 ``-P`` は内部でテーブルスキャンを実行する際の並列度です。
 
