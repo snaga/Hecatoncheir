@@ -361,9 +361,9 @@ if __name__ == "__main__":
             continue
 
         # copy nls_name and comment from previous record.
-        t = Table2.find(dbname, t[0], t[1])
-        if len(t) == 1:
-            DbProfilerBase.migrate_table_meta(t[0].data, newdata)
+        tab = Table2.find(dbname, t[0], t[1])
+        if len(tab) == 1:
+            DbProfilerBase.migrate_table_meta(tab[0].data, newdata)
         try:
             Table2.create(dbname, t[0], t[1], newdata)
         except InternalError as ex:
