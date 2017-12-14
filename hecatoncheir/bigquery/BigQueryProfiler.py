@@ -78,7 +78,7 @@ class BigQueryProfiler(DbProfilerBase.DbProfilerBase):
 
     def get_row_count(self, schema_name, table_name):
         tab = self._get_table(schema_name, table_name)
-        return tab.num_rows
+        return long(tab.num_rows)
 
     def _init_column_cache(self, schema_name, table_name):
         if not self.column_cache:
