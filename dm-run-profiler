@@ -34,6 +34,7 @@ Options:
     --tnsname=STRING           TNS name (Oracle only)
     --user=STRING              User name
     --pass=STRING              User password
+    --credential=STRING        Credential file name (BigQuery only)
     -P=INTEGER                 Parallel degree of table scan
     -o=FILENAME                Output file
     --batch=FILENAME           Batch execution
