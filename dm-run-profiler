@@ -196,6 +196,14 @@ def table_list_from_schema(profiler, schema):
     return tables
 
 
+def table_list_dedup(tables):
+    tables2 = []
+    for t in tables:
+        if not t in tables2:
+            tables2.append(t)
+    return tables2
+
+
 input_encoding = 'utf-8'
 
 if __name__ == "__main__":
@@ -332,6 +340,8 @@ if __name__ == "__main__":
         log.error(_("Abort."))
         traceback.print_exc()
         sys.exit(3)
+
+    tables = table_list_dedup(tables)
 
     try:
         repo = DbProfilerRepository.DbProfilerRepository(output_file)
