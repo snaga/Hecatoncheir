@@ -56,8 +56,9 @@ SELECT database_name,
             if (r[0], r[1], r[2]) in found:
                 continue
             data = json.loads(r[3])
-            if tag and tag not in data.get('tags',[]):
-                continue
+            if tag:
+                if not data.get('tags') or tag not in data.get('tags'):
+                    continue
             tables.append(Table2(r[0], r[1], r[2], data))
             found.append((r[0], r[1], r[2]))
         return tables
