@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import getopt
+import json
 import os
 import sys
 import traceback
@@ -9,6 +10,7 @@ import traceback
 from hecatoncheir import DbProfilerBase
 from hecatoncheir import DbProfilerFormatter
 from hecatoncheir import DbProfilerRepository
+from hecatoncheir.bigquery import BigQueryProfiler
 from hecatoncheir.oracle import OraProfiler
 from hecatoncheir.pgsql import PgProfiler
 from hecatoncheir.mysql import MyProfiler
@@ -32,6 +34,7 @@ Options:
     --tnsname=STRING           TNS name (Oracle only)
     --user=STRING              User name
     --pass=STRING              User password
+    --credential=STRING        Credential file name (BigQuery only)
     -P=INTEGER                 Parallel degree of table scan
     -o=FILENAME                Output file
     --batch=FILENAME           Batch execution
@@ -56,7 +59,7 @@ Options:
 
 class Config():
     def __init__(self, dbtype):
-        assert dbtype in ['pgsql','mysql','oracle','mssql']
+        assert dbtype in ['pgsql','mysql','oracle','mssql','bigquery']
 
         self.host = None
         self.port = None
@@ -74,6 +77,8 @@ class Config():
             self.init_oracle()
         elif dbtype == 'mssql':
             self.init_mssql()
+        elif dbtype == 'bigquery':
+            self.init_bigquery()
 
     def init_pgsql(self):
         self.host = os.environ.get('PGHOST', u'localhost')
@@ -104,6 +109,8 @@ class Config():
         self.dbuser = u'sa'
         self.dbpass = None
 
+    def init_bigquery(self):
+        self.credential_file = None
 
 def get_dbtype(argv):
     dbtype = None
@@ -133,9 +140,15 @@ def get_profiler(config):
     profiler = None
 
     if dbtype == 'pgsql':
+        if config.dbpass is None:
+            log.error(_("Specify database password with --pass."))
+            sys.exit(1)
         profiler = PgProfiler.PgProfiler(config.host, config.port, config.dbname,
                                          config.dbuser, config.dbpass)
     elif dbtype == 'oracle':
+        if config.dbpass is None:
+            log.error(_("Specify database password with --pass."))
+            sys.exit(1)
         if config.tnsname:
             config.dbname = config.tnsname
             config.host = None
@@ -146,11 +159,25 @@ def get_profiler(config):
         profiler = OraProfiler.OraProfiler(config.host, config.port, config.dbname,
                                            config.dbuser, config.dbpass)
     elif dbtype == 'mysql':
+        if config.dbpass is None:
+            log.error(_("Specify database password with --pass."))
+            sys.exit(1)
         profiler = MyProfiler.MyProfiler(config.host, config.port, config.dbname,
                                          config.dbuser, config.dbpass)
     elif dbtype == 'mssql':
+        if config.dbpass is None:
+            log.error(_("Specify database password with --pass."))
+            sys.exit(1)
         profiler = MSSQLProfiler.MSSQLProfiler(config.host, config.port, config.dbname,
                                                config.dbuser, config.dbpass)
+    elif dbtype == 'bigquery':
+        if not config.credential_file:
+            log.error(_("Specify credential file with --credential."))
+            sys.exit(1)
+        with open(config.credential_file) as f:
+            c = json.loads(f.read())
+        config.dbname = c['project_id']
+        profiler = BigQueryProfiler.BigQueryProfiler(config.credential_file)
 
     return profiler
 
@@ -214,7 +241,7 @@ if __name__ == "__main__":
         usage()
         sys.exit(1)
 
-    if dbtype not in ['pgsql','mysql','oracle','mssql']:
+    if dbtype not in ['pgsql','mysql','oracle','mssql','bigquery']:
         log.error("Database type `%s' is not supported." % dbtype)
         sys.exit(1)
 
@@ -224,6 +251,7 @@ if __name__ == "__main__":
         opts, args = getopt.getopt(sys.argv[1:], "P:o:",
                                    ["help", "dbtype=", "host=", "port=",
                                     "dbname=", "tnsname=", "user=", "pass=",
+                                    "credential=",
                                     "batch=", "enable-validation",
                                     "enable-sample-rows",
                                     "disable-sample-rows",
@@ -268,6 +296,8 @@ if __name__ == "__main__":
             config.dbuser = a.decode(input_encoding)
         elif o in ("--pass"):
             config.dbpass = a.decode(input_encoding)
+        elif o in ("--credential"):
+            config.credential_file = a.decode(input_encoding)
         elif o in ("--batch"):
             table_list = a
         elif o in ("--enable-validation"):
@@ -292,10 +322,6 @@ if __name__ == "__main__":
         else:
             log.error("unexpected option. internal error.")
             sys.exit(1)
-
-    if config.dbpass is None:
-        log.error(_("Specify database password with --pass."))
-        sys.exit(1)
 
     print_config(config)
 
