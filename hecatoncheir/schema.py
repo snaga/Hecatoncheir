@@ -55,7 +55,7 @@ VALUES ('{0}', '{1}', '{2}', '{3}')
         q = u"""
 SELECT database_name,
        schema_name,
-       COUNT(*)
+       COUNT(DISTINCT table_name)
   FROM repo
  WHERE database_name = '{0}'
    AND schema_name = '{1}'
