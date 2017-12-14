@@ -157,6 +157,43 @@ def get_profiler(config):
     return profiler
 
 
+def table_list_from_file(filename):
+    tables = []
+    try:
+        for line in open(filename):
+            line = line.strip()
+            if line.startswith("#"):
+                continue
+            t = line.split(".")
+            if len(t) == 2 and len(t[0]) and len(t[1]):
+                tables.append([t[0], t[1]])
+            else:
+                log.error(_("Specify table name in "
+                            "<SCHEMA.TABLE> format: <%s>") % line)
+    except Exception as ex:
+        log.error("Could not read a table list file `%s'." % filename)
+    return tables
+
+
+def table_list_from_args(args):
+    tables = []
+    for a in args:
+        t = a.split(".")
+        if len(t) == 2 and len(t[0]) and len(t[1]):
+            tables.append([t[0], t[1]])
+        else:
+            log.error(_("Specify table name in "
+                        "<SCHEMA.TABLE> format: <%s>") % a)
+    return tables
+
+
+def table_list_from_schema(profiler, schema):
+    tables = []
+    for t in profiler.get_table_names(schema):
+        tables.append([schema, t])
+    return tables
+
+
 input_encoding = 'utf-8'
 
 if __name__ == "__main__":
@@ -275,33 +312,18 @@ if __name__ == "__main__":
     try:
         profiler.connect()
 
-        if len(args) > 0:
-            for a in args:
-                if a.find('.') >= 0:
-                    tables.append(a.split('.'))
-                else:
-                    log.error(_("Specify table name in "
-                                "<SCHEMA.TABLE> format: <%s>") % a)
-                    sys.exit(1)
+        tables.extend(table_list_from_args(args))
+
         # Using a table list file.
-        elif table_list:
-            if os.path.exists(table_list) is False:
-                log.error(_("Table list file %s not found.") % table_list)
-                sys.exit(1)
-            for line in open(table_list):
-                line = line.rstrip()
-                if line.startswith("#"):
-                    continue
-                t = line.split(".")
-                if len(t) == 2 and len(t[0]) > 0 and len(t[1]) > 0:
-                    tables.append([t[0], t[1]])
+        if table_list:
+            tables.extend(table_list_from_file(table_list))
+
         # Looking at all tables in all schemas.
-        elif schema_name is None:
+        if len(tables) == 0 and not schema_name and not table_name:
             for s in profiler.get_schema_names():
-                for t in profiler.get_table_names(s):
-                    tables.append([s, t])
+                tables.extend(table_list_from_schema(profiler, s))
         # Looking at all tables in the specified schema.
-        elif schema_name and table_name is None:
+        elif schema_name and not table_name:
             for t in profiler.get_table_names(schema_name):
                 tables.append([schema_name, t])
         # Looking at one specified table.
