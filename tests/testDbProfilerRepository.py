@@ -7,10 +7,13 @@ import time
 import unittest
 sys.path.append('..')
 
+import sqlalchemy as sa
+
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir.exception import InternalError
 from hecatoncheir import db
 from hecatoncheir.table import Table2
+from hecatoncheir.validation import ValidationRule
 
 class TestDbProfilerRepository(unittest.TestCase):
     repo = None
@@ -27,7 +30,6 @@ class TestDbProfilerRepository(unittest.TestCase):
 
     def tearDown(self):
         self.repo.close()
-        self.repo.destroy()
 
     def testDbProfilerRepository_001(self):
         repo = DbProfilerRepository.DbProfilerRepository()
@@ -54,12 +56,11 @@ class TestDbProfilerRepository(unittest.TestCase):
         if not repo.use_pgsql:
             self.assertTrue(os.path.exists(fname))
 
+        # connecting a repository database should fail. (permission denied)
         fname = "/foo.db"
-        repo = DbProfilerRepository.DbProfilerRepository(fname)
-        if repo.use_pgsql:
-            self.assertTrue(repo.init())
-        else:
-            self.assertFalse(repo.init())
+        with self.assertRaises(sa.exc.OperationalError) as cm:
+            DbProfilerRepository.DbProfilerRepository(fname)
+        self.assertEquals('(sqlite3.OperationalError) unable to open database file', str(cm.exception))
 
     def testDestroy_001(self):
         fname = "foo.db"
@@ -387,148 +388,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.repo.put_bg_term(u'term11', '', '', '', [], [], [], [])
 
         self.assertEqual([u'term11', u'term1', u'term2', u'term3'], self.repo.get_bg_terms_all())
-
-    """
-    Unit tests for accessing validation rules.
-    """
-    def test_get_validation_rules_001(self):
-        self.assertEqual([], self.repo.get_validation_rules())
-
-    def test_get_validation_rules_002(self):
-        self.assertTrue(self.repo.create_validation_rule('database_name1','schema_name1','table_name1','column_name','description1','rule','param','param2'))
-        self.assertTrue(self.repo.create_validation_rule('database_name2','schema_name2','table_name2','column_name','description2','rule','param','param2'))
-        self.assertTrue(self.repo.create_validation_rule('database_name3','schema_name3','table_name3','column_name','description3','rule','param','param2'))
-
-        a = [(1, u'database_name1', u'schema_name1',u'table_name1',u'column_name',u'description1',u'rule',u'param',u'param2')]
-        self.assertEqual(a, self.repo.get_validation_rules(database_name='database_name1'))
-
-        a = [(2, u'database_name2', u'schema_name2',u'table_name2',u'column_name',u'description2',u'rule',u'param',u'param2')]
-        self.assertEqual(a, self.repo.get_validation_rules(schema_name='schema_name2'))
-
-        a = [(3, u'database_name3', u'schema_name3',u'table_name3',u'column_name',u'description3',u'rule',u'param',u'param2')]
-        self.assertEqual(a, self.repo.get_validation_rules(table_name='table_name3'))
-
-        self.assertEqual([], self.repo.get_validation_rules(database_name='database_name1',schema_name='schema_name2',table_name='table_name3'))
-
-    def test_create_validation_rule_001(self):
-        self.assertEqual(1, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description1','rule','param','param2'))
-
-        self.assertEqual(2, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description2','rule'))
-
-        self.assertEqual(3, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description3','rule', 'param'))
-
-        # same rule as #1
-        self.assertEqual(None, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description4','rule','param','param2'))
-
-        a = [(1,
-              u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description1',
-              u'rule',
-              u'param',
-              u'param2'),
-             (2,
-              u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description2',
-              u'rule',
-              u'',
-              u''),
-             (3,
-              u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description3',
-              u'rule',
-              u'param',
-              u'')]
-
-        self.assertEqual(a, self.repo.get_validation_rules())
-
-    def test_get_validation_rule_001(self):
-        # 1
-        self.assertEqual(1, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description1','rule','param','param2'))
-
-        a = (1,
-             u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description1',
-              u'rule',
-              u'param',
-              u'param2')
-        self.assertEqual(a, self.repo.get_validation_rule(1))
-
-        # 2
-        self.assertEqual(2, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description2','rule'))
-        a = (2,
-             u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description2',
-              u'rule',
-              u'',
-              u'')
-        self.assertEqual(a, self.repo.get_validation_rule(2))
-
-        # 3: not found
-        self.assertEqual(None, self.repo.get_validation_rule(3))
-
-    def test_update_validation_rule_001(self):
-        # 1
-        self.assertEqual(1, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description1','rule','param','param2'))
-
-        a = (1,
-             u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description1',
-              u'rule',
-              u'param',
-              u'param2')
-        self.assertEqual(a, self.repo.get_validation_rule(1))
-
-        # update 1
-        self.assertTrue(self.repo.update_validation_rule(1, 'database_name','schema_name','table_name','column_name','description2','rule'))
-        a = (1,
-             u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description2',
-              u'rule',
-              u'',
-              u'')
-        self.assertEqual(a, self.repo.get_validation_rule(1))
-
-    def test_delete_validation_rule_001(self):
-        # 1
-        self.assertEqual(1, self.repo.create_validation_rule('database_name','schema_name','table_name','column_name','description1','rule','param','param2'))
-
-        a = (1,
-             u'database_name',
-              u'schema_name',
-              u'table_name',
-              u'column_name',
-              u'description1',
-              u'rule',
-              u'param',
-              u'param2')
-        self.assertEqual(a, self.repo.get_validation_rule(1))
-
-        # delete 1
-        self.assertTrue(self.repo.delete_validation_rule(1))
-
-        # deleted
-        self.assertEqual(None, self.repo.get_validation_rule(1))
 
 if __name__ == '__main__':
     unittest.main()

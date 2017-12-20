@@ -15,6 +15,7 @@ from hecatoncheir.repository import Repository
 from hecatoncheir.schema import Schema2
 from hecatoncheir.table import Table2
 from hecatoncheir.tag import Tag2
+from hecatoncheir.validation import ValidationRule
 
 table_csv_keys = [
     'DATABASE_NAME',
@@ -213,14 +214,14 @@ def process_glossary_csv(repo, r):
 
 
 def process_validation_csv(repo, r):
-    if r['param'] is not None and len(r['param']) == 0:
-        r['param'] = None
-    if r['param2'] is not None and len(r['param2']) == 0:
-        r['param2'] = None
-    repo.create_validation_rule(r['database_name'], r['schema_name'],
-                                r['table_name'], r['column_name'],
-                                r['description'], r['rule'],
-                                r['param'], r['param2'])
+    try:
+        ValidationRule.create(r['database_name'], r['schema_name'],
+                              r['table_name'], r['column_name'],
+                              r['description'], r['rule'],
+                              r['param'], r['param2'])
+    except Exception as ex:
+        log.error(_('Could not import a vaidation rule: %s') % str(r), detail=str(ex))
+        return 0
     return 1
 
 

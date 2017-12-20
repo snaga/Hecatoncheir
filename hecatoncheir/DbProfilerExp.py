@@ -20,6 +20,7 @@ from attachment import Attachment
 from schema import Schema2
 from table import Table2
 from tag import Tag2
+from validation import get_validation_rules
 
 
 def export_file(filename, body):
@@ -152,8 +153,8 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         filename = output_path + ("/%s.%s.%s.html" %
                                   (database_name, schema_name, table_name))
 
-        validation_rules = repo.get_validation_rules(database_name,
-                                                     schema_name, table_name)
+        validation_rules = get_validation_rules(database_name,
+                                                schema_name, table_name)
         export_file(filename, DbProfilerFormatter.to_table_html(
                 data, validation_rules=validation_rules,
                 datamapping=dmentries,
