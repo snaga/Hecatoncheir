@@ -20,7 +20,7 @@ from hecatoncheir.repository import Repository
 from hecatoncheir.schema import Schema2
 from hecatoncheir.table import Table2
 from hecatoncheir.tag import Tag2
-from hecatoncheir.validation import ValidationRule
+from hecatoncheir.validation import ValidationRule, get_validation_rules
 
 app = Flask(__name__)
 
@@ -208,7 +208,7 @@ def table(db, schema, table):
 
     table_data = Table2.find(db, schema, table)[0].data
     datamap = repo.get_datamap_items(db, schema, table)
-    validation_rules = repo.get_validation_rules(db, schema, table)
+    validation_rules = get_validation_rules(db, schema, table)
     html = DbProfilerFormatter.to_table_html(table_data,
                                              validation_rules=validation_rules,
                                              datamapping=datamap,
@@ -328,9 +328,9 @@ def api_validation_get_all():
          'description', 'rule', 'param', 'param2']
     data = []
     try:
-        rr = repo.get_validation_rules(request.args.get('database_name'),
-                                       request.args.get('schema_name'),
-                                       request.args.get('table_name'))
+        rr = get_validation_rules(request.args.get('database_name'),
+                                  request.args.get('schema_name'),
+                                  request.args.get('table_name'))
         for r in rr:
             assert len(a) == len(r)
             d = {}

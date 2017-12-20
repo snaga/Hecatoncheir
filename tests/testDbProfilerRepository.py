@@ -389,27 +389,5 @@ class TestDbProfilerRepository(unittest.TestCase):
 
         self.assertEqual([u'term11', u'term1', u'term2', u'term3'], self.repo.get_bg_terms_all())
 
-    """
-    Unit tests for accessing validation rules.
-    """
-    def test_get_validation_rules_001(self):
-        self.assertEqual([], self.repo.get_validation_rules())
-
-    def test_get_validation_rules_002(self):
-        self.assertIsNotNone(ValidationRule.create('database_name1','schema_name1','table_name1','column_name','description1','rule','param','param2'))
-        self.assertIsNotNone(ValidationRule.create('database_name2','schema_name2','table_name2','column_name','description2','rule','param','param2'))
-        self.assertIsNotNone(ValidationRule.create('database_name3','schema_name3','table_name3','column_name','description3','rule','param','param2'))
-
-        a = [(1, u'database_name1', u'schema_name1',u'table_name1',u'column_name',u'description1',u'rule',u'param',u'param2')]
-        self.assertEqual(a, self.repo.get_validation_rules(database_name='database_name1'))
-
-        a = [(2, u'database_name2', u'schema_name2',u'table_name2',u'column_name',u'description2',u'rule',u'param',u'param2')]
-        self.assertEqual(a, self.repo.get_validation_rules(schema_name='schema_name2'))
-
-        a = [(3, u'database_name3', u'schema_name3',u'table_name3',u'column_name',u'description3',u'rule',u'param',u'param2')]
-        self.assertEqual(a, self.repo.get_validation_rules(table_name='table_name3'))
-
-        self.assertEqual([], self.repo.get_validation_rules(database_name='database_name1',schema_name='schema_name2',table_name='table_name3'))
-
 if __name__ == '__main__':
     unittest.main()

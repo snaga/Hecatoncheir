@@ -14,6 +14,33 @@ def sql_escape(s):
     return s.replace("'", "''")
 
 
+def get_validation_rules(database_name=None, schema_name=None,
+                         table_name=None):
+    """
+    Get validation rules in the list composed by the old format (tuples).
+
+    FIXME:
+    This function is kept for the backward compatibility for now,
+    and should be removed by the further refactoring.
+
+    Returns:
+      list: a list of tuples containing validation rules.
+    """
+    rules = []
+    for r in ValidationRule.find(database_name=database_name,
+                                 schema_name=schema_name,
+                                 table_name=table_name):
+        rules.append((r.id,
+                      r.database_name,
+                      r.schema_name,
+                      r.table_name,
+                      r.column_name,
+                      r.description,
+                      r.rule,
+                      r.param,
+                      r.param2))
+    return rules
+
 class ValidationRule:
     def __init__(self, id_, database_name, schema_name, table_name,
                  column_name, description, rule,
@@ -277,6 +304,25 @@ class TestValidationRule(unittest.TestCase):
         v = ValidationRule.find(id_=1)
         self.assertEquals(1, len(v))
         self.assertEquals('desc', v[0].description)
+
+    def test_get_validation_rules_001(self):
+        self.assertEqual([], get_validation_rules())
+
+    def test_get_validation_rules_002(self):
+        self.assertIsNotNone(ValidationRule.create('database_name1','schema_name1','table_name1','column_name','description1','rule','param','param2'))
+        self.assertIsNotNone(ValidationRule.create('database_name2','schema_name2','table_name2','column_name','description2','rule','param','param2'))
+        self.assertIsNotNone(ValidationRule.create('database_name3','schema_name3','table_name3','column_name','description3','rule','param','param2'))
+
+        a = [(1, u'database_name1', u'schema_name1',u'table_name1',u'column_name',u'description1',u'rule',u'param',u'param2')]
+        self.assertEqual(a, get_validation_rules(database_name='database_name1'))
+
+        a = [(2, u'database_name2', u'schema_name2',u'table_name2',u'column_name',u'description2',u'rule',u'param',u'param2')]
+        self.assertEqual(a, get_validation_rules(schema_name='schema_name2'))
+
+        a = [(3, u'database_name3', u'schema_name3',u'table_name3',u'column_name',u'description3',u'rule',u'param',u'param2')]
+        self.assertEqual(a, get_validation_rules(table_name='table_name3'))
+
+        self.assertEqual([], get_validation_rules(database_name='database_name1',schema_name='schema_name2',table_name='table_name3'))
 
 if __name__ == '__main__':
     unittest.main()

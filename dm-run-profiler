@@ -20,6 +20,7 @@ from hecatoncheir.exception import (DbProfilerException, DriverError,
                                     InternalError, QueryError, QueryTimeout)
 from hecatoncheir.msgutil import gettext as _
 from hecatoncheir.table import Table2
+from hecatoncheir.validation import get_validation_rules
 
 
 def usage():
@@ -417,7 +418,7 @@ if __name__ == "__main__":
 
         validation_rules = None
         if enable_validation:
-            validation_rules = repo.get_validation_rules(config.dbname, t[0], t[1])
+            validation_rules = get_validation_rules(config.dbname, t[0], t[1])
 
         profiler.skip_table_profiling = skip_table_profiling
         profiler.skip_column_profiling = skip_column_profiling

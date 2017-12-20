@@ -525,27 +525,6 @@ INSERT INTO business_glossary (
                                 query=query, source=ex)
         return data
 
-    def get_validation_rules(self, database_name=None, schema_name=None,
-                             table_name=None):
-        """
-        Returns:
-            list: a list of tuples containing  validation rules.
-        """
-        rules = []
-        for r in ValidationRule.find(database_name=database_name,
-                                     schema_name=schema_name,
-                                     table_name=table_name):
-            rules.append((r.id,
-                          r.database_name,
-                          r.schema_name,
-                          r.table_name,
-                          r.column_name,
-                          r.description,
-                          r.rule,
-                          r.param,
-                          r.param2))
-        return rules
-
     def open(self):
         assert db.engine
         return
