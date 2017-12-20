@@ -1,9 +1,11 @@
 from datetime import datetime
 import json
+import os
 import unittest
 
 import sqlalchemy as sa
 
+from repository import Repository
 from utils import jsonize
 import db
 
@@ -104,11 +106,15 @@ DELETE FROM repo
 class TestTable2(unittest.TestCase):
     def setUp(self):
         db.creds = {}
-        db.creds['username'] = 'postgres'
-        db.creds['password'] = 'postgres'
-        db.creds['dbname'] = 'datacatalog'
-        db.connect()
-        db.conn.execute('truncate repo cascade')
+        db.creds['host'] = os.environ.get('PGHOST', 'localhost')
+        db.creds['port'] = os.environ.get('PGPORT', 5432)
+        db.creds['dbname'] = os.environ.get('PGDATABASE', 'datacatalog')
+        db.creds['username'] = os.environ.get('PGUSER', 'postgres')
+        db.creds['password'] = os.environ.get('PGPASSWORD', 'postgres')
+
+        self.repo = Repository()
+        self.repo.destroy()
+        self.repo.create()
 
     def tearDown(self):
         db.conn.close()

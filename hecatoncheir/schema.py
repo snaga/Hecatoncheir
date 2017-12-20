@@ -135,20 +135,15 @@ DELETE FROM schemas2
 class TestSchema2(unittest.TestCase):
     def setUp(self):
         db.creds = {}
-
         db.creds['host'] = os.environ.get('PGHOST', 'localhost')
-        db.creds['port'] = os.environ.get('PGPORT', '5432')
+        db.creds['port'] = os.environ.get('PGPORT', 5432)
         db.creds['dbname'] = os.environ.get('PGDATABASE', 'datacatalog')
         db.creds['username'] = os.environ.get('PGUSER', 'postgres')
         db.creds['password'] = os.environ.get('PGPASSWORD', 'postgres')
-        db.connect()
 
-        r = Repository()
-        r.destroy()
-        r.create()
-
-        db.conn.execute('truncate repo cascade')
-        db.conn.execute('truncate schemas2 cascade')
+        self.repo = Repository()
+        self.repo.destroy()
+        self.repo.create()
 
         from table import Table2
         Table2.create('d', 's', 't', {'timestamp': '2016-04-27T10:06:41.653836'})

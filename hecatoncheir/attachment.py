@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import unittest
 
 import sqlalchemy as sa
@@ -71,13 +72,15 @@ DELETE FROM attachments
 class TestAttachment(unittest.TestCase):
     def setUp(self):
         db.creds = {}
-        db.creds['username'] = 'postgres'
-        db.creds['password'] = 'postgres'
-        db.creds['dbname'] = 'datacatalog'
-        db.connect()
-        repo = Repository()
-        repo.destroy()
-        repo.create()
+        db.creds['host'] = os.environ.get('PGHOST', 'localhost')
+        db.creds['port'] = os.environ.get('PGPORT', 5432)
+        db.creds['dbname'] = os.environ.get('PGDATABASE', 'datacatalog')
+        db.creds['username'] = os.environ.get('PGUSER', 'postgres')
+        db.creds['password'] = os.environ.get('PGPASSWORD', 'postgres')
+
+        self.repo = Repository()
+        self.repo.destroy()
+        self.repo.create()
 
     def tearDown(self):
         db.conn.close()
