@@ -15,6 +15,7 @@ from logger import str2unicode as _s2u
 from msgutil import gettext as _, jsonize
 from repository import Repository
 from table import Table2
+from validation import ValidationRule
 
 
 class DbProfilerRepository():
@@ -525,191 +526,25 @@ INSERT INTO business_glossary (
         return data
 
     def get_validation_rules(self, database_name=None, schema_name=None,
-                             table_name=None, column_name=None,
-                             description=None, rule=None,
-                             param=None, param2=None):
+                             table_name=None):
         """
         Returns:
             list: a list of tuples containing  validation rules.
         """
-        query = u"SELECT id FROM validation_rule"
-        cond = []
-        if database_name:
-            cond.append("database_name = '%s'" % database_name)
-        if schema_name:
-            cond.append("schema_name = '%s'" % schema_name)
-        if table_name:
-            cond.append("table_name = '%s'" % table_name)
-        if column_name:
-            cond.append("column_name = '%s'" % column_name)
-        if rule:
-            cond.append("rule = '%s'" % rule)
-        if param is not None:
-            cond.append("param = '%s'" % param.replace("'", "''"))
-        if param2 is not None:
-            cond.append("param2 = '%s'" % param2.replace("'", "''"))
-        if len(cond) > 0:
-            query = query + " WHERE (%s)" % ' AND '.join(cond)
-
-        ids = []
-        try:
-            for r in db.engine.execute(query):
-                ids.append(r[0])
-        except Exception as ex:
-            raise InternalError("Could not get validation rules: " + str(ex),
-                                query=query, source=ex)
-
         rules = []
-        for i in ids:
-            rules.append(self.get_validation_rule(i))
+        for r in ValidationRule.find(database_name=database_name,
+                                     schema_name=schema_name,
+                                     table_name=table_name):
+            rules.append((r.id,
+                          r.database_name,
+                          r.schema_name,
+                          r.table_name,
+                          r.column_name,
+                          r.description,
+                          r.rule,
+                          r.param,
+                          r.param2))
         return rules
-
-    def create_validation_rule(self, database_name, schema_name, table_name,
-                               column_name, description, rule,
-                               param='', param2=''):
-        """
-        Args:
-            database_name(str):
-            schema_name(str):
-            table_name(str):
-            column_name(str):
-            description(str):
-            rule(str):
-            param(str):
-            param2(str):
-
-        Returns:
-            integer when the rule successfully gets created. None when already
-            exists.
-        """
-
-        r = self.get_validation_rules(database_name, schema_name, table_name,
-                                      column_name, description, rule,
-                                      param, param2)
-        assert len(r) <= 1
-        if r:
-            log.warning((_("The same validation rule already exists: ") +
-                         u"{0},{1},{2},{3},{4},{5},{6},{7}"
-                         .format(database_name, schema_name, table_name,
-                                 column_name, description, rule,
-                                 param, param2)))
-            return None
-
-        query = u"""
-INSERT INTO validation_rule (id,database_name,schema_name,table_name,
-                             column_name,description,rule,param,param2)
-  VALUES ((SELECT coalesce(max(id),0)+1 FROM validation_rule),
-          '{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}');
-""".format(database_name, schema_name, table_name, column_name, description,
-           rule,
-           '' if param is None else "%s" % param.replace("'", "''"),
-           '' if param2 is None else "%s" % param2.replace("'", "''"))
-
-        log.trace("create_validation_rule: %s" % query.replace('\n', ''))
-        id = None
-        try:
-            db.engine.execute(query)
-            rows = db.engine.execute("SELECT max(id) FROM validation_rule")
-            id = rows.fetchone()[0]
-        except Exception as ex:
-            raise InternalError("Could not register validation rule: " + str(ex),
-                                query=query, source=ex)
-        return id
-
-    def get_validation_rule(self, id):
-        """
-        Args:
-            id(integer):
-
-        Returns:
-            tuple: (id,database_name,schema_name,table_name,column_name,
-                    description,rule,param,param2) or None
-        """
-        query = (u"SELECT id,database_name,schema_name,table_name,column_name,"
-                 u"description,rule,param,param2 FROM validation_rule "
-                 u"WHERE id = %d" % id)
-
-        log.trace("get_validation_rule: %s" % query.replace('\n', ''))
-        tup = None
-        try:
-            rows = db.engine.execute(query)
-            r = rows.fetchone()
-            if r:
-                tup = tuple(r)
-        except Exception as ex:
-            raise InternalError("Could not get validation rule: " + str(ex),
-                                query=query, source=ex)
-        return tup
-
-    def update_validation_rule(self, id, database_name, schema_name,
-                               table_name, column_name, description,
-                               rule, param=None, param2=None):
-        """
-        Args:
-            id(integer):
-            database_name(str):
-            schema_name(str):
-            table_name(str):
-            column_name(str):
-            description(str):
-            rule(str):
-            param(str):
-            param2(str):
-
-        Returns:
-            True when the rule successfully gets updated, otherwise False.
-        """
-
-        query = u"""
-UPDATE validation_rule
-   SET database_name = '{0}',
-       schema_name = '{1}',
-       table_name = '{2}',
-       column_name = '{3}',
-       description = '{4}',
-       rule = '{5}',
-       param = '{6}',
-       param2 = '{7}'
- WHERE id = {8}
-""".format(database_name, schema_name, table_name, column_name, description,
-           rule,
-           '' if param is None else "%s" % param,
-           '' if param2 is None else "%s" % param2, id)
-
-        log.trace("update_validation_rule: %s" % query.replace('\n', ''))
-        rowcount = 0
-        try:
-            rows = db.engine.execute(query)
-            rowcount = rows.rowcount
-        except Exception as ex:
-            raise InternalError("Could not update validation rule: " + str(ex),
-                                query=query, source=ex)
-        if rowcount == 0:
-            return False
-        return True
-
-    def delete_validation_rule(self, id):
-        """
-        Args:
-            id(integer):
-
-        Returns:
-            True when the rule successfully gets deleted, otherwise False.
-        """
-
-        query = u"DELETE FROM validation_rule WHERE id = %s" % id
-
-        log.trace("delete_validation_rule: %s" % query.replace('\n', ''))
-        rowcount = 0
-        try:
-            rows = db.engine.execute(query)
-            rowcount = rows.rowcount
-        except Exception as ex:
-            raise InternalError("Could not delete validation rule: " + str(ex),
-                                query=query, source=ex)
-        if rowcount == 0:
-            return False
-        return True
 
     def open(self):
         assert db.engine

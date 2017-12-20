@@ -20,6 +20,7 @@ from hecatoncheir.repository import Repository
 from hecatoncheir.schema import Schema2
 from hecatoncheir.table import Table2
 from hecatoncheir.tag import Tag2
+from hecatoncheir.validation import ValidationRule
 
 app = Flask(__name__)
 
@@ -359,16 +360,17 @@ def api_validation_create():
     repo = open_repo()
     id = None
     try:
-        id = repo.create_validation_rule(
+        r = ValidationRule.create(
             req['database_name'], req['schema_name'], req['table_name'],
             req['column_name'], req['description'], req['rule'],
             req.get('param'), req.get('param2'))
-    except Exception as e:
-        return api_error(400, 'exception caught.')
+        id = r.id
+    except Exception as ex:
+        id = None
     repo.close()
 
-    if id is None:
-        return api_error(400, 'the same rule already exists.')
+    if not id:
+        return api_error(400, 'could not register a validation rule.')
     resp = {'id': id,
             'status': 'success'}
     return api_response(201, resp)
@@ -414,11 +416,17 @@ def api_validation_put(id):
     repo = open_repo()
     try:
         id = int(id)
-        if not repo.update_validation_rule(
-                id, req['database_name'], req['schema_name'],
-                req['table_name'], req['column_name'],
-                req['description'], req['rule'],
-                req.get('param'), req.get('param2')):
+        v = ValidationRule.find(id_=id)
+        assert len(v) == 1
+        v[0].database_name = req['database_name']
+        v[0].schema_name = req['schema_name']
+        v[0].table_name = req['table_name']
+        v[0].column_name = req['column_name']
+        v[0].description = req['description']
+        v[0].rule = req['rule']
+        v[0].param = req.get('param')
+        v[0].param2 = req.get('param2')
+        if not v[0].update():
             return api_error(400, 'rule %d could not updated.' % id)
     except Exception as e:
         return api_error(400, 'exception caught.')
@@ -434,7 +442,9 @@ def api_validation_delete(id):
     repo = open_repo()
     try:
         id = int(id)
-        if repo.delete_validation_rule(id) is False:
+        v = ValidationRule.find(id_=id)
+        assert len(v) == 1
+        if not v[0].destroy():
             return api_error(400, 'no rule deleted.')
     except Exception as e:
         return api_error(400, 'exception caught.')
