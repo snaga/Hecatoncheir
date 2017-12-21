@@ -62,7 +62,7 @@ class DatamappingItem():
         assert database_name and schema_name and table_name
         assert isinstance(data, dict)
 
-        query = """
+        query = u"""
 INSERT INTO datamapping (
   lineno,
   record_id,
@@ -109,7 +109,7 @@ INSERT INTO datamapping (
         if column_name:
             cond.append("column_name = '%s'" % column_name)
 
-        query = """
+        query = u"""
 SELECT
   record_id,
   database_name,
@@ -151,7 +151,7 @@ ORDER BY
         else:
             cond.append("column_name is null")
 
-        query = """
+        query = u"""
 UPDATE datamapping
 SET
   source_database_name = {0},
@@ -185,7 +185,7 @@ WHERE
         else:
             cond.append("column_name is null")
 
-        query = "DELETE FROM datamapping WHERE ({0})".format(' AND '.join(cond))
+        query = u"DELETE FROM datamapping WHERE ({0})".format(' AND '.join(cond))
 
         db.engine.execute(query)
 
@@ -226,6 +226,12 @@ class TestDatamappingItem(unittest.TestCase):
         self.assertEquals('test_source_table', d.source_table_name)
         self.assertEquals('test_source_column', d.source_column_name)
         self.assertEquals({}, d.data)
+
+        # unicode string
+        d = DatamappingItem.create(u'レコード001',
+                                   'dqwbtest', 'test_schema', 'test_table', 'test_column',
+                                   'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                                   {})
 
     def test_create_002(self):
         d = DatamappingItem.create('REC001',
@@ -291,7 +297,8 @@ class TestDatamappingItem(unittest.TestCase):
         self.assertEquals(1, len(dd))
         self.assertEquals('REC001', dd[0].record_id)
 
-        dd = DatamappingItem.find(database_name='nosuchdb')
+        # unicodde string
+        dd = DatamappingItem.find(database_name=u'データベース')
         self.assertEquals(0, len(dd))
 
     def test_find_002(self):
@@ -358,18 +365,24 @@ class TestDatamappingItem(unittest.TestCase):
         self.assertTrue(d.update())
         self.assertEquals('foo', d.source_column_name)
 
+        # unicode string
+        d.source_column_name = u'カラム'
+        self.assertTrue(d.update())
+        self.assertEquals(u'カラム', d.source_column_name)
+
     def test_destroy_001(self):
         DatamappingItem.create('REC001',
                                'dqwbtest', 'test_schema', 'test_table', 'test_column',
                                'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
                                {})
-        DatamappingItem.create('REC002',
+        # unicode string
+        DatamappingItem.create(u'レコード002',
                                'dqwbtest', 'test_schema', 'test_table', None,
                                'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
                                {})
         self.assertEquals(2, len(DatamappingItem.find()))
 
-        d = DatamappingItem.find(record_id='REC002')[0]
+        d = DatamappingItem.find(record_id=u'レコード002')[0]
         self.assertTrue(d.destroy())
 
         self.assertEquals(1, len(DatamappingItem.find()))
