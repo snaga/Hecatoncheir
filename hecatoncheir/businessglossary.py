@@ -11,6 +11,33 @@ from repository import Repository
 import db
 
 
+def get_bg_term(term):
+    """
+    Get a glossary term in the dictionary format.
+
+    FIXME:
+    This function is kept for the backward compatibility for now,
+    and should be removed by the further refactoring.
+
+    Returns:
+      dict: a dictionary of key-value pairs.
+    """
+    data = {}
+
+    t = GlossaryTerm.find(term)
+
+    data['term'] = t[0].term
+    data['description_short'] = t[0].desc_short
+    data['description_long'] = t[0].desc_long
+    data['owned_by'] = t[0].owner
+    data['categories'] = t[0].categories
+    data['synonyms'] = t[0].synonyms
+    data['related_terms'] = t[0].related_terms
+    data['assigned_assets'] = t[0].assigned_assets
+
+    return data
+
+
 class GlossaryTerm:
     def __init__(self, term, desc_short, desc_long, owner,
                categories, synonyms, related_terms, assigned_assets):
