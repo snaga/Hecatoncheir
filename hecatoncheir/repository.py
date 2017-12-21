@@ -42,9 +42,9 @@ create table datamapping (
   table_name text not null,
   column_name text,
   record_id text,
-  source_database_name text not null,
-  source_schema_name text not null,
-  source_table_name text not null,
+  source_database_name text,
+  source_schema_name text,
+  source_table_name text,
   source_column_name text,
   created_at text not null,
   data text not null
