@@ -15,6 +15,7 @@ from hecatoncheir import DbProfilerRepository
 from hecatoncheir import DbProfilerVerify
 from hecatoncheir import db
 from hecatoncheir import logger as log
+from hecatoncheir.datamapping import get_datamap_items
 from hecatoncheir.msgutil import gettext as _
 from hecatoncheir.repository import Repository
 from hecatoncheir.schema import Schema2
@@ -207,7 +208,7 @@ def table(db, schema, table):
     terms = get_glossary_terms(repo)
 
     table_data = Table2.find(db, schema, table)[0].data
-    datamap = repo.get_datamap_items(db, schema, table)
+    datamap = get_datamap_items(db, schema, table)
     validation_rules = get_validation_rules(db, schema, table)
     html = DbProfilerFormatter.to_table_html(table_data,
                                              validation_rules=validation_rules,

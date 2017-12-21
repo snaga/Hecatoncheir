@@ -10,7 +10,7 @@ from hecatoncheir import CSVUtils
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir import logger as log
 from hecatoncheir.msgutil import gettext as _
-
+from hecatoncheir.datamapping import DatamappingItem
 
 datamapper_header = [
     'CHANGE_DATE',
@@ -98,15 +98,37 @@ if __name__ == "__main__":
         ent = r
         ent['lineno'] = lines + 1
 
-        entries = repo.get_datamap_items(
-            ent['database_name'], ent['schema_name'], ent['table_name'],
-            ent['column_name'])
+        entries = DatamappingItem.find(record_id=ent['record_id'],
+                                       database_name=ent['database_name'],
+                                       schema_name=ent['schema_name'],
+                                       table_name=ent['table_name'],
+                                       column_name=ent['column_name'])
+        if len(entries) == 0:
+            log.info(_("Creating data mapping item: %s.%s.%s.%s.%s") %
+                     (ent['database_name'], ent['schema_name'], ent['table_name'],
+                      ent['column_name'], ent['record_id']))
 
-        log.info(_("Updating mapping: %s.%s.%s.%s.%s") %
-                 (ent['database_name'], ent['schema_name'], ent['table_name'],
-                  ent['column_name'], ent['record_id']))
-        repo.put_datamap_item(ent)
-        merged += 1
+            item = DatamappingItem.create(ent['record_id'],
+                                          ent['database_name'], ent['schema_name'],
+                                          ent['table_name'], ent['column_name'],
+                                          ent['source_database_name'], ent['source_schema_name'],
+                                          ent['source_table_name'], ent['source_column_name'],
+                                          ent)
+            if item:
+                merged += 1
+        else:
+            log.info(_("Updating data mapping item: %s.%s.%s.%s.%s") %
+                     (ent['database_name'], ent['schema_name'], ent['table_name'],
+                      ent['column_name'], ent['record_id']))
+
+            item = entries[0]
+            item.source_database_name = ent['source_database_name']
+            item.source_schema_name = ent['source_schema_name']
+            item.source_table_name = ent['source_table_name']
+            item.source_column_name = ent['source_column_name']
+            item.data = ent
+            if item.update():
+                merged += 1
 
     log.info(_("Read %d lines") % (lines + 1))
     log.info(_("%d mappings imported.") % merged)

@@ -11,6 +11,33 @@ from repository import Repository
 import db
 
 
+def get_datamap_items(database_name, schema_name, table_name,
+                      column_name=None):
+    """Get one or more datamap entries from the repository
+
+    FIXME:
+    This function is kept for the backward compatibility for now,
+    and should be removed by the further refactoring.
+
+    Args:
+      database_name (str):
+      schema_name_name (str):
+      table_name (str):
+      column_name (str):
+    
+    Returns:
+      list: a list which consists of one or more datamap entries.
+    """
+    assert database_name and schema_name and table_name
+
+    items = DatamappingItem.find(database_name, schema_name,
+                                 table_name, column_name)
+    datamap = []
+    for item in items:
+        datamap.append(json.loads(item[0]))
+    return datamap
+
+
 class DatamappingItem():
     def __init__(self, record_id,
                  database_name, schema_name, table_name, column_name,
