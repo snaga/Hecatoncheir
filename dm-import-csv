@@ -10,6 +10,7 @@ from hecatoncheir import CSVUtils
 from hecatoncheir import DbProfilerRepository
 from hecatoncheir import db
 from hecatoncheir import logger as log
+from hecatoncheir.businessglossary import GlossaryTerm
 from hecatoncheir.msgutil import gettext as _
 from hecatoncheir.repository import Repository
 from hecatoncheir.schema import Schema2
@@ -200,16 +201,19 @@ def process_column_csv(repo, r):
 def process_glossary_csv(repo, r):
     if len(r['term']) == 0:
         return 0
-    repo.put_bg_term(r['term'], r['description_short'],
-                     r['description_long'], r['owner'],
-                     [x.strip() for x in r.get('categories', '')
-                      .split(',')],
-                     [x.strip() for x in r.get('synonyms', '')
-                      .split(',')],
-                     [x.strip() for x in r.get('related_terms', '')
-                      .split(',')],
-                     [x.strip() for x in r.get('related_assets', '')
-                      .split(',')])
+    t = GlossaryTerm.create(r['term'],
+                            r['description_short'],
+                            r['description_long'],
+                            r['owner'],
+                            [x.strip() for x in r.get('categories', '')
+                             .split(',')],
+                            [x.strip() for x in r.get('synonyms', '')
+                             .split(',')],
+                            [x.strip() for x in r.get('related_terms', '')
+                             .split(',')],
+                            [x.strip() for x in r.get('related_assets', '')
+                             .split(',')])
+    assert isinstance(t, GlossaryTerm)
     return 1
 
 

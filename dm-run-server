@@ -15,6 +15,7 @@ from hecatoncheir import DbProfilerRepository
 from hecatoncheir import DbProfilerVerify
 from hecatoncheir import db
 from hecatoncheir import logger as log
+from hecatoncheir.businessglossary import GlossaryTerm, get_bg_term
 from hecatoncheir.datamapping import get_datamap_items
 from hecatoncheir.msgutil import gettext as _
 from hecatoncheir.repository import Repository
@@ -41,8 +42,8 @@ def open_repo():
 
 def get_glossary_terms(repo):
     terms = []
-    for t in repo.get_bg_terms_all():
-        terms.append(repo.get_bg_term(t))
+    for t in GlossaryTerm.find():
+        terms.append(get_bg_term(t.term))
     return terms
 
 

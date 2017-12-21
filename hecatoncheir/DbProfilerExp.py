@@ -17,6 +17,7 @@ import logger as log
 from CSVUtils import list2csv
 from msgutil import gettext as _
 from attachment import Attachment
+from businessglossary import GlossaryTerm, get_bg_term
 from datamapping import get_datamap_items
 from schema import Schema2
 from table import Table2
@@ -124,8 +125,8 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
     template_static = template_path + "/static"
 
     terms = []
-    for term in repo.get_bg_terms_all():
-        t = repo.get_bg_term(term)
+    for tmp in GlossaryTerm.find():
+        t = get_bg_term(tmp.term)
         asset_names = {}
         for a in t['assigned_assets']:
             n = parse_table_name(a)

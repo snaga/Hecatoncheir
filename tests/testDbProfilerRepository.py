@@ -265,54 +265,6 @@ class TestDbProfilerRepository(unittest.TestCase):
         self.assertFalse(self.repo.clear_table_fk('test_database', 'test_schema', 'test_table', 'c1'))
         self.assertFalse(self.repo.clear_table_fk('test_database', 'test_schema', 'test_table2', 'c1'))
 
-    def testGet_bg_term_001(self):
-        self.assertIsNone(self.repo.get_bg_term(u'term'))
-
-        self.assertTrue(self.repo.put_bg_term(u'term', 'sd', 'ld', 'owner', ['cat1','cat2'], ['synA', 'synB'], ['term2', 'term3'], ['TAB1', 'TAB2']))
-
-        a = {'id': '0',
-             'term': u'term',
-             'description_short': 'sd',
-             'description_long': 'ld',
-             'owned_by': 'owner',
-             'categories': ['cat1','cat2'],
-             'synonyms': ['synA', 'synB'],
-             'related_terms': ['term2', 'term3'],
-             'assigned_assets': ['TAB1', 'TAB2']}
-        b = self.repo.get_bg_term(u'term')
-
-        # excluding `created_at' since it's a timestamp value.
-        self.assertTrue('created_at' in b)
-        created_at = b['created_at']
-        del b['created_at']
-
-        self.assertEqual(a, b)
-
-        # updating the record
-        time.sleep(1)
-        self.assertTrue(self.repo.put_bg_term(u'term', 'sd2', 'ld', 'owner', ['cat1','cat2'], ['synA', 'synB'], ['term2', 'term3'], ['TAB1', 'TAB2']))
-        b = self.repo.get_bg_term(u'term')
-        self.assertFalse(created_at == b['created_at']) # created_at field must be changed.
-
-        self.assertTrue('created_at' in b)
-        del b['created_at']
-
-        a['description_short'] = u'sd2'
-        self.assertEqual(a, b)
-
-    def testGet_bg_terms_all_001(self):
-        self.assertEqual([], self.repo.get_bg_terms_all())
-
-        self.repo.put_bg_term(u'term3', '', '', '', [], [], [], [])
-        self.repo.put_bg_term(u'term1', '', '', '', [], [], [], [])
-        self.repo.put_bg_term(u'term2', '', '', '', [], [], [], [])
-
-        self.assertEqual([u'term1', u'term2', u'term3'], self.repo.get_bg_terms_all())
-
-        self.repo.put_bg_term(u'term3', '', '', '', [], [], [], [])
-        self.repo.put_bg_term(u'term11', '', '', '', [], [], [], [])
-
-        self.assertEqual([u'term11', u'term1', u'term2', u'term3'], self.repo.get_bg_terms_all())
 
 if __name__ == '__main__':
     unittest.main()
