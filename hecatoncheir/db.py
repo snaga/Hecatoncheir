@@ -37,6 +37,16 @@ def version():
     for r in rs:
         return r[0]
 
+
+def fmt_datetime(ts):
+    if str(engine).startswith('Engine(postgresql://'):
+        return "'%s'" % ts
+    return "datetime('%s')" % ts
+
+def fmt_nullable(v):
+    return "'%s'" % v if v else 'null'
+
+
 def dump_table(table):
     """
     Utility function for testing purpose.

@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import json
 
 class DbProfilerJSONEncoder(json.JSONEncoder):
