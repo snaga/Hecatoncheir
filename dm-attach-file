@@ -115,7 +115,10 @@ if __name__ == "__main__":
             sys.exit(1)
 
         try:
-            Attachment.create(objid, objtype, os.path.basename(filename))
+            if len(Attachment.find(objid, objtype, os.path.basename(filename))) == 0:
+                Attachment.create(objid, objtype, os.path.basename(filename))
+            else:
+                log.info(_("`%s' has already been attached. Skipping."))
         except Exception as e:
             log.error(_("Could not add file name to the repository. "
                         "Abort."), detail=str(e))
