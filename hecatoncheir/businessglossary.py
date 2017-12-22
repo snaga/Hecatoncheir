@@ -102,6 +102,7 @@ INSERT INTO business_glossary (
 
         query = u"""
 SELECT
+  DISTINCT
   term,
   description_short,
   description_long,
