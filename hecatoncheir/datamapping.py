@@ -85,7 +85,7 @@ INSERT INTO datamapping (
            db.fmt_nullable(source_table_name),
            db.fmt_nullable(source_column_name),
            db.fmt_datetime(datetime.now().isoformat()),
-           json.dumps(data))
+           db.quote_string(json.dumps(data)))
 
         db.engine.execute(query)
 
@@ -167,7 +167,7 @@ WHERE
            db.fmt_nullable(self.source_table_name),
            db.fmt_nullable(self.source_column_name),
            db.fmt_datetime(datetime.now().isoformat()),
-           json.dumps(self.data),
+           db.quote_string(json.dumps(self.data)),
            ' AND '.join(cond))
 
         db.engine.execute(query)

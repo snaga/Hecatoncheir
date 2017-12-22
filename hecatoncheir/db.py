@@ -44,8 +44,10 @@ def fmt_datetime(ts):
     return "datetime('%s')" % ts
 
 def fmt_nullable(v):
-    return "'%s'" % v if v else 'null'
+    return "'%s'" % v if v is not None else 'null'
 
+def quote_string(s):
+    return s.replace("'", "''")
 
 def dump_table(table):
     """
