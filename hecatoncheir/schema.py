@@ -66,9 +66,10 @@ GROUP BY
 
         rs = db.conn.execute(q)
         r = rs.fetchone()
-        if not r:
-            return None
-        num_of_tables = r[2]
+        if r:
+            num_of_tables = r[2]
+        else:
+            num_of_tables = 0
 
         # Get those schema description and comment.
         description = None

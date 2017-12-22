@@ -206,10 +206,10 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         desc = ss.description
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_schema[schema],
-                comment=desc.comment if desc else None,
+                comment=ss.comment,
                 files=['%s/%s' % (schema, x) for x in files],
                 schemas=[[d, s, len(tables_by_schema[schema]),
-                          desc.desc if desc else None]],
+                          ss.description]],
                 reponame=schema, glossary_terms=terms,
                 template_file=template_index))
 
