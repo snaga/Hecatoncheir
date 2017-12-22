@@ -93,6 +93,10 @@ create table business_glossary (
 """)
 
         db.conn.execute("""
+create index business_glossary_term_idx ON business_glossary(term);
+""")
+
+        db.conn.execute("""
 create table validation_rule (
   id integer primary key,
   database_name text not null,

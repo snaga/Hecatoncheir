@@ -147,7 +147,7 @@ def process_table_csv(repo, r):
     tab["owner"] = r.get('table_owner', tab.get("owner", ''))
     tab["tags"] = [x.strip() for x in r.get('tags', '').split(',')]
 
-    tab.update()
+    t[0].update()
     return 1
 
 
@@ -194,76 +194,86 @@ def process_column_csv(repo, r):
                 tmp2 = [tab["database_name"], tab["schema_name"],
                         tab["table_name"], col["column_name"]]
                 fk_list.append(tmp2 + tmp + [guess])
-    tab.update()
+    t[0].update()
     return 1
 
 
 def process_glossary_csv(repo, r):
     if len(r['term']) == 0:
         return 0
-    t = GlossaryTerm.create(r['term'],
-                            r['description_short'],
-                            r['description_long'],
-                            r['owner'],
-                            [x.strip() for x in r.get('categories', '')
-                             .split(',')],
-                            [x.strip() for x in r.get('synonyms', '')
-                             .split(',')],
-                            [x.strip() for x in r.get('related_terms', '')
-                             .split(',')],
-                            [x.strip() for x in r.get('related_assets', '')
-                             .split(',')])
+    t = None
+    terms = GlossaryTerm.find(r['term'])
+    if len(terms) == 0:
+        t = GlossaryTerm.create(r['term'],
+                                r['description_short'],
+                                r['description_long'],
+                                r['owner'],
+                                [x.strip() for x in r.get('categories', '')
+                                 .split(',')],
+                                [x.strip() for x in r.get('synonyms', '')
+                                 .split(',')],
+                                [x.strip() for x in r.get('related_terms', '')
+                                 .split(',')],
+                                [x.strip() for x in r.get('related_assets', '')
+                                 .split(',')])
+    else:
+        t = terms[0]
+        t.desc_short = r['description_short']
+        t.desc_long = r['description_long']
+        t.owner = r['owner']
+        t.categories = [x.strip() for x in r.get('categories', '').split(',')]
+        t.synonyms = [x.strip() for x in r.get('synonyms', '').split(',')]
+        t.related_terms = [x.strip() for x in r.get('related_terms', '').split(',')]
+        t.assigned_assets = [x.strip() for x in r.get('related_assets', '').split(',')]
+        t.update()
     assert isinstance(t, GlossaryTerm)
     return 1
 
 
 def process_validation_csv(repo, r):
-    try:
+    """
+    Update an existing record if those column and rule match.
+    Otherwise, create new one.
+    """
+    rule = None
+    for v in ValidationRule.find(r['database_name'],
+                                 r['schema_name'],
+                                 r['table_name']):
+        if (v.column_name == r['column_name'] and
+            v.rule == r['rule']):
+            rule = v
+    if rule:
+        rule.param = r['param']
+        rule.param2 = r['param2']
+        rule.update()
+    else:
         ValidationRule.create(r['database_name'], r['schema_name'],
                               r['table_name'], r['column_name'],
                               r['description'], r['rule'],
                               r['param'], r['param2'])
-    except Exception as ex:
-        log.error(_('Could not import a vaidation rule: %s') % str(r), detail=str(ex))
-        return 0
     return 1
 
 
 def process_schemacomment_csv(repo, r):
-    # Creating first, and if an integrity error occures, update next.
-    try:
-        Schema2.create(r['database_name'], r['schema_name'],
-                       r['schema_description'], r['schema_comment'])
-    except Exception as ex:
-        if not unicode(ex).startswith('(sqlite3.IntegrityError) columns database_name, schema_name are not unique'):
-            raise ex
-
     s = Schema2.find(r['database_name'], r['schema_name'])
     if s:
         s.description = r['schema_description']
         s.comment = r['schema_comment']
         s.update()
     else:
-        log.warning("Schema `%s.%s' not found." % (r['database_name'], r['schema_name']))
-        return 0
+        Schema2.create(r['database_name'], r['schema_name'],
+                       r['schema_description'], r['schema_comment'])
     return 1
 
 
 def process_tagcomment_csv(repo, r):
-    try:
-        Tag2.create(r['tag_name'], r['tag_description'], r['tag_comment'])
-    except Exception as ex:
-        if not unicode(ex).startswith('(sqlite3.IntegrityError) column label is not unique'):
-            raise ex
-
     t = Tag2.find(r['tag_name'])
     if t:
         t.description = r['tag_description']
         t.comment = r['tag_comment']
         t.update()
     else:
-        log.warning("Tag `%s' not found." % (r['tag_name']))
-        return 0
+        Tag2.create(r['tag_name'], r['tag_description'], r['tag_comment'])
     return 1
 
 
