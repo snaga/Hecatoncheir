@@ -40,7 +40,7 @@ def get_bg_term(term):
 
 class GlossaryTerm:
     def __init__(self, term, desc_short, desc_long, owner,
-               categories, synonyms, related_terms, assigned_assets):
+                 categories, synonyms, related_terms, assigned_assets):
         self.term = term
         self.desc_short = desc_short
         self.desc_long = desc_long
@@ -123,7 +123,8 @@ ORDER BY
         terms = []
         for r in rs:
             t = GlossaryTerm(r[0], r[1], r[2], r[3],
-                             json.loads(r[4]), json.loads(r[5]), json.loads(r[6]),
+                             json.loads(r[4]), json.loads(r[5]),
+                             json.loads(r[6]),
                              json.loads(r[7]))
             terms.append(t)
         return terms
@@ -185,7 +186,7 @@ class TestBusinessGlossaryTerm(unittest.TestCase):
 
     def test_create_001(self):
         t = GlossaryTerm.create(u'term', 'sd2', 'ld', 'owner',
-                                ['cat1','cat2'],
+                                ['cat1', 'cat2'],
                                 ['synA', 'synB'],
                                 ['term2', 'term3'],
                                 ['TAB1', 'TAB2'])
@@ -195,7 +196,7 @@ class TestBusinessGlossaryTerm(unittest.TestCase):
         self.assertEquals('sd2', t.desc_short)
         self.assertEquals('ld', t.desc_long)
         self.assertEquals('owner', t.owner)
-        self.assertEquals(['cat1','cat2'], t.categories)
+        self.assertEquals(['cat1', 'cat2'], t.categories)
         self.assertEquals(['synA', 'synB'], t.synonyms)
         self.assertEquals(['term2', 'term3'], t.related_terms)
         self.assertEquals(['TAB1', 'TAB2'], t.assigned_assets)
@@ -214,7 +215,7 @@ class TestBusinessGlossaryTerm(unittest.TestCase):
 
     def test_find_001(self):
         GlossaryTerm.create(u'term', 'sd2', 'ld', 'owner',
-                            ['cat1','cat2'],
+                            ['cat1', 'cat2'],
                             ['synA', 'synB'],
                             ['term2', 'term3'],
                             ['TAB1', 'TAB2'])
@@ -233,7 +234,7 @@ class TestBusinessGlossaryTerm(unittest.TestCase):
         self.assertEquals('sd2', d[0].desc_short)
         self.assertEquals('ld', d[0].desc_long)
         self.assertEquals('owner', d[0].owner)
-        self.assertEquals(['cat1','cat2'], d[0].categories)
+        self.assertEquals(['cat1', 'cat2'], d[0].categories)
         self.assertEquals(['synA', 'synB'], d[0].synonyms)
         self.assertEquals(['term2', 'term3'], d[0].related_terms)
         self.assertEquals(['TAB1', 'TAB2'], d[0].assigned_assets)
@@ -249,10 +250,9 @@ class TestBusinessGlossaryTerm(unittest.TestCase):
         self.assertEquals(u'term', d[0].term)
         self.assertEquals(u'用語', d[1].term)
 
-
     def test_update_001(self):
         t = GlossaryTerm.create(u'term', 'sd2', 'ld', 'owner',
-                                ['cat1','cat2'],
+                                ['cat1', 'cat2'],
                                 ['synA', 'synB'],
                                 ['term2', 'term3'],
                                 ['TAB1', 'TAB2'])
@@ -281,13 +281,13 @@ class TestBusinessGlossaryTerm(unittest.TestCase):
 
     def test_destroy_001(self):
         t = GlossaryTerm.create(u'term', 'sd2', 'ld', 'owner',
-                                ['cat1','cat2'],
+                                ['cat1', 'cat2'],
                                 ['synA', 'synB'],
                                 ['term2', 'term3'],
                                 ['TAB1', 'TAB2'])
 
         t = GlossaryTerm.create(u'term2', 'sd2', 'ld', 'owner',
-                                ['cat1','cat2'],
+                                ['cat1', 'cat2'],
                                 ['synA', 'synB'],
                                 ['term2', 'term3'],
                                 ['TAB1', 'TAB2'])

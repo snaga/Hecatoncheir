@@ -188,7 +188,8 @@ class TestRepository(unittest.TestCase):
 
         with self.assertRaises(sa.exc.ProgrammingError) as cm:
             self.repo.create()
-        self.assertTrue(str(cm.exception).startswith('(psycopg2.ProgrammingError) relation "repo" already exists'))
+        err_msg = '(psycopg2.ProgrammingError) relation "repo" already exists'
+        self.assertTrue(str(cm.exception).startswith(err_msg))
 
     def test_destroy_001(self):
         self.repo.create()

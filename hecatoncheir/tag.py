@@ -8,6 +8,7 @@ import sqlalchemy as sa
 from repository import Repository
 import db
 
+
 class Tag2:
     def __init__(self, label, description=None, comment=None, num_of_tables=0):
         assert isinstance(label, unicode)
@@ -38,7 +39,8 @@ class Tag2:
         if not comment:
             comment = u''
 
-        q = u"INSERT INTO tags2 VALUES ('{0}','{1}','{2}')".format(label, description, comment)
+        q = (u"INSERT INTO tags2 VALUES ('{0}','{1}','{2}')"
+             .format(label, description, comment))
         db.conn.execute(q)
 
         return Tag2(label, description, comment)
@@ -46,7 +48,8 @@ class Tag2:
     @staticmethod
     def find(label):
         assert isinstance(label, unicode)
-        q = u"SELECT description, comment FROM tags2 WHERE label = '{0}'".format(label)
+        q = (u"SELECT description, comment FROM tags2 WHERE label = '{0}'"
+             .format(label))
         rs = db.conn.execute(q)
         r = rs.fetchone()
         if not r:
@@ -71,7 +74,8 @@ class Tag2:
 
     def update(self):
         assert isinstance(self.label, unicode)
-        assert isinstance(self.description, unicode) or self.description is None
+        assert (isinstance(self.description, unicode) or
+                self.description is None)
         assert isinstance(self.comment, unicode) or self.comment is None
 
         q = u"""
@@ -128,7 +132,9 @@ class TestTag2(unittest.TestCase):
 
         with self.assertRaises(sa.exc.IntegrityError) as cm:
             t = Tag2.create(u'l', u'd', u'c')
-        self.assertTrue(str(cm.exception).startswith('(psycopg2.IntegrityError) duplicate key value violates unique constraint "tags2_pkey"'))
+        err_msg = ('(psycopg2.IntegrityError) duplicate key value violates '
+                   'unique constraint "tags2_pkey"')
+        self.assertTrue(str(cm.exception).startswith(err_msg))
 
     def test_find_001(self):
         Tag2.create(u'l', u'd', u'c')
@@ -160,10 +166,11 @@ class TestTag2(unittest.TestCase):
 
         # Create a new table record with a tag 'l'
         from table import Table2
-        t = Table2.create('d', 's', 't', {'timestamp': '2016-04-27T10:06:41.653836'})
+        t = Table2.create('d', 's', 't', {'timestamp':
+                                          '2016-04-27T10:06:41.653836'})
         t.data['tags'] = ['l']
         t.update()
-        
+
         # Get a number of tables of the tag 'l' again
         t = Tag2.find(u'l')
         self.assertEquals(1, t.num_of_tables)

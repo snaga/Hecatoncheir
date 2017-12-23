@@ -23,7 +23,8 @@ def connect():
     if use_sqlite:
         connstr = 'sqlite:///' + dbname
     else:
-        connstr = 'postgresql://{3}:{4}@{0}:{1}/{2}'.format(host, port, dbname, user, password)
+        connstr = 'postgresql://{3}:{4}@{0}:{1}/{2}'.format(host, port, dbname,
+                                                            user, password)
     print(connstr)
 
     engine = sa.create_engine(connstr)
@@ -43,11 +44,14 @@ def fmt_datetime(ts):
         return "'%s'" % ts
     return "datetime('%s')" % ts
 
+
 def fmt_nullable(v):
     return "'%s'" % v if v is not None else 'null'
 
+
 def quote_string(s):
     return s.replace("'", "''")
+
 
 def dump_table(table):
     """
@@ -60,6 +64,7 @@ def dump_table(table):
         found = True
     if not found:
         print('[%s] No record.' % table)
+
 
 class TestTag2(unittest.TestCase):
     def setUp(self):

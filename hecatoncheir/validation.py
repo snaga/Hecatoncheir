@@ -8,6 +8,7 @@ import sqlalchemy as sa
 from repository import Repository
 import db
 
+
 def sql_escape(s):
     if not s:
         return ''
@@ -40,6 +41,7 @@ def get_validation_rules(database_name=None, schema_name=None,
                       r.param,
                       r.param2))
     return rules
+
 
 class ValidationRule:
     def __init__(self, id_, database_name, schema_name, table_name,
@@ -103,7 +105,8 @@ FROM
   validation_rule
 """
 
-        rs = db.engine.execute(query + "WHERE " + " AND ".join(cond) + " ORDER BY id")
+        rs = db.engine.execute(query + "WHERE " +
+                               " AND ".join(cond) + " ORDER BY id")
         rules = []
         for r in rs:
             v = ValidationRule(r[0], r[1], r[2], r[3], r[4],
@@ -126,8 +129,10 @@ SET
   param2 = '{8}'
 WHERE
   id = '{0}'
-""".format(self.id, self.database_name, self.schema_name, self.table_name, self.column_name,
-           self.description, self.rule, sql_escape(self.param), sql_escape(self.param2))
+""".format(self.id, self.database_name, self.schema_name,
+           self.table_name, self.column_name,
+           self.description, self.rule,
+           sql_escape(self.param), sql_escape(self.param2))
 
         db.engine.execute(query)
 
@@ -183,7 +188,8 @@ class TestValidationRule(unittest.TestCase):
 
     def test_create_002(self):
         # unicode characters
-        v = ValidationRule.create('d', 's', u'テーブル名', u'カラム名', u'説明', 'r', u'パラメータ', u'パラメータ2')
+        v = ValidationRule.create('d', 's', u'テーブル名', u'カラム名',
+                                  u'説明', 'r', u'パラメータ', u'パラメータ2')
         self.assertTrue(v.update())
 
     def test_create_003(self):
@@ -191,11 +197,14 @@ class TestValidationRule(unittest.TestCase):
         v = ValidationRule.create('d', 's', 't', 'c', 'desc', 'r', 'p', 'p2')
         with self.assertRaises(sa.exc.IntegrityError) as cm:
             ValidationRule.create('d', 's', 't', 'c', 'desc', 'r', 'p', 'p2')
-        self.assertTrue(str(cm.exception).startswith('(psycopg2.IntegrityError) '))
+        m = str(cm.exception)
+        self.assertTrue(m.startswith('(psycopg2.IntegrityError) '))
 
     def test_find_001(self):
-        ValidationRule.create('d', 's', 't', 'c', 'desc', 'r', 'p', 'p2')
-        ValidationRule.create('d', 's', 't', 'c', 'desc2', 'r', 'p2', 'p2')
+        ValidationRule.create('d', 's', 't', 'c', 'desc',
+                              'r', 'p', 'p2')
+        ValidationRule.create('d', 's', 't', 'c', 'desc2',
+                              'r', 'p2', 'p2')
         r = ValidationRule.find(id_=1)
 
         self.assertEquals(1, len(r))
@@ -220,8 +229,10 @@ class TestValidationRule(unittest.TestCase):
         self.assertEquals(0, len(r))
 
     def test_find_002(self):
-        v1 = ValidationRule.create('d', 's', 't', 'c', 'desc', 'r', 'p', 'p2')
-        v2 = ValidationRule.create('d', 's2', 't', 'c', 'desc2', 'r', 'p2', 'p2')
+        v1 = ValidationRule.create('d', 's', 't', 'c', 'desc',
+                                   'r', 'p', 'p2')
+        v2 = ValidationRule.create('d', 's2', 't', 'c', 'desc2',
+                                   'r', 'p2', 'p2')
 
         r = ValidationRule.find(database_name='d')
 
@@ -245,8 +256,10 @@ class TestValidationRule(unittest.TestCase):
         self.assertEquals(0, len(r))
 
     def test_update_001(self):
-        v = ValidationRule.create('d', 's', 't', 'c', 'desc', 'r', 'p', 'p2')
-        v2 = ValidationRule.create('d', 's', 't', 'c', 'desc2', 'r', 'p2', 'p2')
+        v = ValidationRule.create('d', 's', 't', 'c', 'desc',
+                                  'r', 'p', 'p2')
+        v2 = ValidationRule.create('d', 's', 't', 'c', 'desc2',
+                                   'r', 'p2', 'p2')
 
         self.assertEquals(1, v.id)
         self.assertEquals('d', v.database_name)
@@ -309,20 +322,28 @@ class TestValidationRule(unittest.TestCase):
         self.assertEqual([], get_validation_rules())
 
     def test_get_validation_rules_002(self):
-        self.assertIsNotNone(ValidationRule.create('database_name1','schema_name1','table_name1','column_name','description1','rule','param','param2'))
-        self.assertIsNotNone(ValidationRule.create('database_name2','schema_name2','table_name2','column_name','description2','rule','param','param2'))
-        self.assertIsNotNone(ValidationRule.create('database_name3','schema_name3','table_name3','column_name','description3','rule','param','param2'))
+        self.assertIsNotNone(ValidationRule.create('db1', 's1', 't1', 'c',
+                                                   'desc1', 'r', 'p', 'p2'))
+        self.assertIsNotNone(ValidationRule.create('db2', 's2', 't2', 'c',
+                                                   'desc2', 'r', 'p', 'p2'))
+        self.assertIsNotNone(ValidationRule.create('db3', 's3', 't3', 'c',
+                                                   'desc3', 'r', 'p', 'p2'))
 
-        a = [(1, u'database_name1', u'schema_name1',u'table_name1',u'column_name',u'description1',u'rule',u'param',u'param2')]
-        self.assertEqual(a, get_validation_rules(database_name='database_name1'))
+        a = [(1, u'db1', u's1', u't1', u'c', u'desc1',
+              u'r', u'p', u'p2')]
+        self.assertEqual(a, get_validation_rules(database_name='db1'))
 
-        a = [(2, u'database_name2', u'schema_name2',u'table_name2',u'column_name',u'description2',u'rule',u'param',u'param2')]
-        self.assertEqual(a, get_validation_rules(schema_name='schema_name2'))
+        a = [(2, u'db2', u's2', u't2', u'c', u'desc2',
+              u'r', u'p', u'p2')]
+        self.assertEqual(a, get_validation_rules(schema_name='s2'))
 
-        a = [(3, u'database_name3', u'schema_name3',u'table_name3',u'column_name',u'description3',u'rule',u'param',u'param2')]
-        self.assertEqual(a, get_validation_rules(table_name='table_name3'))
+        a = [(3, u'db3', u's3', u't3', u'c', u'desc3',
+              u'r', u'p', u'p2')]
+        self.assertEqual(a, get_validation_rules(table_name='t3'))
 
-        self.assertEqual([], get_validation_rules(database_name='database_name1',schema_name='schema_name2',table_name='table_name3'))
+        self.assertEqual([], get_validation_rules(database_name='db1',
+                                                  schema_name='s2',
+                                                  table_name='t3'))
 
 if __name__ == '__main__':
     unittest.main()

@@ -60,7 +60,7 @@ Options:
 
 class Config():
     def __init__(self, dbtype):
-        assert dbtype in ['pgsql','mysql','oracle','mssql','bigquery']
+        assert dbtype in ['pgsql', 'mysql', 'oracle', 'mssql', 'bigquery']
 
         self.host = None
         self.port = None
@@ -113,6 +113,7 @@ class Config():
     def init_bigquery(self):
         self.credential_file = None
 
+
 def get_dbtype(argv):
     dbtype = None
     for i, o in enumerate(sys.argv[1:]):
@@ -133,7 +134,9 @@ def print_config(config):
         if k == 'dbpass':
             log.info(u'%s: ****' % k)
         else:
-            log.info(u'%s: %s' % (k, vars(config)[k] if vars(config)[k] else '(none)'))
+            log.info(u'%s: %s' % (k,
+                                  (vars(config)[k] if vars(config)[k]
+                                   else '(none)')))
     log.info("---------------------------------")
 
 
@@ -144,7 +147,8 @@ def get_profiler(config):
         if config.dbpass is None:
             log.error(_("Specify database password with --pass."))
             sys.exit(1)
-        profiler = PgProfiler.PgProfiler(config.host, config.port, config.dbname,
+        profiler = PgProfiler.PgProfiler(config.host, config.port,
+                                         config.dbname,
                                          config.dbuser, config.dbpass)
     elif dbtype == 'oracle':
         if config.dbpass is None:
@@ -156,20 +160,25 @@ def get_profiler(config):
             config.port = None
             log.info(_("TNS info: %s@%s") % (config.dbuser, config.tnsname))
         else:
-            log.info(_("Conn info: %s@%s:%s/%s") % (config.dbuser, config.host, config.port, config.dbname))
-        profiler = OraProfiler.OraProfiler(config.host, config.port, config.dbname,
+            info = "%s@%s:%s/%s" % (config.dbuser, config.host,
+                                    config.port, config.dbname)
+            log.info(_("Conn info: %s") % info)
+        profiler = OraProfiler.OraProfiler(config.host, config.port,
+                                           config.dbname,
                                            config.dbuser, config.dbpass)
     elif dbtype == 'mysql':
         if config.dbpass is None:
             log.error(_("Specify database password with --pass."))
             sys.exit(1)
-        profiler = MyProfiler.MyProfiler(config.host, config.port, config.dbname,
+        profiler = MyProfiler.MyProfiler(config.host, config.port,
+                                         config.dbname,
                                          config.dbuser, config.dbpass)
     elif dbtype == 'mssql':
         if config.dbpass is None:
             log.error(_("Specify database password with --pass."))
             sys.exit(1)
-        profiler = MSSQLProfiler.MSSQLProfiler(config.host, config.port, config.dbname,
+        profiler = MSSQLProfiler.MSSQLProfiler(config.host, config.port,
+                                               config.dbname,
                                                config.dbuser, config.dbpass)
     elif dbtype == 'bigquery':
         if not config.credential_file:
@@ -227,7 +236,7 @@ def table_list_from_schema(profiler, schema):
 def table_list_dedup(tables):
     tables2 = []
     for t in tables:
-        if not t in tables2:
+        if t not in tables2:
             tables2.append(t)
     return tables2
 
@@ -242,7 +251,7 @@ if __name__ == "__main__":
         usage()
         sys.exit(1)
 
-    if dbtype not in ['pgsql','mysql','oracle','mssql','bigquery']:
+    if dbtype not in ['pgsql', 'mysql', 'oracle', 'mssql', 'bigquery']:
         log.error("Database type `%s' is not supported." % dbtype)
         sys.exit(1)
 
