@@ -165,7 +165,11 @@ class TestSchema2(unittest.TestCase):
 
     def test_find_002(self):
         s = Schema2.find('d', 's4')
-        self.assertIsNone(s)
+        self.assertEquals('d', s.database_name)
+        self.assertEquals('s4', s.schema_name)
+        self.assertIsNone(s.description)
+        self.assertIsNone(s.comment)
+        self.assertEquals(0, s.num_of_tables)
 
     def test_findall_001(self):
         a = Schema2.findall()
