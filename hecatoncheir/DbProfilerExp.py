@@ -55,7 +55,7 @@ def parse_table_name(s):
 # top_schemas: list of schema name string: [u's5']
 # all_schemas: list of Schema2 objects: [Schema2, Schema2, Schema2, ...]
 # schema_index: list of lists (dbname, schemaname, num_of_tables, desc)
-#        [['db', 's5', 1, 'desc'], ['db', 's1', 1, 'desc'], ['db', 's2', 1, 'desc'], ...]
+#        [['db', 's5', 1, 'desc'], ['db', 's1', 1, 'desc'], ...]
 def get_schema_ordered_list(top_schemas, all_schemas):
     assert isinstance(top_schemas, list) or top_schemas is None
     assert isinstance(all_schemas, list)
@@ -133,7 +133,8 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
             if not n[0] and not n[1] and not n[2]:
                 continue
             table_list = Table2.find(n[0], n[1], n[2])
-            asset_names[a] = ['%s.%s.%s' % (x.database_name, x.schema_name, x.table_name)
+            asset_names[a] = ['%s.%s.%s' % (x.database_name,
+                                            x.schema_name, x.table_name)
                               for x in table_list]
         t['assigned_assets2'] = asset_names
         terms.append(t)

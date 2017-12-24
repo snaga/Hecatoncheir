@@ -27,7 +27,8 @@ class DbProfilerRepository():
     user = None
     password = None
 
-    def __init__(self, filename=None, host=None, port=None, user=None, password=None):
+    def __init__(self, filename=None, host=None, port=None,
+                 user=None, password=None):
         self.filename = filename if filename else 'repo.db'
         self.host = host
         self.port = port if port else 5432
@@ -54,7 +55,8 @@ class DbProfilerRepository():
         try:
             repo.create()
         except sa.exc.OperationalError as ex:
-            if str(ex).startswith('(sqlite3.OperationalError) table repo already exists'):
+            err_msg = '(sqlite3.OperationalError) table repo already exists'
+            if str(ex).startswith(err_msg):
                 log.info(_("The repository has already been initialized."))
                 return True
             log.error(_("Could not initialize the repository."))
@@ -282,6 +284,7 @@ SELECT data
 
     def close(self):
         pass
+
 
 class TestDbProfilerRepository(unittest.TestCase):
     repo = None

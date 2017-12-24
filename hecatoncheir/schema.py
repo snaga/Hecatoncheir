@@ -11,7 +11,8 @@ import db
 
 
 class Schema2:
-    def __init__(self, database_name, schema_name, description=None, comment=None, num_of_tables=0):
+    def __init__(self, database_name, schema_name, description=None,
+                 comment=None, num_of_tables=0):
         assert isinstance(description, unicode) or description is None
         assert isinstance(comment, unicode) or comment is None
 
@@ -48,7 +49,6 @@ VALUES ('{0}', '{1}', '{2}', '{3}')
         rs = db.conn.execute(q)
 
         return Schema2(database_name, schema_name, description, comment)
-
 
     @staticmethod
     def find(database_name, schema_name):
@@ -88,7 +88,8 @@ SELECT description,
             description = r[0]
             comment = r[1]
 
-        return Schema2(database_name, schema_name, description, comment, num_of_tables)
+        return Schema2(database_name, schema_name, description,
+                       comment, num_of_tables)
 
     @staticmethod
     def findall():
@@ -108,7 +109,8 @@ SELECT DISTINCT
         return a
 
     def update(self):
-        assert isinstance(self.description, unicode) or self.description is None
+        assert (isinstance(self.description, unicode) or
+                self.description is None)
         assert isinstance(self.comment, unicode) or self.comment is None
 
         q = u"""
@@ -117,7 +119,8 @@ UPDATE schemas2
        comment = '{3}'
  WHERE database_name = '{0}'
    AND schema_name = '{1}'
-""".format(self.database_name, self.schema_name, self.description, self.comment)
+""".format(self.database_name, self.schema_name,
+           self.description, self.comment)
         rs = db.conn.execute(q)
 
         return True
@@ -147,9 +150,12 @@ class TestSchema2(unittest.TestCase):
         self.repo.create()
 
         from table import Table2
-        Table2.create('d', 's', 't', {'timestamp': '2016-04-27T10:06:41.653836'})
-        Table2.create('d', 's2', 't2', {'timestamp': '2016-04-27T10:06:41.653836'})
-        Table2.create('d', 's3', 't3', {'timestamp': '2016-04-27T10:06:41.653836'})
+        Table2.create('d', 's', 't',
+                      {'timestamp': '2016-04-27T10:06:41.653836'})
+        Table2.create('d', 's2', 't2',
+                      {'timestamp': '2016-04-27T10:06:41.653836'})
+        Table2.create('d', 's3', 't3',
+                      {'timestamp': '2016-04-27T10:06:41.653836'})
 
     def tearDown(self):
         db.conn.close()

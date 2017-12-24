@@ -24,7 +24,7 @@ def get_datamap_items(database_name, schema_name, table_name,
       schema_name_name (str):
       table_name (str):
       column_name (str):
-    
+
     Returns:
       list: a list which consists of one or more datamap entries.
     """
@@ -56,8 +56,10 @@ class DatamappingItem():
 
     @staticmethod
     def create(record_id,
-               database_name=None, schema_name=None, table_name=None, column_name=None,
-               source_database_name=None, source_schema_name=None, source_table_name=None,
+               database_name=None, schema_name=None,
+               table_name=None, column_name=None,
+               source_database_name=None,
+               source_schema_name=None, source_table_name=None,
                source_column_name=None, data=None):
         assert database_name and schema_name and table_name
         assert isinstance(data, dict)
@@ -90,13 +92,16 @@ INSERT INTO datamapping (
         db.engine.execute(query)
 
         return DatamappingItem(record_id,
-                               database_name, schema_name, table_name, column_name,
-                               source_database_name, source_schema_name, source_table_name, source_column_name,
+                               database_name, schema_name,
+                               table_name, column_name,
+                               source_database_name, source_schema_name,
+                               source_table_name, source_column_name,
                                data)
 
     @staticmethod
     def find(record_id=None,
-             database_name=None, schema_name=None, table_name=None, column_name=None):
+             database_name=None, schema_name=None,
+             table_name=None, column_name=None):
         cond = ["1=1"]
         if record_id:
             cond.append("record_id = '%s'" % record_id)
@@ -134,8 +139,8 @@ ORDER BY
         items = []
         for r in rs:
             items.append(DatamappingItem(r[0],
-                                         r[1], r[2], r[3], r[4], # target
-                                         r[5], r[6], r[7], r[8], # source
+                                         r[1], r[2], r[3], r[4],  # target
+                                         r[5], r[6], r[7], r[8],  # source
                                          json.loads(r[10])))
 
         return items
@@ -185,7 +190,8 @@ WHERE
         else:
             cond.append("column_name is null")
 
-        query = u"DELETE FROM datamapping WHERE ({0})".format(' AND '.join(cond))
+        query = (u"DELETE FROM datamapping "
+                 "WHERE ({0})".format(' AND '.join(cond)))
 
         db.engine.execute(query)
 
@@ -212,8 +218,10 @@ class TestDatamappingItem(unittest.TestCase):
 
     def test_create_001(self):
         d = DatamappingItem.create('REC001',
-                                   'dqwbtest', 'test_schema', 'test_table', 'test_column',
-                                   'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                                   'dqwbtest', 'test_schema',
+                                   'test_table', 'test_column',
+                                   'dqwbtest', 'test_source_schema',
+                                   'test_source_table', 'test_source_column',
                                    {})
 
         self.assertEquals('REC001', d.record_id)
@@ -229,14 +237,18 @@ class TestDatamappingItem(unittest.TestCase):
 
         # unicode string
         d = DatamappingItem.create(u'レコード001',
-                                   'dqwbtest', 'test_schema', 'test_table', 'test_column',
-                                   'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                                   'dqwbtest', 'test_schema',
+                                   'test_table', 'test_column',
+                                   'dqwbtest', 'test_source_schema',
+                                   'test_source_table', 'test_source_column',
                                    {})
 
     def test_create_002(self):
         d = DatamappingItem.create('REC001',
-                                   'dqwbtest', 'test_schema', 'test_table', None,
-                                   'dqwbtest', 'test_source_schema', 'test_source_table', None,
+                                   'dqwbtest', 'test_schema',
+                                   'test_table', None,
+                                   'dqwbtest', 'test_source_schema',
+                                   'test_source_table', None,
                                    {})
 
         self.assertEquals('REC001', d.record_id)
@@ -252,12 +264,16 @@ class TestDatamappingItem(unittest.TestCase):
 
     def test_find_001(self):
         d = DatamappingItem.create('REC001',
-                                   'dqwbtest', 'test_schema', 'test_table', 'test_column',
-                                   'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                                   'dqwbtest', 'test_schema',
+                                   'test_table', 'test_column',
+                                   'dqwbtest', 'test_source_schema',
+                                   'test_source_table', 'test_source_column',
                                    {})
         d = DatamappingItem.create('REC002',
-                                   'dqwbtest', 'test_schema', 'test_table', 'test_column2',
-                                   'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                                   'dqwbtest', 'test_schema',
+                                   'test_table', 'test_column2',
+                                   'dqwbtest', 'test_source_schema',
+                                   'test_source_table', 'test_source_column',
                                    {})
 
         dd = DatamappingItem.find(record_id='REC001')
@@ -303,8 +319,10 @@ class TestDatamappingItem(unittest.TestCase):
 
     def test_find_002(self):
         d = DatamappingItem.create('REC001',
-                                   'dqwbtest', 'test_schema', 'test_table', None,
-                                   'dqwbtest', 'test_source_schema', 'test_source_table', None,
+                                   'dqwbtest', 'test_schema',
+                                   'test_table', None,
+                                   'dqwbtest', 'test_source_schema',
+                                   'test_source_table', None,
                                    {})
 
         dd = DatamappingItem.find(record_id='REC001')
@@ -322,8 +340,10 @@ class TestDatamappingItem(unittest.TestCase):
 
     def test_update_001(self):
         DatamappingItem.create('REC001',
-                               'dqwbtest', 'test_schema', 'test_table', 'test_column',
-                               'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                               'dqwbtest', 'test_schema',
+                               'test_table', 'test_column',
+                               'dqwbtest', 'test_source_schema',
+                               'test_source_table', 'test_source_column',
                                {})
         d = DatamappingItem.find(record_id='REC001')[0]
 
@@ -372,13 +392,16 @@ class TestDatamappingItem(unittest.TestCase):
 
     def test_destroy_001(self):
         DatamappingItem.create('REC001',
-                               'dqwbtest', 'test_schema', 'test_table', 'test_column',
-                               'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                               'dqwbtest', 'test_schema',
+                               'test_table', 'test_column',
+                               'dqwbtest', 'test_source_schema',
+                               'test_source_table', 'test_source_column',
                                {})
         # unicode string
         DatamappingItem.create(u'レコード002',
                                'dqwbtest', 'test_schema', 'test_table', None,
-                               'dqwbtest', 'test_source_schema', 'test_source_table', 'test_source_column',
+                               'dqwbtest', 'test_source_schema',
+                               'test_source_table', 'test_source_column',
                                {})
         self.assertEquals(2, len(DatamappingItem.find()))
 

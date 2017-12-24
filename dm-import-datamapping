@@ -105,20 +105,26 @@ if __name__ == "__main__":
                                        column_name=ent['column_name'])
         if len(entries) == 0:
             log.info(_("Creating data mapping item: %s.%s.%s.%s.%s") %
-                     (ent['database_name'], ent['schema_name'], ent['table_name'],
+                     (ent['database_name'], ent['schema_name'],
+                      ent['table_name'],
                       ent['column_name'], ent['record_id']))
 
             item = DatamappingItem.create(ent['record_id'],
-                                          ent['database_name'], ent['schema_name'],
-                                          ent['table_name'], ent['column_name'],
-                                          ent['source_database_name'], ent['source_schema_name'],
-                                          ent['source_table_name'], ent['source_column_name'],
+                                          ent['database_name'],
+                                          ent['schema_name'],
+                                          ent['table_name'],
+                                          ent['column_name'],
+                                          ent['source_database_name'],
+                                          ent['source_schema_name'],
+                                          ent['source_table_name'],
+                                          ent['source_column_name'],
                                           ent)
             if item:
                 merged += 1
         else:
             log.info(_("Updating data mapping item: %s.%s.%s.%s.%s") %
-                     (ent['database_name'], ent['schema_name'], ent['table_name'],
+                     (ent['database_name'], ent['schema_name'],
+                      ent['table_name'],
                       ent['column_name'], ent['record_id']))
 
             item = entries[0]

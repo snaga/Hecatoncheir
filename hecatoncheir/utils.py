@@ -2,6 +2,7 @@ import datetime
 import decimal
 import json
 
+
 class DbProfilerJSONEncoder(json.JSONEncoder):
     def default(self, o):
         try:
@@ -18,6 +19,7 @@ class DbProfilerJSONEncoder(json.JSONEncoder):
         elif isinstance(o, decimal.Decimal):
             return (str(o) for o in [o])
         return super(DbProfilerJSONEncoder, self).default(o)
+
 
 def jsonize(data):
     return json.dumps(data, cls=DbProfilerJSONEncoder, sort_keys=True,

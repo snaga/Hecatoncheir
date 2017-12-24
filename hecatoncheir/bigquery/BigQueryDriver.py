@@ -3,7 +3,6 @@
 
 from copy import deepcopy
 import sys
-sys.path.append('../..')
 
 from hecatoncheir import DbDriverBase, logger as log
 from hecatoncheir.QueryResult import QueryResult
@@ -78,7 +77,8 @@ class BigQueryDriver(DbDriverBase.DbDriverBase):
             raise ex
         except Exception as ex:
             msg = unicode(ex)
-            if msg == 'Operation did not complete within the designated timeout.':
+            if msg == ('Operation did not complete within '
+                       'the designated timeout.'):
                 raise QueryTimeout(
                     "Query timeout: %s" % query,
                     query=query, source=ex)

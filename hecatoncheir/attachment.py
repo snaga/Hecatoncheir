@@ -8,6 +8,7 @@ import sqlalchemy as sa
 from repository import Repository
 import db
 
+
 class Attachment:
     def __init__(self, objid, objtype, filename):
         self.objid = objid
@@ -105,7 +106,9 @@ class TestAttachment(unittest.TestCase):
 
         with self.assertRaises(sa.exc.IntegrityError) as cm:
             a = Attachment.create(u'aaa', 'table', u'filename.xls')
-        self.assertTrue(str(cm.exception).startswith('(psycopg2.IntegrityError) duplicate key value violates unique constraint'))
+        err_msg = ('(psycopg2.IntegrityError) duplicate key value violates '
+                   'unique constraint')
+        self.assertTrue(str(cm.exception).startswith(err_msg))
 
     def test_find_001(self):
         a = Attachment.create(u'aaa', 'table', u'filename.xls')

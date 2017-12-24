@@ -116,7 +116,8 @@ def index_schemas():
     for tab in Table2.find():
         tables_all.append(tab.data)
 
-    # [[dbname, schema, num_of_tables, desc], [dbname, schema, num_of_tables, desc], ...]
+    # [[dbname, schema, num_of_tables, desc],
+    #  [dbname, schema, num_of_tables, desc], ...]
     schemas = []
     for s in Schema2.findall():
         schemas.append([s.database_name, s.schema_name,

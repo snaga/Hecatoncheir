@@ -5,7 +5,6 @@ import json
 import os
 import sys
 import unittest
-sys.path.append('../..')
 
 import BigQueryDriver
 from hecatoncheir import DbProfilerBase, DbProfilerValidator, logger as log
@@ -92,15 +91,19 @@ class BigQueryProfiler(DbProfilerBase.DbProfilerBase):
         column_names = self.get_column_names(schema_name, table_name)
         columns = []
         for col in column_names:
-            columns.append('COUNT(CASE WHEN %s IS NULL THEN 1 ELSE NULL END) %s_nulls' % (col, col))
+            columns.append(('COUNT(CASE WHEN %s IS NULL THEN 1 '
+                            'ELSE NULL END) %s_nulls') % (col, col))
             columns.append('MIN(%s) %s_min' % (col, col))
             columns.append('MAX(%s) %s_max' % (col, col))
-        q = u'SELECT {0} FROM {1}.{2}'.format(','.join(columns), schema_name, table_name)
-        #print(q)
+        q = u'SELECT {0} FROM {1}.{2}'.format(','.join(columns),
+                                              schema_name, table_name)
+        # print(q)
         r = self.dbdriver.q2rs(q).resultset[0]
         for c in column_names:
-            self.column_cache[schema_name][table_name][c] = (r.pop(0), r.pop(0), r.pop(0))
-            #print('column %s cache %s' % (c, self.column_cache[schema_name][table_name][c]))
+            self.column_cache[schema_name][table_name][c] = (
+                r.pop(0), r.pop(0), r.pop(0))
+            # print('column %s cache %s' % (
+            # c, self.column_cache[schema_name][table_name][c]))
 
     def get_column_nulls(self, schema_name, table_name):
         column_names = self.get_column_names(schema_name, table_name)
@@ -127,7 +130,8 @@ class BigQueryProfiler(DbProfilerBase.DbProfilerBase):
                          self.column_cache[schema_name][table_name][c][2]]
         return minmax
 
-    def _get_column_freq_values(self, schema_name, table_name, column_name, ascending):
+    def _get_column_freq_values(self, schema_name, table_name,
+                                column_name, ascending):
         limit = 10
 
         q = u"""
@@ -157,14 +161,16 @@ LIMIT {4}
         freqs = {}
         column_names = self.get_column_names(schema_name, table_name)
         for col in column_names:
-            freqs[col] = self._get_column_freq_values(schema_name, table_name, col, False)
+            freqs[col] = self._get_column_freq_values(schema_name, table_name,
+                                                      col, False)
         return freqs
 
     def get_column_least_freq_values(self, schema_name, table_name):
         freqs = {}
         column_names = self.get_column_names(schema_name, table_name)
         for col in column_names:
-            freqs[col] = self._get_column_freq_values(schema_name, table_name, col, True)
+            freqs[col] = self._get_column_freq_values(schema_name, table_name,
+                                                      col, True)
         return freqs
 
     def get_column_cardinalities(self, schema_name, table_name):
@@ -328,11 +334,17 @@ class TestBigQueryProfiler(unittest.TestCase):
         self.assertEquals([u'1992-01-01', u'1998-08-02'], c['o_orderDATE'])
         self.assertEquals([1, 149999], c['o_custkey'])
         self.assertEquals([u'F', u'P'], c['o_orderstatus'])
-        self.assertEquals([u'Tiresias about the blithely express accounts haggle furiously ', u'waters x-ray with the furiously pending packages. regular theodolites nag abou'], c['o_comment'])
+        tmp = [(u'Tiresias about the blithely express '
+                'accounts haggle furiously '),
+               (u'waters x-ray with the furiously pending packages. '
+                'regular theodolites nag abou')]
+        self.assertEquals(tmp,
+                          c['o_comment'])
         self.assertEquals([u'1-URGENT', u'5-LOW'], c['o_orderpriority'])
         self.assertEquals([857.71, 555285.16], c['o_totalprice'])
         self.assertEquals([1, 6000000], c['o_orderkey'])
-        self.assertEquals([u'Clerk#000000001', u'Clerk#000001000'], c['o_clerk'])
+        self.assertEquals([u'Clerk#000000001', u'Clerk#000001000'],
+                          c['o_clerk'])
 
     def test_get_column_most_freq_values_001(self):
         p = BigQueryProfiler('bigquery.json')
@@ -384,11 +396,13 @@ class TestBigQueryProfiler(unittest.TestCase):
         p = BigQueryProfiler('bigquery.json')
         self.assertIsNotNone(p)
         project_id = p.dbdriver.project
-        r = [(1, project_id,'snagatest','region','r_name','','regexp','^A', ''),
-             (2, project_id,'snagatest','region','r_regionkey','','eval','{r_regionkey} > 0', '')]
+        r = [(1, project_id, 'snagatest', 'region', 'r_name', '',
+              'regexp', '^A', ''),
+             (2, project_id, 'snagatest', 'region', 'r_regionkey', '',
+              'eval', '{r_regionkey} > 0', '')]
         c = p.run_record_validation(u'snagatest', u'region', r)
-        self.assertEquals([5,2], c['r_name'][0]['statistics'])
-        self.assertEquals([5,1], c['r_regionkey'][0]['statistics'])
+        self.assertEquals([5, 2], c['r_name'][0]['statistics'])
+        self.assertEquals([5, 1], c['r_regionkey'][0]['statistics'])
 
 if __name__ == '__main__':
     unittest.main()

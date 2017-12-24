@@ -131,7 +131,7 @@ def process_table_csv(repo, r):
         return 0
 
     t = Table2.find(r['database_name'], r['schema_name'],
-                      r['table_name'])
+                    r['table_name'])
     if len(t) == 0:
         tmp = (_("Table %s.%s.%s not found in the repository. "
                  "Skipping.") %
@@ -203,28 +203,28 @@ def process_glossary_csv(repo, r):
         return 0
     t = None
     terms = GlossaryTerm.find(r['term'])
+
+    def str2list(s):
+        return [x.strip() for x in s.split(',')]
+
     if len(terms) == 0:
         t = GlossaryTerm.create(r['term'],
                                 r['description_short'],
                                 r['description_long'],
                                 r['owner'],
-                                [x.strip() for x in r.get('categories', '')
-                                 .split(',')],
-                                [x.strip() for x in r.get('synonyms', '')
-                                 .split(',')],
-                                [x.strip() for x in r.get('related_terms', '')
-                                 .split(',')],
-                                [x.strip() for x in r.get('related_assets', '')
-                                 .split(',')])
+                                str2list(r.get('categories', '')),
+                                str2list(r.get('synonyms', '')),
+                                str2list(r.get('related_terms', '')),
+                                str2list(r.get('related_assets', '')))
     else:
         t = terms[0]
         t.desc_short = r['description_short']
         t.desc_long = r['description_long']
         t.owner = r['owner']
-        t.categories = [x.strip() for x in r.get('categories', '').split(',')]
-        t.synonyms = [x.strip() for x in r.get('synonyms', '').split(',')]
-        t.related_terms = [x.strip() for x in r.get('related_terms', '').split(',')]
-        t.assigned_assets = [x.strip() for x in r.get('related_assets', '').split(',')]
+        t.categories = str2list(r.get('categories', ''))
+        t.synonyms = str2list(r.get('synonyms', ''))
+        t.related_terms = str2list(r.get('related_terms', ''))
+        t.assigned_assets = str2list(r.get('related_assets', ''))
         t.update()
     assert isinstance(t, GlossaryTerm)
     return 1
@@ -240,7 +240,7 @@ def process_validation_csv(repo, r):
                                  r['schema_name'],
                                  r['table_name']):
         if (v.column_name == r['column_name'] and
-            v.rule == r['rule']):
+                v.rule == r['rule']):
             rule = v
     if rule:
         rule.param = r['param']
