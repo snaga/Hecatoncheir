@@ -294,15 +294,15 @@ class TestBigQueryProfiler(unittest.TestCase):
     def test_get_column_datatypes_001(self):
         p = BigQueryProfiler('bigquery.json')
         self.assertIsNotNone(p)
-        self.assertEquals([u'INTEGER',
-                           u'INTEGER',
-                           u'STRING',
-                           u'FLOAT',
-                           u'STRING',
-                           u'STRING',
-                           u'STRING',
-                           u'INTEGER',
-                           u'STRING'],
+        self.assertEquals({u'o_shippriority': [u'INTEGER', 0],
+                           u'o_orderDATE': [u'STRING', 0],
+                           u'o_custkey': [u'INTEGER', 0],
+                           u'o_orderstatus': [u'STRING', 0],
+                           u'o_comment': [u'STRING', 0],
+                           u'o_orderpriority': [u'STRING', 0],
+                           u'o_totalprice': [u'FLOAT', 0],
+                           u'o_orderkey': [u'INTEGER', 0],
+                           u'o_clerk': [u'STRING', 0]},
                           p.get_column_datatypes('snagatest', 'orders'))
 
     def test_get_row_count_001(self):
