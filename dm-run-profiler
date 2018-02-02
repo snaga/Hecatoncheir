@@ -333,6 +333,10 @@ if __name__ == "__main__":
             log.error("unexpected option. internal error.")
             sys.exit(1)
 
+    if enable_validation:
+        timeout = None
+        log.info(_("Query timeout is disabled because data validation is enabled."))
+
     print_config(config)
 
     profiler = get_profiler(config)
