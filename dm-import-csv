@@ -236,9 +236,9 @@ def process_validation_csv(repo, r):
     Otherwise, create new one.
     """
     rule = None
-    for v in ValidationRule.find(r['database_name'],
-                                 r['schema_name'],
-                                 r['table_name']):
+    for v in ValidationRule.find(database_name=r['database_name'],
+                                 schema_name=r['schema_name'],
+                                 table_name=r['table_name']):
         if (v.column_name == r['column_name'] and
                 v.rule == r['rule']):
             rule = v
