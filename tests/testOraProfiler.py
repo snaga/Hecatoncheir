@@ -12,12 +12,14 @@ from hecatoncheir.oracle import OraProfiler
 
 class TestOracleProfiler(unittest.TestCase):
     def setUp(self):
-        self.host = '127.0.0.1'
-        self.port = 1521
-        self.dbname = 'orcl'
-        self.user = 'scott'
-        self.passwd = 'tiger'
-        pass
+        self.host = os.environ.get('_DBHOST')
+        self.port = os.environ.get('_DBPORT')
+        self.dbname = os.environ.get('_DBNAME')
+        self.user = os.environ.get('_DBUSER')
+        self.passwd = os.environ.get('_DBPASSWORD')
+        if not self.dbname or not self.user or not self.passwd:
+            self.fail()
+        self.schema = self.user.upper()
 
     def test_OraProfiler_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
@@ -26,7 +28,7 @@ class TestOracleProfiler(unittest.TestCase):
     def test_get_schema_names_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         s = p.get_schema_names()
-        self.assertEqual([u'SCOTT'], s)
+        self.assertTrue(self.schema in s)
 
         # detecting error on lazy connection
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, 'foo', 'foo')
@@ -36,23 +38,23 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_table_names_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        t = p.get_table_names(u'SCOTT')
+        t = p.get_table_names(self.schema)
 
-        self.assertEqual([u'CUSTOMER',
-                          u'DEPT',
-                          u'LINEITEM',
-                          u'NATION',
-                          u'NATION2',
-                          u'ORDERS',
-                          u'PART',
-                          u'PARTSUPP',
-                          u'REGION',
-                          u'SUPPLIER'],
-                         t)
+        t2 = [u'CUSTOMER',
+              u'LINEITEM',
+              u'NATION',
+              u'NATION2',
+              u'ORDERS',
+              u'PART',
+              u'PARTSUPP',
+              u'REGION',
+              u'SUPPLIER']
+
+        self.assertTrue(set(t) & set(t2) == set(t2))
 
     def test_get_column_names_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_names(u'SCOTT', u'CUSTOMER')
+        c = p.get_column_names(self.schema, u'CUSTOMER')
 
         self.assertEqual([u'C_CUSTKEY',
                           u'C_NAME',
@@ -64,7 +66,7 @@ class TestOracleProfiler(unittest.TestCase):
                           u'C_COMMENT'],
                          c)
 
-        c = p.get_column_names(u'SCOTT', u'CUSTOMER2')
+        c = p.get_column_names(self.schema, u'CUSTOMER2')
 
         self.assertEqual([u'C_CUSTKEY',
                           u'C_NAME',
@@ -79,7 +81,7 @@ class TestOracleProfiler(unittest.TestCase):
     def test_get_sample_rows_001(self):
         # case-sensitive
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_sample_rows(u'SCOTT', u'SUPPLIER')
+        c = p.get_sample_rows(self.schema, u'SUPPLIER')
 
         self.assertEqual(11, len(c))
         self.assertEqual([u'S_SUPPKEY',
@@ -109,7 +111,7 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_column_datatypes_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_datatypes(u'SCOTT', u'CUSTOMER')
+        c = p.get_column_datatypes(self.schema, u'CUSTOMER')
 
         self.assertEqual(['NUMBER', 22], c['C_CUSTKEY'])
         self.assertEqual(['VARCHAR2', 25], c['C_NAME'])
@@ -120,7 +122,7 @@ class TestOracleProfiler(unittest.TestCase):
         self.assertEqual(['CHAR', 10], c['C_MKTSEGMENT'])
         self.assertEqual(['VARCHAR2', 117], c['C_COMMENT'])
 
-        c = p.get_column_datatypes(u'SCOTT', u'CUSTOMER2')
+        c = p.get_column_datatypes(self.schema, u'CUSTOMER2')
 
         self.assertEqual(['NUMBER', 22], c['C_CUSTKEY'])
         self.assertEqual(['VARCHAR2', 25], c['C_NAME'])
@@ -133,17 +135,17 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_row_count_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_row_count(u'SCOTT', u'CUSTOMER')
+        c = p.get_row_count(self.schema, u'CUSTOMER')
         self.assertEqual(28, c)
 
     def test_get_row_count_002(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_row_count(u'SCOTT', u'CUSTOMER', use_statistics=True)
+        c = p.get_row_count(self.schema, u'CUSTOMER', use_statistics=True)
         self.assertEqual(28, c)
 
     def test_get_column_nulls_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_nulls(u'SCOTT', u'SUPPLIER')
+        c = p.get_column_nulls(self.schema, u'SUPPLIER')
 
         self.assertEqual(0, c['S_SUPPKEY'])
         self.assertEqual(0, c['S_NAME'])
@@ -155,7 +157,7 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_column_nulls_002(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_nulls(u'SCOTT', u'SUPPLIER', use_statistics=True)
+        c = p.get_column_nulls(self.schema, u'SUPPLIER', use_statistics=True)
 
         self.assertEqual(0, c['S_SUPPKEY'])
         self.assertEqual(0, c['S_NAME'])
@@ -178,7 +180,7 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_column_min_max_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_min_max(u'SCOTT', u'CUSTOMER')
+        c = p.get_column_min_max(self.schema, u'CUSTOMER')
 
         self.assertEqual([3373, 147004], c['C_CUSTKEY'])
         self.assertEqual([u'Customer#000003373', u'Customer#000147004'], c['C_NAME'])
@@ -195,7 +197,7 @@ class TestOracleProfiler(unittest.TestCase):
     def test_get_column_most_freq_values_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         p.profile_most_freq_values_enabled = 20
-        c = p.get_column_most_freq_values(u'SCOTT', u'CUSTOMER')
+        c = p.get_column_most_freq_values(self.schema, u'CUSTOMER')
 
         self.assertEqual([[3373, 1],
                           [16252, 1],
@@ -232,7 +234,7 @@ class TestOracleProfiler(unittest.TestCase):
     def test_get_column_least_freq_values_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
         p.profile_most_freq_values_enabled = 20
-        c = p.get_column_least_freq_values(u'SCOTT', u'CUSTOMER')
+        c = p.get_column_least_freq_values(self.schema, u'CUSTOMER')
 
         self.assertEqual([[3373, 1],
                           [16252, 1],
@@ -283,7 +285,7 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_get_column_cardinalities_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        c = p.get_column_cardinalities(u'SCOTT', u'CUSTOMER')
+        c = p.get_column_cardinalities(self.schema, u'CUSTOMER')
 
         self.assertEqual(28, c['C_CUSTKEY'])
         self.assertEqual(28, c['C_NAME'])
@@ -296,15 +298,15 @@ class TestOracleProfiler(unittest.TestCase):
 
     def test_run_record_valition_001(self):
         p = OraProfiler.OraProfiler(self.host, self.port, self.dbname, self.user, self.passwd)
-        r = [(1, 'ORCL','SCOTT','CUSTOMER','C_CUSTKEY','','regexp','^\d+$', ''),
-             (2, 'ORCL','SCOTT','CUSTOMER','C_CUSTKEY','','eval','{C_CUSTKEY} > 0 and {C_CUSTKEY} < 1000000', ''),
-             (3, 'ORCL','SCOTT','CUSTOMER','C_ACCTBAL','','eval','{C_ACCTBAL} > 0', ''),
-             (4, 'ORCL','SCOTT','CUSTOMER','C_CUSTKEY,C_NATIONKEY','','eval','{C_CUSTKEY} > {C_NATIONKEY}', ''),
-             (5, 'ORCL','SCOTT','CUSTOMER','C_CUSTKEY,C_NATIONKEY','','eval','{C_CUSTKEY} < {C_NATIONKEY}', ''),
-             (6, 'ORCL','SCOTT','CUSTOMER','C_CUSTKEY','','eval','{C_CUSTKEY} > 0 and', ''),
-             (7, 'ORCL','SCOTT','CUSTOMER','C_CUSTKEY','','eval','{C_CUSTKEY2} > 0', '')]
+        r = [(1, self.dbname, self.schema,'CUSTOMER','C_CUSTKEY','','regexp','^\d+$', ''),
+             (2, self.dbname, self.schema,'CUSTOMER','C_CUSTKEY','','eval','{C_CUSTKEY} > 0 and {C_CUSTKEY} < 1000000', ''),
+             (3, self.dbname, self.schema,'CUSTOMER','C_ACCTBAL','','eval','{C_ACCTBAL} > 0', ''),
+             (4, self.dbname, self.schema,'CUSTOMER','C_CUSTKEY,C_NATIONKEY','','eval','{C_CUSTKEY} > {C_NATIONKEY}', ''),
+             (5, self.dbname, self.schema,'CUSTOMER','C_CUSTKEY,C_NATIONKEY','','eval','{C_CUSTKEY} < {C_NATIONKEY}', ''),
+             (6, self.dbname, self.schema,'CUSTOMER','C_CUSTKEY','','eval','{C_CUSTKEY} > 0 and', ''),
+             (7, self.dbname, self.schema,'CUSTOMER','C_CUSTKEY','','eval','{C_CUSTKEY2} > 0', '')]
 
-        c = p.run_record_validation(u'SCOTT', u'CUSTOMER', r)
+        c = p.run_record_validation(self.schema, u'CUSTOMER', r)
 
         self.maxDiff = None
         # record validation (regrep/eval) only
@@ -321,8 +323,8 @@ class TestOracleProfiler(unittest.TestCase):
         self.assertEqual(28, c['C_NATIONKEY'][1]['invalid_count'])
 
         # case-sensitive?
-        self.assertEqual({}, p.run_record_validation('SCOTT', 'customer', r))
-        self.assertEqual({}, p.run_record_validation('scott', u'CUSTOMER', r))
+        self.assertEqual({}, p.run_record_validation(self.schema, 'customer', r))
+        self.assertEqual({}, p.run_record_validation(self.schema.lower(), u'CUSTOMER', r))
 
 if __name__ == '__main__':
     unittest.main()
