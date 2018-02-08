@@ -263,14 +263,34 @@ WHERE ROWNUM <= {4}
             self._query_value_freqs(q, col, value_freqs)
         return value_freqs
 
-    def get_column_cardinalities(self, schema_name, table_name):
+    def get_column_cardinalities(self, schema_name, table_name,
+                                 use_statistics=False):
         column_names = self.get_column_names(schema_name, table_name)
         if column_names is None:
             return None
 
         column_cardinalities = {}
-        for col in column_names:
-            q = u'''
+        if use_statistics:
+            # Use database statistics to collect column cardinalities.
+            query = u"""
+SELECT
+  COLUMN_NAME,
+  NUM_DISTINCT
+  LAST_ANALYZED
+FROM
+  ALL_TAB_COL_STATISTICS
+WHERE
+  OWNER = '{0}'
+AND
+  TABLE_NAME = '{1}'
+""".format(schema_name, table_name)
+
+            for r in self.dbdriver.q2rs(query).resultset:
+                column_cardinalities[r[0]] = long(r[1]) if r[1] is not None else None
+        else:
+            # Scan a whole table to collect column cardinalities.
+            for col in column_names:
+                q = u'''
 WITH TEMP AS (
 SELECT {3}
   DISTINCT "{2}"
@@ -282,7 +302,7 @@ WHERE
 SELECT COUNT(*) FROM TEMP
 '''.format(schema_name, table_name, col, self.parallel_hint)
 
-            self._query_column_cardinality(q, col, column_cardinalities)
+                self._query_column_cardinality(q, col, column_cardinalities)
         return column_cardinalities
 
     def run_record_validation(self, schema_name, table_name,

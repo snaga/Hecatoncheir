@@ -59,6 +59,8 @@ class DbProfilerBase(object):
     skip_table_profiling = False
     skip_column_profiling = False
 
+    use_statistics = False
+
     parallel_degree = 0
     timeout = None
 
@@ -146,7 +148,8 @@ class DbProfilerBase(object):
         rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         column_names = []
         for r in rs.resultset:
-            column_names.append(_s2u(r[0]))
+#            column_names.append(_s2u(r[0]))
+            column_names.append(r[0].decode('utf-8'))
             log.trace("_query_column_names: " + unicode(r))
         return column_names
 
@@ -198,8 +201,8 @@ class DbProfilerBase(object):
         data_types = {}
         rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         for r in rs.resultset:
-            data_types[r[0]] = [r[1], r[2]]
-            log.trace("_query_column_datetypes: " + unicode(r))
+            data_types[r[0].decode('utf-8')] = [r[1], r[2]]
+            log.trace("_query_column_datetypes: %s %s %s" % (unicode(r[0]), r[1], r[2]))
         return data_types
 
     @abstractmethod
@@ -343,7 +346,7 @@ class DbProfilerBase(object):
         """
         rs = self.dbdriver.q2rs(query, timeout=self.timeout)
         for r in rs.resultset:
-            cardinalities[column_name] = int(r[0])
+            cardinalities[column_name] = long(r[0])
             log.trace(("_query_column_cardinality: col %s cardinality %d" %
                        (column_name, cardinalities[column_name])))
 
@@ -402,11 +405,32 @@ class DbProfilerBase(object):
         if self.profile_nulls_enabled is True:
             log.info(_("Number of nulls: start"))
             nulls = self.get_column_nulls(tablemeta.schema_name,
-                                          tablemeta.table_name)
+                                          tablemeta.table_name,
+                                          use_statistics=self.use_statistics)
             for col in tablemeta.column_names:
+                if col not in nulls:
+                    log.warning(_("Could not obtain number of nulls: %s") % col)
+                    continue
                 cm = tablemeta.get_column_meta(col)
                 cm.nulls = long(nulls[col])
             log.info(_("Number of nulls: end"))
+
+        if self.profile_column_cardinality_enabled:
+            log.info(_("Column cardinality: start"))
+            column_cardinality = self.get_column_cardinalities(
+                tablemeta.schema_name,
+                tablemeta.table_name,
+                use_statistics=self.use_statistics)
+            for col in tablemeta.column_names:
+                if col not in column_cardinality:
+                    log.warning(_("Could not obtain column cardinality: %s") % col)
+                    continue
+                cm = tablemeta.get_column_meta(col)
+                cm.cardinality = column_cardinality[col]
+            log.info(_("Column cardinality: end"))
+
+        if self.use_statistics:
+            return True
 
         if self.profile_min_max_enabled is True:
             log.info(_("Min/Max values: start"))
@@ -435,16 +459,6 @@ class DbProfilerBase(object):
                 cm.most_freq_values = most_freqs[col]
                 cm.least_freq_values = least_freqs[col]
             log.info(_("Most/Least freq values: end"))
-
-        if self.profile_column_cardinality_enabled is True:
-            log.info(_("Column cardinality: start"))
-            column_cardinality = self.get_column_cardinalities(
-                tablemeta.schema_name,
-                tablemeta.table_name)
-            for col in tablemeta.column_names:
-                cm = tablemeta.get_column_meta(col)
-                cm.cardinality = column_cardinality[col]
-            log.info(_("Column cardinality: end"))
 
         return True
 
@@ -506,13 +520,11 @@ class DbProfilerBase(object):
         try:
             rows = self.get_row_count(tm.schema_name, tm.table_name)
         except QueryTimeout as e:
-            log.info(_("Row count: Timeout caught. Using the database "
+            log.info(_("Query timeout caught. Using the database "
                        "statistics."))
+            self.use_statistics = True
             rows = self.get_row_count(tm.schema_name, tm.table_name,
                                       use_statistics=True)
-            # Once timeout occured, column profiling should be skipped
-            # in order to avoid heavy loads.
-            self.skip_column_profiling = True
 
         if rows is None:
             raise ProfilingError(_('Could not obtain number of rows.'),
@@ -569,6 +581,8 @@ class DbProfilerBase(object):
 
         # sample rows
         self._profile_sample_rows(tablemeta)
+
+        self.use_statistics = False
 
         # continue to profile table?
         if self.skip_table_profiling:

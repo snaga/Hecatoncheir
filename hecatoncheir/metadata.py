@@ -48,7 +48,7 @@ class TableColumnMeta:
                 self.most_freq_vals is None)
         assert (isinstance(self.least_freq_vals, list) or
                 self.least_freq_vals is None)
-        assert isinstance(self.cardinality, int) or self.cardinality is None
+        assert isinstance(self.cardinality, long) or self.cardinality is None
         assert isinstance(self.validation, list) or self.validation is None
         assert isinstance(self.comment, unicode) or self.comment is None
 

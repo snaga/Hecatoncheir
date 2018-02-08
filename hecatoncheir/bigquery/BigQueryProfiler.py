@@ -173,7 +173,12 @@ LIMIT {4}
                                                       col, True)
         return freqs
 
-    def get_column_cardinalities(self, schema_name, table_name):
+    def get_column_cardinalities(self, schema_name, table_name,
+                                 use_statistics=False):
+        # FIXME:
+        if use_statistics:
+            raise NotImplementedError('use_statistics=True is not supported yet.')
+
         column_names = self.get_column_names(schema_name, table_name)
         column_cardinalities = {}
         for col in column_names:
