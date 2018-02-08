@@ -82,9 +82,17 @@ SELECT database_name,
             db.conn.execute(q)
 
     def update(self):
-        # Insert the latest record of the table
         q = """
-INSERT INTO repo VALUES ('{0}','{1}','{2}','{3}','{4}')
+UPDATE repo
+   SET data = '{4}'
+ WHERE database_name = '{0}'
+   AND schema_name = '{1}'
+   AND table_name = '{2}'
+   AND created_at = (SELECT max(created_at)
+                       FROM repo
+                      WHERE database_name = '{0}'
+                        AND schema_name = '{1}'
+                        AND table_name = '{2}')
 """.format(self.database_name, self.schema_name, self.table_name,
            datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f"),
            jsonize(self.data).replace("'", "''"))
