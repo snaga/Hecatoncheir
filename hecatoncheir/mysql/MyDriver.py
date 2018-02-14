@@ -36,7 +36,8 @@ class MyDriver(DbDriverBase.DbDriverBase):
 
     def connect(self):
         try:
-            self.conn = self.driver.connect(host=self.host, db=self.dbname,
+            self.conn = self.driver.connect(host=self.host, port=self.port,
+                                            db=self.dbname,
                                             user=self.dbuser,
                                             passwd=self.dbpass)
         except Exception as e:
