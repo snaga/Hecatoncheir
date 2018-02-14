@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import unittest
 sys.path.append('..')
@@ -9,12 +10,10 @@ from hecatoncheir.exception import DriverError, InternalError, QueryError, Query
 from hecatoncheir.mysql import MyDriver
 
 class TestMyDriver(unittest.TestCase):
-    dbuser = "root"
-    dbpass = "mysql123"
-    dbname = "dqwbtest"
-
     def setUp(self):
-        pass
+        self.dbuser = os.environ.get('_DBUSER', 'root')
+        self.dbpass = os.environ.get('_DBPASS', '')
+        self.dbname = os.environ.get('_DBNAME', 'testdb')
 
     def test_MyDriver_001(self):
         my = MyDriver.MyDriver('a','b','c','d','e')
@@ -36,7 +35,18 @@ class TestMyDriver(unittest.TestCase):
         my = MyDriver.MyDriver('127.0.0.1', 3306, self.dbname, self.dbuser, '')
         with self.assertRaises(DriverError) as cm:
             my.connect()
-        self.assertEqual("Could not connect to the server: Access denied for user 'root'@'localhost' (using password: NO)", cm.exception.value)
+        self.assertEqual(("Could not connect to the server: "
+                          "Access denied for user '%s'@'localhost' (using password: NO)") % self.dbuser,
+                         cm.exception.value)
+
+    def test_connect_003(self):
+        # connection failure
+        my = MyDriver.MyDriver('127.0.0.1', 13306, self.dbname, self.dbuser, self.dbpass)
+        with self.assertRaises(DriverError) as cm:
+            my.connect()
+        self.assertEqual(("Could not connect to the server: "
+                          "Can't connect to MySQL server on '127.0.0.1' (111)"),
+                         cm.exception.value)
 
     def test_query_to_resultset_001(self):
         my = MyDriver.MyDriver('127.0.0.1', 3306, self.dbname, self.dbuser, self.dbpass)
@@ -54,7 +64,8 @@ class TestMyDriver(unittest.TestCase):
         # exception
         with self.assertRaises(QueryError) as cm:
              my.query_to_resultset(u'select 1 as c from bar')
-        self.assertEqual("Could not execute a query: Table 'dqwbtest.bar' doesn't exist", cm.exception.value)
+        self.assertEqual("Could not execute a query: Table '%s.bar' doesn't exist" % self.dbname,
+                         cm.exception.value)
 
         # query timeout (no timeout)
         rs = my.query_to_resultset(u'select sleep(2)')
