@@ -65,6 +65,33 @@ When no schema/table name are supplied, a list of schema names will be shown. Yo
 See ":ref:`ref-command`" for more information about ``dm-run-profiler`` command.
 
 
+Limiting query execution time and data profiles
+-----------------------------------------------
+
+Query timeout can be enabled at the ``dm-run-profiler`` command. Once the timeout is specified with the ``--timeout`` option, the query execution time while data profiling would be limited.
+
+Those queries exceeding the limit would be cancelled, and the profiler would be looking at the database statistics which is maintained by the each DBMSes. (Obviously, if the database statistics is not collected, the profiler cannot collect data profile using it)
+
+Not all the data profile metrics can be collected when using the database statistics. And those values collected from the database statistics could be differ from those actual values from the tables.
+
+Specifying ``--enable-validation`` would disable the query timeout to avoid using incorrect data profile collected from the database statistics.
+
+Here is a list of the data profile matrix collected in each case:
+
+* Table scan + Column scan (No query timeout occured on both table and column, or specifying the ``--enable-validation`` option)
+    * Table - Number of records
+    * Column - Number of nulls
+    * Column - Column cardinalities
+    * Column - Min/Max values
+    * Column - Most/Least frequent values
+* Table scan + Column statistics (from the database statistics) (No query timeout occured on the table, but it occured on column)
+    * Table - Number of records
+    * Column - Number of nulls
+    * Column - Column cardinalities
+* Table statistics + Column statistics (from the database statistics) (Query timeout occured during the table scan)
+    * Table - Number of records
+
+
 .. _importing-supplimental-metadata:
 
 Importing supplimental metadata using CSV files
