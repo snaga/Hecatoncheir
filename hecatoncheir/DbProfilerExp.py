@@ -161,7 +161,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         export_file(filename, DbProfilerFormatter.to_table_html(
                 data, validation_rules=validation_rules,
                 datamapping=dmentries,
-                files=['%s/%s' % ('.'.join(tab[0:3]), x) for x in files],
+                files=['%s/%s' % ('.'.join(tab[0:3]), x.filename) for x in files],
                 glossary_terms=terms,
                 template_file=template_table))
 
@@ -208,7 +208,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_schema[schema],
                 comment=ss.comment,
-                files=['%s/%s' % (schema, x) for x in files],
+                files=['%s/%s' % (schema, x.filename) for x in files],
                 schemas=[[d, s, len(tables_by_schema[schema]),
                           ss.description]],
                 reponame=schema, glossary_terms=terms,
@@ -224,7 +224,7 @@ def export_html(repo, tables=[], tags=[], schemas=[], template_path=None,
         export_file(filename, DbProfilerFormatter.to_index_html(
                 tables_by_tag[tag],
                 comment=tmp.comment,
-                files=['tag-%s/%s' % (tag, x) for x in files],
+                files=['tag-%s/%s' % (tag, x.filename) for x in files],
                 tags=[[tmp.label, tmp.num_of_tables, tmp.description]],
                 reponame=tag, glossary_terms=terms,
                 template_file=template_index))
