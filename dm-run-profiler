@@ -451,11 +451,9 @@ if __name__ == "__main__":
                       (t[0], t[1]), detail=u'QueryError: '+e.value)
             failed_count += 1
             continue
-        except QueryTimeout as e:
-            log.error(_("Profiling failed on %s.%s") %
-                      (t[0], t[1]), detail=u'QueryTimeout: '+e.value)
-            failed_count += 1
-            continue
+        except QueryTimeout as ex:
+            log.info(_("Interrupted by query timeout on %s.%s") %
+                     (t[0], t[1]), detail=u'QueryTimeout: ' + e.value)
         except InternalError as e:
             log.error(_("Profiling failed on %s.%s (internal error)") %
                       (t[0], t[1]), detail=u'InternalError: '+e.value)
