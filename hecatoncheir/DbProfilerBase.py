@@ -402,12 +402,20 @@ class DbProfilerBase(object):
         return (count, failed)
 
     def run_column_profiling(self, tablemeta):
+        # number of nulls for every column
         if self.profile_nulls_enabled is True:
             log.info(_("Number of nulls: start"))
-            nulls = self.get_column_nulls(tablemeta.schema_name,
-                                          tablemeta.table_name,
-                                          use_statistics=self.use_statistics)
+            nulls = None
+            try:
+                nulls = self.get_column_nulls(tablemeta.schema_name,
+                                              tablemeta.table_name,
+                                              use_statistics=self.use_statistics)
+            except QueryTimeout as ex:
+                log.warning(_("Could not obtain number of nulls due to the query timeout."))
+
             for col in tablemeta.column_names:
+                if nulls is None:
+                    break
                 if col not in nulls:
                     log.warning(_("Could not obtain number of nulls: %s") % col)
                     continue
@@ -415,13 +423,21 @@ class DbProfilerBase(object):
                 cm.nulls = long(nulls[col])
             log.info(_("Number of nulls: end"))
 
+        # column cardinalities
         if self.profile_column_cardinality_enabled:
             log.info(_("Column cardinality: start"))
-            column_cardinality = self.get_column_cardinalities(
-                tablemeta.schema_name,
-                tablemeta.table_name,
-                use_statistics=self.use_statistics)
+            column_cardinality = None
+            try:
+                column_cardinality = self.get_column_cardinalities(
+                    tablemeta.schema_name,
+                    tablemeta.table_name,
+                    use_statistics=self.use_statistics)
+            except QueryTimeout as ex:
+                log.warning(_("Could not obtain column cardinalities due to the query timeout."))
+
             for col in tablemeta.column_names:
+                if column_cardinality is None:
+                    break
                 if col not in column_cardinality:
                     log.warning(_("Could not obtain column cardinality: %s") % col)
                     continue
@@ -432,11 +448,19 @@ class DbProfilerBase(object):
         if self.use_statistics:
             return True
 
+        # min/max for every column
         if self.profile_min_max_enabled is True:
             log.info(_("Min/Max values: start"))
-            minmax = self.get_column_min_max(tablemeta.schema_name,
-                                             tablemeta.table_name)
+            minmax = None
+            try:
+                minmax = self.get_column_min_max(tablemeta.schema_name,
+                                                 tablemeta.table_name)
+            except QueryTimeout as ex:
+                log.warning(_("Could not obtain min/max due to the query timeout."))
+
             for col in tablemeta.column_names:
+                if minmax is None:
+                    break
                 if isinstance(minmax[col][0], str):
                     minmax[col][0] = minmax[col][0].decode('utf-8')
                     minmax[col][1] = minmax[col][1].decode('utf-8')
@@ -445,16 +469,25 @@ class DbProfilerBase(object):
                 cm.max = u'%s' % minmax[col][1]
             log.info(_("Min/Max values: end"))
 
+        # most/least freq values for every column
         if self.profile_most_freq_values_enabled > 0:
             log.info(_("Most/Least freq values(1/2): start"))
-            most_freqs = self.get_column_most_freq_values(
-                tablemeta.schema_name,
-                tablemeta.table_name)
-            log.info(_("Most/Least freq values(2/2): start"))
-            least_freqs = self.get_column_least_freq_values(
-                tablemeta.schema_name,
-                tablemeta.table_name)
+            most_freqs = None
+            least_freqs = None
+            try:
+                most_freqs = self.get_column_most_freq_values(
+                    tablemeta.schema_name,
+                    tablemeta.table_name)
+                log.info(_("Most/Least freq values(2/2): start"))
+                least_freqs = self.get_column_least_freq_values(
+                    tablemeta.schema_name,
+                    tablemeta.table_name)
+            except QueryTimeout as ex:
+                log.warning(_("Could not obtain most/least freq values due to the query timeout."))
+
             for col in tablemeta.column_names:
+                if most_freqs is None or least_freqs is None:
+                    break
                 cm = tablemeta.get_column_meta(col)
                 cm.most_freq_values = most_freqs[col]
                 cm.least_freq_values = least_freqs[col]
@@ -517,12 +550,15 @@ class DbProfilerBase(object):
             return
 
         log.info(_("Row count: start"))
+        rows = None
         try:
             rows = self.get_row_count(tm.schema_name, tm.table_name)
-        except QueryTimeout as e:
-            log.info(_("Query timeout caught. Using the database "
-                       "statistics."))
+        except QueryTimeout as ex:
+            log.warning(_("Could not obtain number of rows due to the query timeout. "
+                          "Going to use the database statistics."))
             self.use_statistics = True
+
+        if rows is None and self.use_statistics:
             rows = self.get_row_count(tm.schema_name, tm.table_name,
                                       use_statistics=True)
 
@@ -540,8 +576,11 @@ class DbProfilerBase(object):
             return
 
         log.info(_("Sample rows: start"))
-        tm.sample_rows = self.get_sample_rows(tm.schema_name,
-                                              tm.table_name)
+        try:
+            tm.sample_rows = self.get_sample_rows(tm.schema_name,
+                                                  tm.table_name)
+        except QueryTimeout as ex:
+            log.warning(_("Could not sample rows due to the query timeout."))
         log.info(_("Sample rows: end"))
 
     def _build_tablemeta(self, schema_name, table_name):
