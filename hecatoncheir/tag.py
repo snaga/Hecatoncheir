@@ -48,28 +48,36 @@ class Tag2:
     @staticmethod
     def find(label):
         assert isinstance(label, unicode)
-        q = (u"SELECT description, comment FROM tags2 WHERE label = '{0}'"
-             .format(label))
-        rs = db.conn.execute(q)
-        r = rs.fetchone()
-        if not r:
-            return None
-        description = r[0]
-        comment = r[1]
+
+        num_of_tables = None
+        description = None
+        comment = None
 
         # Getting a number of tables with the tag label
         q = u"SELECT count(*) FROM tags WHERE tag_label = '{0}'".format(label)
         rs = db.conn.execute(q)
         r = rs.fetchone()
+        if r:
+            num_of_tables = r[0]
 
-        return Tag2(label, description, comment, r[0])
+        # Getting a short description and a comment of the tag.
+        q = (u"SELECT description, comment FROM tags2 WHERE label = '{0}'"
+             .format(label))
+        rs = db.conn.execute(q)
+        r = rs.fetchone()
+        if r:
+            description = r[0]
+            comment = r[1]
+
+        return Tag2(label, description, comment, num_of_tables)
 
     @staticmethod
     def findall():
         tags = []
-        rs = db.conn.execute(u"SELECT label FROM tags2 ORDER BY label")
+        rs = db.conn.execute(u"SELECT DISTINCT tag_label FROM tags ORDER BY tag_label")
         for r in rs.fetchall():
-            tags.append(Tag2.find(r[0]))
+            if r[0]:
+                tags.append(Tag2.find(r[0]))
         return tags
 
     def update(self):
