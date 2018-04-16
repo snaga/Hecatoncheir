@@ -11,7 +11,6 @@ import sys
 from flask import Flask, request, Response, jsonify
 
 from hecatoncheir import DbProfilerFormatter
-from hecatoncheir import DbProfilerRepository
 from hecatoncheir import DbProfilerVerify
 from hecatoncheir import db
 from hecatoncheir import logger as log
@@ -28,19 +27,12 @@ app = Flask(__name__)
 
 
 def open_repo():
-    filename = os.environ["DBPROF_REPOFILE"]
-    repo = DbProfilerRepository.DbProfilerRepository(filename)
-    repo.open()
-
-    db.creds = {}
-    db.creds['use_sqlite'] = True
-    db.creds['dbname'] = filename
-    repo2 = Repository()
-
-    return repo
+    db.creds = db.parse_connection_string(os.environ["DBPROF_REPOFILE"])
+    db.connect()
+    return True
 
 
-def get_glossary_terms(repo):
+def get_glossary_terms():
     terms = []
     for t in GlossaryTerm.find():
         terms.append(get_bg_term(t.term))
@@ -50,8 +42,8 @@ def get_glossary_terms(repo):
 @app.route("/")
 @app.route("/index.html")
 def index():
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     tables_all = []
     for tab in Table2.find():
@@ -68,7 +60,7 @@ def index():
             continue
         tags.append([tag.label, tag.num_of_tables, tag.description])
 
-    reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
+    reponame = re.sub('.*/', '', db.creds['dbname'])
     reponame = re.sub('\..*$', '', reponame)
     html = DbProfilerFormatter.to_index_html(tables_all, schemas=schemas,
                                              tags=tags,
@@ -78,14 +70,13 @@ def index():
                                              max_panels=6,
                                              editable=True).encode('utf-8')
 
-    repo.close()
     return html
 
 
 @app.route("/index-tags.html")
 def index_tags():
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     tables_all = []
     for tab in Table2.find():
@@ -94,7 +85,7 @@ def index_tags():
     for tag in Tag2.findall():
         tags.append([tag.label, tag.num_of_tables, tag.description])
 
-    reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
+    reponame = re.sub('.*/', '', db.creds['dbname'])
     reponame = re.sub('\..*$', '', reponame)
     html = DbProfilerFormatter.to_index_html(tables_all,
                                              tags=tags,
@@ -103,14 +94,13 @@ def index_tags():
                                              max_panels=99,
                                              editable=True).encode('utf-8')
 
-    repo.close()
     return html
 
 
 @app.route("/index-schemas.html")
 def index_schemas():
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     tables_all = []
     for tab in Table2.find():
@@ -123,7 +113,7 @@ def index_schemas():
         schemas.append([s.database_name, s.schema_name,
                         s.num_of_tables, s.description])
 
-    reponame = re.sub('.*/', '', os.environ["DBPROF_REPOFILE"])
+    reponame = re.sub('.*/', '', db.creds['dbname'])
     reponame = re.sub('\..*$', '', reponame)
     html = DbProfilerFormatter.to_index_html(tables_all,
                                              schemas=schemas,
@@ -132,14 +122,13 @@ def index_schemas():
                                              max_panels=99,
                                              editable=True).encode('utf-8')
 
-    repo.close()
     return html
 
 
 @app.route("/<db>.<schema>.html")
 def index_schema(db, schema):
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     s = Schema2.find(db, schema)
     tables = []
@@ -154,14 +143,13 @@ def index_schema(db, schema):
         reponame=schema, glossary_terms=terms,
         editable=True).encode('utf-8')
 
-    repo.close()
     return html
 
 
 @app.route("/tag-<tag>.html")
 def index_tag(tag):
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     tables = []
     for tab in Table2.find(tag=tag):
@@ -177,14 +165,13 @@ def index_tag(tag):
                                              glossary_terms=terms,
                                              editable=True).encode('utf-8')
 
-    repo.close()
     return html
 
 
 @app.route("/validation-<status>.html")
 def index_validation(status):
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     tables = []
     for t in Table2.find():
@@ -200,14 +187,13 @@ def index_validation(status):
                                              glossary_terms=terms,
                                              editable=True).encode('utf-8')
 
-    repo.close()
     return html
 
 
 @app.route("/<db>.<schema>.<table>.html")
 def table(db, schema, table):
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     table_data = Table2.find(db, schema, table)[0].data
     datamap = get_datamap_items(db, schema, table)
@@ -218,18 +204,16 @@ def table(db, schema, table):
                                              glossary_terms=terms,
                                              editable=True).encode('utf-8')
 
-    repo.close()
     return html
 
 
 @app.route("/glossary.html")
 def glossary():
-    repo = open_repo()
-    terms = get_glossary_terms(repo)
+    open_repo()
+    terms = get_glossary_terms()
 
     html = DbProfilerFormatter.to_glossary_html(glossary_terms=terms,
                                                 editable=True).encode('utf-8')
-    repo.close()
     return html
 
 
@@ -256,9 +240,8 @@ def staticfile(filename, dir1=None, dir2=None):
 # --------------------------------------------------
 @app.route("/api/metadata/<db>.<schema>.<table>")
 def api_metadata(db, schema, table):
-    repo = open_repo()
+    open_repo()
     data = Table2.find(db, schema, table)[0].data
-    repo.close()
 
     return json.dumps(data, indent=2)
 
@@ -266,7 +249,7 @@ def api_metadata(db, schema, table):
 @app.route("/api/table/<db>.<schema>.<table>/table_info",
            methods=['GET', 'POST'])
 def api_table_owner(db, schema, table):
-    repo = open_repo()
+    open_repo()
     tab = Table2.find(db, schema, table)[0]
     data = tab.data
     if request.method == 'POST':
@@ -277,7 +260,6 @@ def api_table_owner(db, schema, table):
             if len(t) > 0:
                 data['tags'].append(t)
         tab.update()
-        repo.close()
         for tag in data['tags']:
             if not Tag2.find(tag):
                 Tag2.create(tag)
@@ -285,7 +267,6 @@ def api_table_owner(db, schema, table):
                            'comment': data.get('comment', ''),
                            'tags': data.get('tags', [])})
     else:
-        repo.close()
         return json.dumps({'owner': data.get('owner', ''),
                            'comment': data.get('comment', ''),
                            'tags': data.get('tags', [])})
@@ -294,7 +275,7 @@ def api_table_owner(db, schema, table):
 @app.route("/api/comment/<db>.<schema>.<table>.<column>",
            methods=['GET', 'POST'])
 def api_column_comment(db, schema, table, column):
-    repo = open_repo()
+    open_repo()
     tab = Table2.find(db, schema, table)[0]
     data = tab.data
     col = None
@@ -304,10 +285,8 @@ def api_column_comment(db, schema, table, column):
     if request.method == 'POST':
         col['comment'] = request.form['comment']
         tab.update()
-        repo.close()
         return json.dumps({'comment': col['comment']})
     else:
-        repo.close()
         return json.dumps({'comment': col['comment']})
 
 
@@ -326,7 +305,7 @@ def api_response(code, content):
 
 @app.route("/api/validation", methods=['GET'])
 def api_validation_get_all():
-    repo = open_repo()
+    open_repo()
     a = ['id', 'database_name', 'schema_name', 'table_name', 'column_name',
          'description', 'rule', 'param', 'param2']
     data = []
@@ -342,7 +321,6 @@ def api_validation_get_all():
             data.append(d)
     except Exception as e:
         return api_error(400, 'exception caught.')
-    repo.close()
 
     resp = {'status': 'success',
             'data': data}
@@ -360,7 +338,7 @@ def api_validation_create():
     except ValueError as e:
         return api_error(400, 'incorrect data format.')
 
-    repo = open_repo()
+    open_repo()
     id = None
     try:
         r = ValidationRule.create(
@@ -370,7 +348,6 @@ def api_validation_create():
         id = r.id
     except Exception as ex:
         id = None
-    repo.close()
 
     if not id:
         return api_error(400, 'could not register a validation rule.')
@@ -381,28 +358,27 @@ def api_validation_create():
 
 @app.route("/api/validation/<id>", methods=['GET'])
 def api_validation_get(id):
-    repo = open_repo()
+    open_repo()
     r = None
     try:
         id = int(id)
-        r = repo.get_validation_rule(id)
+        r = ValidationRule.find(id_=id)
         if r is None:
             return api_error(400, 'rule id %d not found.' % id)
     except Exception as e:
         return api_error(400, 'exception caught.')
-    repo.close()
 
-    assert r[0] == id
-    resp = {'id': r[0],
+    assert r.id == id
+    resp = {'id': r.id,
             'status': 'success',
-            'database_name': r[1],
-            'schema_name': r[2],
-            'table_name': r[3],
-            'column_name': r[4],
-            'description': r[5],
-            'rule': r[6],
-            'param': r[7],
-            'param2': r[8]}
+            'database_name': r.database_name,
+            'schema_name': r.schema_name,
+            'table_name': r.table_name,
+            'column_name': r.column_name,
+            'description': r.description,
+            'rule': r.rule,
+            'param': r.param,
+            'param2': r.param2}
     return api_response(201, resp)
 
 
@@ -416,7 +392,7 @@ def api_validation_put(id):
     except ValueError as e:
         return api_error(400, 'incorrect data format.')
 
-    repo = open_repo()
+    open_repo()
     try:
         id = int(id)
         v = ValidationRule.find(id_=id)
@@ -433,7 +409,6 @@ def api_validation_put(id):
             return api_error(400, 'rule %d could not updated.' % id)
     except Exception as e:
         return api_error(400, 'exception caught.')
-    repo.close()
 
     resp = {'id': id,
             'status': 'success'}
@@ -442,7 +417,7 @@ def api_validation_put(id):
 
 @app.route("/api/validation/<id>", methods=['DELETE'])
 def api_validation_delete(id):
-    repo = open_repo()
+    open_repo()
     try:
         id = int(id)
         v = ValidationRule.find(id_=id)
@@ -451,7 +426,6 @@ def api_validation_delete(id):
             return api_error(400, 'no rule deleted.')
     except Exception as e:
         return api_error(400, 'exception caught.')
-    repo.close()
 
     resp = {'id': id,
             'status': 'success'}
@@ -460,12 +434,13 @@ def api_validation_delete(id):
 
 def usage():
     print '''
-Usage: %s [repo file] [port]
+Usage: %s [repo file | connection string] [port]
 
 Options:
     --help                     Print this help.
 
 ''' % os.path.basename(sys.argv[0])
+
 
 if __name__ == "__main__":
     try:
@@ -490,10 +465,6 @@ if __name__ == "__main__":
 
     if len(args) < 1:
         usage()
-        sys.exit(1)
-
-    if os.path.exists(args[0]) is False:
-        log.error(_("File `%s' not found.") % args[0])
         sys.exit(1)
 
     os.environ["DBPROF_REPOFILE"] = args[0]
