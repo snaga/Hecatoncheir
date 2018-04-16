@@ -21,7 +21,7 @@ global repo2
 
 def usage():
     print '''
-Usage: %s [options...] [repo file] [cmd] [args...]
+Usage: %s [options...] [repo file | connetion string] [cmd] [args...]
 
 Commands:
     init
@@ -98,9 +98,7 @@ if __name__ == "__main__":
         usage()
         sys.exit(1)
 
-    db.creds = {}
-    db.creds['use_sqlite'] = True
-    db.creds['dbname'] = args[0]
+    db.creds = db.parse_connection_string(args[0])
     db.connect()
     repo2 = Repository()
 
