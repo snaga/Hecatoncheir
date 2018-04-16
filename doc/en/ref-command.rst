@@ -151,14 +151,17 @@ dm-repo-cmd
 
 ::
 
-  Usage: dm-repo-cmd [options...] [repo file] [cmd] [args...]
+  Usage: dm-repo-cmd [options...] [repo file | connetion string] [cmd] [args...]
   
   Commands:
+      init
       ls
       rm <db.schema.table>
   
   Options:
       --help      Print this help.
+
+``init`` initializes the repository.
 
 ``ls`` shows a list of table names (in db.schema.table form) in the repository.
 

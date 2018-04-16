@@ -151,14 +151,17 @@ dm-repo-cmdコマンド
 
 ::
 
-  Usage: dm-repo-cmd [options...] [repo file] [cmd] [args...]
+  Usage: dm-repo-cmd [options...] [repo file | connetion string] [cmd] [args...]
   
   Commands:
+      init
       ls
       rm <db.schema.table>
   
   Options:
       --help      Print this help.
+
+``init`` を指定すると、レポジトリを初期化します。
 
 ``ls`` を指定すると、レポジトリに含まれるテーブル名の一覧を「データベース名.スキーマ名.テーブル名」の形式で取得します。
 
